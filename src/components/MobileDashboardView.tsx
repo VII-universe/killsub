@@ -45,8 +45,19 @@ export default function MobileDashboardView({
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
+  const [quickAddPrefill, setQuickAddPrefill] = useState<{
+    name: string
+    amount: string
+    currency: string
+    billing_cycle: string
+  } | null>(null)
 
   const isPro = profile?.plan === 'pro'
+
+  const handleQuickAdd = (item: { name: string; amount: string; currency: string; billing_cycle: string }) => {
+    setQuickAddPrefill(item)
+    setIsFormModalOpen(true)
+  }
 
   const openAiImport = () => {
     if (isPro) {
@@ -90,6 +101,7 @@ export default function MobileDashboardView({
     setIsFormModalOpen(false)
     setEditingSubscription(null)
     setStartAddModalInAiMode(false)
+    setQuickAddPrefill(null)
   }
 
   // Calculate totals
@@ -201,6 +213,8 @@ export default function MobileDashboardView({
               onOpenForm={() => setIsFormModalOpen(true)}
               onOpenAiImport={openAiImport}
               isPro={isPro}
+              subscriptions={effectiveSubscriptions}
+              onQuickAdd={handleQuickAdd}
             />
 
             {/* Financial Overview (Reference 2 & 3: UXDA RedDot Winner cards) */}
@@ -457,6 +471,7 @@ export default function MobileDashboardView({
             <AddSubscriptionForm
               onClose={closeFormModal}
               subscription={editingSubscription || undefined}
+              prefill={quickAddPrefill || undefined}
               startInAiMode={startAddModalInAiMode}
               isPro={isPro}
               onAiLocked={() => {

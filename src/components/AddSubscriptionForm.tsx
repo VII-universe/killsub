@@ -20,6 +20,7 @@ const QUICK_SUGGESTIONS = [
 export default function AddSubscriptionForm({
   onClose,
   subscription,
+  prefill,
   startInAiMode,
   onLimitReached,
   isPro = true,
@@ -27,6 +28,7 @@ export default function AddSubscriptionForm({
 }: {
   onClose?: () => void
   subscription?: Subscription
+  prefill?: { name: string; amount: string; currency: string; billing_cycle: string }
   startInAiMode?: boolean
   onLimitReached?: () => void
   isPro?: boolean
@@ -45,12 +47,14 @@ export default function AddSubscriptionForm({
   const today = new Date().toISOString().split('T')[0]
 
   // Form input state
-  const [name, setName] = useState(subscription?.name || '')
-  const [amount, setAmount] = useState(subscription ? String(subscription.amount) : '')
-  const [currency, setCurrency] = useState(subscription?.currency || 'CZK')
-  const [billingCycle, setBillingCycle] = useState(subscription?.billing_cycle || 'monthly')
+  const [name, setName] = useState(subscription?.name || prefill?.name || '')
+  const [amount, setAmount] = useState(subscription ? String(subscription.amount) : prefill?.amount || '')
+  const [currency, setCurrency] = useState(subscription?.currency || prefill?.currency || 'CZK')
+  const [billingCycle, setBillingCycle] = useState(subscription?.billing_cycle || prefill?.billing_cycle || 'monthly')
   const [nextPaymentDate, setNextPaymentDate] = useState(subscription?.next_payment_date || today)
-  const [category, setCategory] = useState(subscription?.category || suggestCategory(subscription?.name || ''))
+  const [category, setCategory] = useState(
+    subscription?.category || suggestCategory(subscription?.name || prefill?.name || '')
+  )
   const [logoUrl, setLogoUrl] = useState(subscription?.logo_url || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
   const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
