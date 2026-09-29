@@ -10,7 +10,10 @@ export default function ServiceLogo({ name, size = 48, customLogoUrl }: { name: 
 
   if (logoUrl && !failed) {
     return (
-      <div className={`flex items-center justify-center rounded-2xl overflow-hidden bg-white`} style={{ width: size, height: size }}>
+      <div
+        className="flex flex-shrink-0 items-center justify-center rounded-full overflow-hidden bg-white"
+        style={{ width: size, height: size, minWidth: size, minHeight: size }}
+      >
         <img
           src={logoUrl}
           alt={name}
@@ -26,8 +29,8 @@ export default function ServiceLogo({ name, size = 48, customLogoUrl }: { name: 
   // Fallback: styled initials
   return (
     <div
-      className={`flex items-center justify-center rounded-2xl border ${brand.border} ${brand.bg} ${brand.text} font-black shadow-md`}
-      style={{ width: size, height: size, fontSize: size * 0.3 }}
+      className={`flex flex-shrink-0 items-center justify-center rounded-full border ${brand.border} ${brand.bg} ${brand.text} font-black shadow-md`}
+      style={{ width: size, height: size, minWidth: size, minHeight: size, fontSize: size * 0.3 }}
     >
       {name.slice(0, 2).toUpperCase()}
     </div>
