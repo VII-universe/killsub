@@ -44,10 +44,10 @@ export default function PortfolioScoreCard({ subscriptions }: { subscriptions: S
   const offset = circumference - (averageScore / 100) * circumference
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 shadow-xl backdrop-blur-xl">
+    <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] px-4 py-4 shadow-xl backdrop-blur-xl">
       <div className="flex items-center gap-4">
-        <div className="relative flex-shrink-0 h-24 w-24">
-          <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
+        <div className="relative flex-shrink-0" style={{ width: 72, height: 72 }}>
+          <svg className="-rotate-90" width={72} height={72} viewBox="0 0 100 100">
             <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
             <circle
               cx="50"
@@ -63,13 +63,13 @@ export default function PortfolioScoreCard({ subscriptions }: { subscriptions: S
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-black font-mono text-white">{averageScore}</span>
-            <span className="text-[9px] font-bold text-white/50">/100</span>
+            <span className="font-mono text-white" style={{ fontSize: 20, fontWeight: 800 }}>{averageScore}</span>
+            <span className="font-bold text-white/50" style={{ fontSize: 10 }}>/100</span>
           </div>
         </div>
 
         <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/60">
+          <span className="font-extrabold uppercase tracking-wider text-white/60" style={{ fontSize: 10 }}>
             Portfolio skóre
           </span>
           {tip ? (

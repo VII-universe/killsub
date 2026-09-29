@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ThemeSelector from '@/components/ThemeSelector'
 import MobileAIHeroCard from '@/components/MobileAIHeroCard'
+import ServiceLogo from '@/components/ServiceLogo'
 import SubscriptionList, { Subscription } from '@/components/SubscriptionList'
 import AddSubscriptionForm from '@/components/AddSubscriptionForm'
 import CategoryChart from '@/components/CategoryChart'
@@ -219,8 +220,8 @@ export default function MobileDashboardView({
 
             {/* Financial Overview (Reference 2 & 3: UXDA RedDot Winner cards) */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Monthly Spend Card */}
-              <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 shadow-xl backdrop-blur-xl">
+              {/* Monthly Spend Card — primary */}
+              <div className="rounded-3xl border-y border-r border-white/[0.11] border-l-[3px] border-l-[#6c47ff] bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 shadow-xl backdrop-blur-xl">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/60">
                   Měsíční útrata
                 </span>
@@ -228,7 +229,7 @@ export default function MobileDashboardView({
                   {Object.keys(totals).length > 0 ? (
                     Object.entries(totals).map(([cur, data]) => (
                       <div key={cur} className="flex items-baseline gap-1">
-                        <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white">
+                        <span className="text-[36px] font-extrabold font-mono tracking-tight text-white leading-none">
                           {data.monthly.toLocaleString('cs-CZ', { maximumFractionDigits: 0 })}
                         </span>
                         <span className="text-[11px] font-black font-mono text-[var(--accent-primary)]">
@@ -237,7 +238,7 @@ export default function MobileDashboardView({
                       </div>
                     ))
                   ) : (
-                    <span className="text-xl font-black font-mono text-white/40">0 CZK</span>
+                    <span className="text-[36px] font-extrabold font-mono text-white/40 leading-none">0 CZK</span>
                   )}
                 </div>
                 <span className="text-[10px] text-white/50 mt-1 block">
@@ -245,18 +246,21 @@ export default function MobileDashboardView({
                 </span>
               </div>
 
-              {/* Next Due Date Card */}
-              <div className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 shadow-xl backdrop-blur-xl">
+              {/* Next Due Date Card — secondary */}
+              <div className="rounded-3xl border border-white/[0.11] bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-4 shadow-xl backdrop-blur-xl">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/60">
                   Nejbližší platba
                 </span>
                 <div className="mt-2">
                   {nextUpcoming ? (
                     <div>
-                      <div className="truncate text-sm font-black text-white">
-                        {nextUpcoming.name}
+                      <div className="flex items-center gap-1.5">
+                        <ServiceLogo name={nextUpcoming.name} size={16} customLogoUrl={nextUpcoming.logo_url} />
+                        <span className="truncate text-sm font-black text-white">
+                          {nextUpcoming.name}
+                        </span>
                       </div>
-                      <div className="text-[11px] font-black font-mono text-[var(--accent-primary)]">
+                      <div className="mt-1 text-[11px] font-black font-mono text-[var(--accent-primary)]">
                         {new Date(nextUpcoming.next_payment_date!).toLocaleDateString('cs-CZ')}
                       </div>
                     </div>

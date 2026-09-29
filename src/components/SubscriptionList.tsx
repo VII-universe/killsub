@@ -231,7 +231,7 @@ export default function SubscriptionList({
                     ? `Zvažte zrušení — ušetříte ${Math.round(yearlyCost).toLocaleString('cs-CZ')} ${sub.currency}/rok`
                     : undefined
                 }
-                className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4.5 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
+                className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
                   isLowHealth ? 'border-rose-500/50' : 'border-white/10'
                 }`}
               >
@@ -286,7 +286,7 @@ export default function SubscriptionList({
                   {/* Health score badge */}
                   <div className="mt-2.5 flex items-center gap-1.5">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black font-mono border ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0 text-[10px] font-black font-mono border ${
                         healthTone === 'low'
                           ? 'bg-rose-500/15 text-rose-300 border-rose-500/40'
                           : healthTone === 'warning'
@@ -304,7 +304,7 @@ export default function SubscriptionList({
                   {/* Pricing Display */}
                   <div className="mt-4 flex items-baseline justify-between border-t border-white/[0.06] pt-3.5">
                     <div>
-                      <span className="text-2xl font-black font-mono tracking-tight text-white">
+                      <span className="text-[22px] font-black font-mono tracking-tight text-white">
                         {sub.amount.toLocaleString('cs-CZ')}
                       </span>
                       <span className="ml-1 text-xs font-black font-mono text-[var(--accent-primary)]">

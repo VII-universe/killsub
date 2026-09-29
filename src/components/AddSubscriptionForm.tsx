@@ -68,6 +68,7 @@ export default function AddSubscriptionForm({
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiSuccess, setAiSuccess] = useState<string | null>(null)
   const [isAiOpen, setIsAiOpen] = useState(!!startInAiMode)
+  const [moreOpen, setMoreOpen] = useState(!!startInAiMode)
 
   // Surface the Free-plan limit as an upgrade prompt instead of an inline error.
   useEffect(() => {
@@ -95,6 +96,7 @@ export default function AddSubscriptionForm({
       setAiSuccess(null)
       setAiError(null)
       setIsAiOpen(false)
+      setMoreOpen(false)
       if (onClose) {
         setTimeout(onClose, 800)
       }
@@ -190,7 +192,9 @@ export default function AddSubscriptionForm({
                 onAiLocked?.()
                 return
               }
-              setIsAiOpen(!isAiOpen)
+              const next = !isAiOpen
+              setIsAiOpen(next)
+              if (next) setMoreOpen(true)
             }}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
               isAiOpen
@@ -232,74 +236,6 @@ export default function AddSubscriptionForm({
           ))}
         </div>
       </div>
-
-      {/* AI Extraction Drawer */}
-      {isAiOpen && (
-        <div className="mt-4 rounded-2xl border border-[var(--border-strong)] bg-gradient-to-b from-purple-950/40 to-black/60 p-4 space-y-3 shadow-inner">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-black text-pink-300">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
-              </span>
-              Gemini 1.5 Flash Sken
-            </span>
-            <span className="text-[10px] font-mono font-bold text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded-full">
-              AUTO FILL
-            </span>
-          </div>
-
-          <textarea
-            rows={3}
-            value={importText}
-            onChange={(e) => setImportText(e.target.value)}
-            placeholder="Zkopírujte sem potvrzovací e-mail, text faktury nebo zprávu o platbě..."
-            className="w-full rounded-xl border border-white/15 bg-black/60 p-3 text-xs text-white placeholder-white/40 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 transition-all"
-          />
-
-          {aiError && (
-            <div className="rounded-xl border border-rose-500/40 bg-rose-950/50 p-2.5 text-xs font-medium text-rose-300 flex items-center gap-2">
-              <svg className="h-4 w-4 text-rose-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span>{aiError}</span>
-            </div>
-          )}
-
-          {aiSuccess && (
-            <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/50 p-2.5 text-xs font-medium text-emerald-300 flex items-center gap-2">
-              <svg className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{aiSuccess}</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleAnalyzeAI}
-            disabled={isAnalyzing || !importText.trim()}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 py-2.5 px-4 text-xs font-black text-white shadow-lg shadow-pink-500/30 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isAnalyzing ? (
-              <>
-                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                <span>Analyzuji fakturu pomocí AI...</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4 text-pink-200" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-                </svg>
-                <span>Analyzovat a vyplnit formulář</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
 
       {/* Form Status Messages */}
       {state?.error && !state?.limitReached && (
@@ -443,50 +379,143 @@ export default function AddSubscriptionForm({
           </div>
         </div>
 
-        <div>
-          <label htmlFor="last_used_at" className="block text-xs font-bold text-white/90">
-            Naposledy použito <span className="font-normal text-white/40">(nepovinné)</span>
-          </label>
-          <input
-            id="last_used_at"
-            name="last_used_at"
-            type="date"
-            value={lastUsedAt}
-            max={today}
-            onChange={(e) => setLastUsedAt(e.target.value)}
-            className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
-          />
-          <p className="mt-1 text-[10px] text-white/40">
-            Ovlivňuje zdravotní skóre — pokud službu dlouho nepoužíváte, skóre postupně klesá.
-          </p>
-        </div>
+        {/* Více možností toggle */}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(!moreOpen)}
+          className="flex items-center gap-1.5 text-[13px] font-semibold text-[#8b8fa8] hover:text-white/80 transition-colors"
+        >
+          <svg
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${moreOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+          <span>{moreOpen ? 'Méně možností' : 'Více možností'}</span>
+        </button>
 
-        {/* Manual health score override */}
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-3.5">
-          <label className="flex items-center gap-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              name="health_score_manual"
-              checked={manualScore}
-              onChange={(e) => setManualScore(e.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
-            />
-            <span className="text-xs font-bold text-white/90">Nastavit zdravotní skóre ručně</span>
-          </label>
-          {manualScore && (
-            <div className="mt-3">
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${
+            moreOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden space-y-4">
+            {/* AI Extraction Drawer */}
+            {isAiOpen && (
+              <div className="rounded-2xl border border-[var(--border-strong)] bg-gradient-to-b from-purple-950/40 to-black/60 p-4 space-y-3 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-black text-pink-300">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+                    </span>
+                    Gemini 1.5 Flash Sken
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-pink-300 bg-pink-500/20 px-2 py-0.5 rounded-full">
+                    AUTO FILL
+                  </span>
+                </div>
+
+                <textarea
+                  rows={3}
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder="Zkopírujte sem potvrzovací e-mail, text faktury nebo zprávu o platbě..."
+                  className="w-full rounded-xl border border-white/15 bg-black/60 p-3 text-xs text-white placeholder-white/40 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 transition-all"
+                />
+
+                {aiError && (
+                  <div className="rounded-xl border border-rose-500/40 bg-rose-950/50 p-2.5 text-xs font-medium text-rose-300 flex items-center gap-2">
+                    <svg className="h-4 w-4 text-rose-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span>{aiError}</span>
+                  </div>
+                )}
+
+                {aiSuccess && (
+                  <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/50 p-2.5 text-xs font-medium text-emerald-300 flex items-center gap-2">
+                    <svg className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>{aiSuccess}</span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAnalyzeAI}
+                  disabled={isAnalyzing || !importText.trim()}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 py-2.5 px-4 text-xs font-black text-white shadow-lg shadow-pink-500/30 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span>Analyzuji fakturu pomocí AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4 text-pink-200" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
+                      </svg>
+                      <span>Analyzovat a vyplnit formulář</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="last_used_at" className="block text-xs font-bold text-white/90">
+                Naposledy použito <span className="font-normal text-white/40">(nepovinné)</span>
+              </label>
               <input
-                type="range"
-                name="health_score"
-                min={1}
-                max={100}
-                value={scoreValue}
-                onChange={(e) => setScoreValue(e.target.value)}
-                className="w-full accent-[var(--accent-primary)]"
+                id="last_used_at"
+                name="last_used_at"
+                type="date"
+                value={lastUsedAt}
+                max={today}
+                onChange={(e) => setLastUsedAt(e.target.value)}
+                className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
               />
-              <div className="mt-1 text-center text-xs font-mono font-black text-white">{scoreValue}/100</div>
+              <p className="mt-1 text-[10px] text-white/40">
+                Ovlivňuje zdravotní skóre — pokud službu dlouho nepoužíváte, skóre postupně klesá.
+              </p>
             </div>
-          )}
+
+            {/* Manual health score override */}
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3.5">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="health_score_manual"
+                  checked={manualScore}
+                  onChange={(e) => setManualScore(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
+                />
+                <span className="text-xs font-bold text-white/90">Nastavit zdravotní skóre ručně</span>
+              </label>
+              {manualScore && (
+                <div className="mt-3">
+                  <input
+                    type="range"
+                    name="health_score"
+                    min={1}
+                    max={100}
+                    value={scoreValue}
+                    onChange={(e) => setScoreValue(e.target.value)}
+                    className="w-full accent-[var(--accent-primary)]"
+                  />
+                  <div className="mt-1 text-center text-xs font-mono font-black text-white">{scoreValue}/100</div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <button
