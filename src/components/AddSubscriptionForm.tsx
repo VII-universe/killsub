@@ -28,7 +28,13 @@ export default function AddSubscriptionForm({
 }: {
   onClose?: () => void
   subscription?: Subscription
-  prefill?: { name: string; amount: string; currency: string; billing_cycle: string }
+  prefill?: {
+    name?: string
+    amount?: string
+    currency?: string
+    billing_cycle?: string
+    next_payment_date?: string
+  }
   startInAiMode?: boolean
   onLimitReached?: () => void
   isPro?: boolean
@@ -51,7 +57,9 @@ export default function AddSubscriptionForm({
   const [amount, setAmount] = useState(subscription ? String(subscription.amount) : prefill?.amount || '')
   const [currency, setCurrency] = useState(subscription?.currency || prefill?.currency || 'CZK')
   const [billingCycle, setBillingCycle] = useState(subscription?.billing_cycle || prefill?.billing_cycle || 'monthly')
-  const [nextPaymentDate, setNextPaymentDate] = useState(subscription?.next_payment_date || today)
+  const [nextPaymentDate, setNextPaymentDate] = useState(
+    subscription?.next_payment_date || prefill?.next_payment_date || today
+  )
   const [category, setCategory] = useState(
     subscription?.category || suggestCategory(subscription?.name || prefill?.name || '')
   )

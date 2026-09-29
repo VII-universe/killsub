@@ -47,16 +47,22 @@ export default function MobileDashboardView({
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
   const [quickAddPrefill, setQuickAddPrefill] = useState<{
-    name: string
-    amount: string
-    currency: string
-    billing_cycle: string
+    name?: string
+    amount?: string
+    currency?: string
+    billing_cycle?: string
+    next_payment_date?: string
   } | null>(null)
 
   const isPro = profile?.plan === 'pro'
 
   const handleQuickAdd = (item: { name: string; amount: string; currency: string; billing_cycle: string }) => {
     setQuickAddPrefill(item)
+    setIsFormModalOpen(true)
+  }
+
+  const handleCalendarDayClick = (isoDate: string) => {
+    setQuickAddPrefill({ next_payment_date: isoDate })
     setIsFormModalOpen(true)
   }
 
@@ -330,7 +336,7 @@ export default function MobileDashboardView({
               )}
 
               {viewMode === 'calendar' && effectiveSubscriptions.length > 0 ? (
-                <CashflowCalendar subscriptions={effectiveSubscriptions} />
+                <CashflowCalendar subscriptions={effectiveSubscriptions} onDayClick={handleCalendarDayClick} />
               ) : (
                 <SubscriptionList
                   subscriptions={effectiveSubscriptions}
@@ -399,7 +405,7 @@ export default function MobileDashboardView({
             )}
 
             {viewMode === 'calendar' && effectiveSubscriptions.length > 0 ? (
-              <CashflowCalendar subscriptions={effectiveSubscriptions} />
+              <CashflowCalendar subscriptions={effectiveSubscriptions} onDayClick={handleCalendarDayClick} />
             ) : (
               <SubscriptionList
                 subscriptions={effectiveSubscriptions}

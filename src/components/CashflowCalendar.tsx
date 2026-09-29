@@ -33,7 +33,20 @@ function getOccurrencesInMonth(sub: Subscription, year: number, month: number): 
   return new Date(year, month, Math.min(day, lastDay))
 }
 
-export default function CashflowCalendar({ subscriptions }: { subscriptions: Subscription[] }) {
+function toIsoDate(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export default function CashflowCalendar({
+  subscriptions,
+  onDayClick,
+}: {
+  subscriptions: Subscription[]
+  onDayClick?: (isoDate: string) => void
+}) {
   const [viewDate, setViewDate] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -126,9 +139,14 @@ export default function CashflowCalendar({ subscriptions }: { subscriptions: Sub
           const isUrgent = payments.length > 0 && diffDays >= 0 && diffDays <= 3
 
           return (
-            <div
+            <button
               key={day}
-              className={`relative min-h-[56px] rounded-xl border p-1 text-left transition-all ${
+              type="button"
+              onClick={() => onDayClick?.(toIsoDate(cellDate))}
+              title={onDayClick ? 'Přidat předplatné na tento den' : undefined}
+              className={`group relative min-h-[56px] rounded-xl border p-1 text-left transition-all ${
+                onDayClick ? 'cursor-pointer hover:border-[var(--accent-primary)]/60 active:scale-95' : ''
+              } ${
                 isUrgent
                   ? 'border-rose-500/50 bg-rose-500/10'
                   : payments.length > 0
@@ -155,7 +173,14 @@ export default function CashflowCalendar({ subscriptions }: { subscriptions: Sub
                   <div className="text-[8px] font-bold text-white/50">+{payments.length - 2} další</div>
                 )}
               </div>
-            </div>
+              {onDayClick && payments.length === 0 && (
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/0 group-hover:text-white/30 transition-colors">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                </span>
+              )}
+            </button>
           )
         })}
       </div>
