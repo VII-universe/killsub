@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import DeleteSubscriptionButton from './DeleteSubscriptionButton'
+import ServiceLogo from './ServiceLogo'
 import { getServiceBrand } from '@/utils/branding'
 import { computeHealthScore, getHealthTone } from '@/utils/health'
 
@@ -17,6 +18,7 @@ export interface Subscription {
   last_used_at?: string | null
   health_score?: number | null
   health_score_manual?: boolean | null
+  logo_url?: string | null
   created_at?: string
 }
 
@@ -237,12 +239,8 @@ export default function SubscriptionList({
                   {/* Top card header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      {/* Brand Avatar */}
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${sub.brand.border} ${sub.brand.bg} ${sub.brand.text} font-black text-base shadow-md`}
-                      >
-                        {sub.name.slice(0, 2).toUpperCase()}
-                      </div>
+                      {/* Brand Logo */}
+                      <ServiceLogo name={sub.name} size={48} customLogoUrl={sub.logo_url} />
 
                       <div>
                         <div className="flex items-center gap-2">

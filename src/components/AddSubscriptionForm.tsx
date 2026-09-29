@@ -5,6 +5,8 @@ import { addSubscription, updateSubscription, SubscriptionState } from '@/app/ac
 import { Subscription } from './SubscriptionList'
 import { CATEGORIES, suggestCategory } from '@/utils/categories'
 import { markAiUsed } from '@/utils/badges'
+import { getLogoUrl } from '@/utils/serviceLogos'
+import ServiceLogo from './ServiceLogo'
 
 const QUICK_SUGGESTIONS = [
   { name: 'Netflix', amount: '259', currency: 'CZK', cycle: 'monthly' },
@@ -49,6 +51,7 @@ export default function AddSubscriptionForm({
   const [billingCycle, setBillingCycle] = useState(subscription?.billing_cycle || 'monthly')
   const [nextPaymentDate, setNextPaymentDate] = useState(subscription?.next_payment_date || today)
   const [category, setCategory] = useState(subscription?.category || suggestCategory(subscription?.name || ''))
+  const [logoUrl, setLogoUrl] = useState(subscription?.logo_url || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
   const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
   const [scoreValue, setScoreValue] = useState(
@@ -79,6 +82,7 @@ export default function AddSubscriptionForm({
         setBillingCycle('monthly')
         setNextPaymentDate(today)
         setCategory('Ostatní')
+        setLogoUrl('')
         setLastUsedAt('')
         setManualScore(false)
         setScoreValue('80')
@@ -318,16 +322,36 @@ export default function AddSubscriptionForm({
           <label htmlFor="name" className="block text-xs font-bold text-white/90">
             Název služby
           </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="např. Netflix, Spotify, iCloud"
-            className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
-          />
+          <div className="mt-1.5 flex items-center gap-3">
+            {name.trim() && <ServiceLogo name={name} size={44} customLogoUrl={logoUrl || null} />}
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="např. Netflix, Spotify, iCloud"
+              className="flex-1 min-w-0 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
+            />
+          </div>
+
+          {name.trim() && !getLogoUrl(name) && (
+            <div className="mt-2.5">
+              <label htmlFor="logo_url" className="block text-[11px] font-bold text-white/60">
+                Vlastní URL loga <span className="font-normal text-white/40">(nepovinné)</span>
+              </label>
+              <input
+                id="logo_url"
+                name="logo_url"
+                type="url"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="https://..."
+                className="mt-1 block w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-[11px] text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
+              />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
