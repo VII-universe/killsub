@@ -402,10 +402,11 @@ export default function AddSubscriptionForm({
               name="billing_cycle"
               value={billingCycle}
               onChange={(e) => setBillingCycle(e.target.value)}
-              className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-3.5 py-3 text-xs font-bold text-white focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all cursor-pointer"
+              className="mt-1.5 block w-full border px-3.5 py-3 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
+              style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
             >
-              <option value="monthly" className="bg-slate-900 text-white">Měsíčně</option>
-              <option value="yearly" className="bg-slate-900 text-white">Ročně</option>
+              <option value="monthly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Měsíčně</option>
+              <option value="yearly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Ročně</option>
             </select>
           </div>
         </div>
@@ -421,7 +422,8 @@ export default function AddSubscriptionForm({
               type="date"
               value={nextPaymentDate}
               onChange={(e) => setNextPaymentDate(e.target.value)}
-              className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
+              className="mt-1.5 block w-full border px-4 py-3 text-xs font-bold font-mono placeholder-white/30 focus:border-[var(--accent-primary)] focus:outline-none transition-all"
+              style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
             />
           </div>
 
@@ -434,10 +436,11 @@ export default function AddSubscriptionForm({
               name="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-3.5 py-3 text-xs font-bold text-white focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all cursor-pointer"
+              className="mt-1.5 block w-full border px-3.5 py-3 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
+              style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} className="bg-slate-900 text-white">
+                <option key={cat} value={cat} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
                   {cat}
                 </option>
               ))}
@@ -479,7 +482,8 @@ export default function AddSubscriptionForm({
                 value={lastUsedAt}
                 max={today}
                 onChange={(e) => setLastUsedAt(e.target.value)}
-                className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
+                className="mt-1.5 block w-full border px-4 py-3 text-xs font-bold font-mono placeholder-white/30 focus:border-[var(--accent-primary)] focus:outline-none transition-all"
+                style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
               />
               <p className="mt-1 text-[10px] text-white/40">
                 Ovlivňuje zdravotní skóre — pokud službu dlouho nepoužíváte, skóre postupně klesá.
