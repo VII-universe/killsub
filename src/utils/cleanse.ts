@@ -58,3 +58,9 @@ export function getCleanseDaysRemaining(state: CleanseState): number {
   const elapsedDays = (Date.now() - new Date(state.startDate).getTime()) / (1000 * 60 * 60 * 24)
   return Math.max(0, Math.ceil(CLEANSE_DURATION_DAYS - elapsedDays))
 }
+
+export function getCleanseDaysElapsed(state: CleanseState): number {
+  if (!state.active || !state.startDate) return 0
+  const elapsedDays = (Date.now() - new Date(state.startDate).getTime()) / (1000 * 60 * 60 * 24)
+  return Math.max(0, Math.min(CLEANSE_DURATION_DAYS, Math.floor(elapsedDays)))
+}

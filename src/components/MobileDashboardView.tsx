@@ -278,13 +278,6 @@ export default function MobileDashboardView({
 
             {effectiveSubscriptions.length > 0 && <CategoryChart subscriptions={effectiveSubscriptions} />}
 
-            <CleanseChallenge />
-
-            {/* Prominent viral share CTA */}
-            {effectiveSubscriptions.length > 0 && (
-              <ShareWrappedButton subscriptions={effectiveSubscriptions} variant="prominent" />
-            )}
-
             {/* Subscriptions List Section */}
             <div className="pt-2">
               <div className="flex items-center justify-between pb-3 gap-2">
@@ -345,6 +338,13 @@ export default function MobileDashboardView({
                 />
               )}
             </div>
+
+            {/* Cleanse challenge + viral share — last thing before the bottom nav */}
+            <CleanseChallenge />
+
+            {effectiveSubscriptions.length > 0 && (
+              <ShareWrappedButton subscriptions={effectiveSubscriptions} variant="prominent" />
+            )}
           </>
         )}
 

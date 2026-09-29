@@ -211,6 +211,15 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+@keyframes hero-shimmer {
+  0% { left: -10%; }
+  100% { left: 110%; }
+}
+
+.animate-hero-shimmer {
+  animation: hero-shimmer 2.5s ease-in-out infinite;
+}
+
 .text-gradient-stat {
   background: linear-gradient(135deg, #6c47ff, #3d9bff);
   -webkit-background-clip: text;

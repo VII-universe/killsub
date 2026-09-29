@@ -100,8 +100,12 @@ export default function ShareWrappedButton({
           <button
             onClick={handleShare}
             disabled={isGenerating}
-            className="flex w-full items-center justify-center gap-2.5 rounded-3xl bg-gradient-to-r from-pink-500 via-[var(--accent-primary)] to-purple-600 py-4 px-5 text-sm font-black text-white shadow-xl shadow-[var(--accent-primary)]/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="relative overflow-hidden flex w-full items-center justify-center gap-2.5 rounded-3xl bg-gradient-to-r from-pink-500 via-[var(--accent-primary)] to-purple-600 py-3.5 px-5 text-sm font-black text-white shadow-xl shadow-[var(--accent-primary)]/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition-all"
           >
+            <span
+              className="animate-hero-shimmer pointer-events-none absolute inset-y-0 bg-white"
+              style={{ width: 60, opacity: 0.12 }}
+            />
             {isGenerating ? (
               <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
