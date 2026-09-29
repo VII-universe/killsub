@@ -40,7 +40,7 @@ export default function MobileDashboardView({
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
-  const [activeTab, setActiveTab] = useState<'home' | 'subscriptions' | 'add' | 'settings'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'subscriptions' | 'settings'>('home')
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
@@ -391,20 +391,7 @@ export default function MobileDashboardView({
           </div>
         )}
 
-        {/* Tab 3: Direct Add / Scan Tab */}
-        {activeTab === 'add' && (
-          <div className="space-y-4">
-            <AddSubscriptionForm
-              onClose={() => setActiveTab('home')}
-              startInAiMode={isPro}
-              isPro={isPro}
-              onAiLocked={() => setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')}
-              onLimitReached={() => setUpgradeMessage(`Dosáhli jste limitu Free plánu (5 předplatných).`)}
-            />
-          </div>
-        )}
-
-        {/* Tab 4: Settings / Profile Tab */}
+        {/* Tab 3: Settings / Profile Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-4">
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 space-y-4 backdrop-blur-xl">
@@ -533,15 +520,15 @@ export default function MobileDashboardView({
             </svg>
           </button>
 
-          {/* AI Scan Tab */}
+          {/* AI Scan Tab — opens the AI import modal directly (or an upgrade prompt on Free) */}
           <button
-            onClick={() => setActiveTab('add')}
+            onClick={openAiImport}
             className={`flex flex-col items-center gap-1 transition-all active:scale-90 ${
-              activeTab === 'add' ? 'text-[var(--accent-primary)] font-black' : 'text-white/50 hover:text-white/80'
+              isFormModalOpen && startAddModalInAiMode ? 'text-[var(--accent-primary)] font-black' : 'text-white/50 hover:text-white/80'
             }`}
           >
             <div className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
-              activeTab === 'add' ? 'bg-[var(--accent-primary)]/20 shadow-md shadow-[var(--accent-primary)]/30' : ''
+              isFormModalOpen && startAddModalInAiMode ? 'bg-[var(--accent-primary)]/20 shadow-md shadow-[var(--accent-primary)]/30' : ''
             }`}>
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
