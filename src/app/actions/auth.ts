@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 
 export type AuthState = {
   error?: string
@@ -63,6 +64,25 @@ export async function signUp(prevState: AuthState | null, formData: FormData): P
     success: true,
     message: 'Registrace proběhla úspěšně! Pokud je zapnuté ověření e-mailu, zkontrolujte svou schránku.',
   }
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const supabase = await createClient()
+  const headersList = await headers()
+  const origin = headersList.get('origin') || `https://${headersList.get('host')}`
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+    },
+  })
+
+  if (error || !data.url) {
+    redirect('/login?error=oauth')
+  }
+
+  redirect(data.url)
 }
 
 export async function signOut() {

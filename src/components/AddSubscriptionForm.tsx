@@ -1,7 +1,9 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { addSubscription, SubscriptionState } from '@/app/actions/subscriptions'
+import { addSubscription, updateSubscription, SubscriptionState } from '@/app/actions/subscriptions'
+import { Subscription } from './SubscriptionList'
+import { CATEGORIES, suggestCategory } from '@/utils/categories'
 
 const QUICK_SUGGESTIONS = [
   { name: 'Netflix', amount: '259', currency: 'CZK', cycle: 'monthly' },
@@ -12,21 +14,37 @@ const QUICK_SUGGESTIONS = [
   { name: 'Claude Pro', amount: '20', currency: 'USD', cycle: 'monthly' },
 ]
 
-export default function AddSubscriptionForm({ onClose }: { onClose?: () => void }) {
+export default function AddSubscriptionForm({
+  onClose,
+  subscription,
+}: {
+  onClose?: () => void
+  subscription?: Subscription
+}) {
+  const isEditing = !!subscription
   const formRef = useRef<HTMLFormElement>(null)
+  const boundUpdateAction = subscription
+    ? updateSubscription.bind(null, subscription.id)
+    : null
   const [state, formAction, isPending] = useActionState<SubscriptionState | null, FormData>(
-    addSubscription,
+    isEditing ? (boundUpdateAction as typeof addSubscription) : addSubscription,
     null
   )
 
   const today = new Date().toISOString().split('T')[0]
 
   // Form input state
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState('CZK')
-  const [billingCycle, setBillingCycle] = useState('monthly')
-  const [nextPaymentDate, setNextPaymentDate] = useState(today)
+  const [name, setName] = useState(subscription?.name || '')
+  const [amount, setAmount] = useState(subscription ? String(subscription.amount) : '')
+  const [currency, setCurrency] = useState(subscription?.currency || 'CZK')
+  const [billingCycle, setBillingCycle] = useState(subscription?.billing_cycle || 'monthly')
+  const [nextPaymentDate, setNextPaymentDate] = useState(subscription?.next_payment_date || today)
+  const [category, setCategory] = useState(subscription?.category || suggestCategory(subscription?.name || ''))
+  const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
+  const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
+  const [scoreValue, setScoreValue] = useState(
+    subscription?.health_score ? String(subscription.health_score) : '80'
+  )
 
   // AI Import State
   const [importText, setImportText] = useState('')
@@ -38,11 +56,17 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
   // Reset form on success
   useEffect(() => {
     if (state?.success) {
-      setName('')
-      setAmount('')
-      setCurrency('CZK')
-      setBillingCycle('monthly')
-      setNextPaymentDate(today)
+      if (!isEditing) {
+        setName('')
+        setAmount('')
+        setCurrency('CZK')
+        setBillingCycle('monthly')
+        setNextPaymentDate(today)
+        setCategory('Ostatní')
+        setLastUsedAt('')
+        setManualScore(false)
+        setScoreValue('80')
+      }
       setImportText('')
       setAiSuccess(null)
       setAiError(null)
@@ -51,7 +75,7 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
         setTimeout(onClose, 800)
       }
     }
-  }, [state, today, onClose])
+  }, [state, today, onClose, isEditing])
 
   const handleAnalyzeAI = async () => {
     if (!importText.trim()) {
@@ -78,7 +102,10 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
         throw new Error(data.error || 'Extrakce se nezdařila.')
       }
 
-      if (data.name) setName(data.name)
+      if (data.name) {
+        setName(data.name)
+        setCategory(suggestCategory(data.name))
+      }
       if (data.amount !== undefined && data.amount !== null && data.amount > 0) {
         setAmount(String(data.amount))
       }
@@ -103,6 +130,7 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
     setAmount(item.amount)
     setCurrency(item.currency)
     setBillingCycle(item.cycle)
+    setCategory(suggestCategory(item.name))
   }
 
   return (
@@ -119,8 +147,12 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
             </svg>
           </div>
           <div>
-            <h3 className="text-sm sm:text-base font-black tracking-tight text-white">Přidat předplatné</h3>
-            <p className="text-[11px] text-white/60">Zadejte parametry nebo využijte AI</p>
+            <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
+              {isEditing ? 'Upravit předplatné' : 'Přidat předplatné'}
+            </h3>
+            <p className="text-[11px] text-white/60">
+              {isEditing ? 'Aktualizujte parametry předplatného' : 'Zadejte parametry nebo využijte AI'}
+            </p>
           </div>
         </div>
 
@@ -324,18 +356,85 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="next_payment_date" className="block text-xs font-bold text-white/90">
+              Datum příští platby
+            </label>
+            <input
+              id="next_payment_date"
+              name="next_payment_date"
+              type="date"
+              value={nextPaymentDate}
+              onChange={(e) => setNextPaymentDate(e.target.value)}
+              className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-xs font-bold text-white/90">
+              Kategorie
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-3.5 py-3 text-xs font-bold text-white focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all cursor-pointer"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat} className="bg-slate-900 text-white">
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div>
-          <label htmlFor="next_payment_date" className="block text-xs font-bold text-white/90">
-            Datum příští platby
+          <label htmlFor="last_used_at" className="block text-xs font-bold text-white/90">
+            Naposledy použito <span className="font-normal text-white/40">(nepovinné)</span>
           </label>
           <input
-            id="next_payment_date"
-            name="next_payment_date"
+            id="last_used_at"
+            name="last_used_at"
             type="date"
-            value={nextPaymentDate}
-            onChange={(e) => setNextPaymentDate(e.target.value)}
+            value={lastUsedAt}
+            max={today}
+            onChange={(e) => setLastUsedAt(e.target.value)}
             className="mt-1.5 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold font-mono text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
           />
+          <p className="mt-1 text-[10px] text-white/40">
+            Ovlivňuje zdravotní skóre — pokud službu dlouho nepoužíváte, skóre postupně klesá.
+          </p>
+        </div>
+
+        {/* Manual health score override */}
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-3.5">
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              name="health_score_manual"
+              checked={manualScore}
+              onChange={(e) => setManualScore(e.target.checked)}
+              className="h-4 w-4 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
+            />
+            <span className="text-xs font-bold text-white/90">Nastavit zdravotní skóre ručně</span>
+          </label>
+          {manualScore && (
+            <div className="mt-3">
+              <input
+                type="range"
+                name="health_score"
+                min={1}
+                max={100}
+                value={scoreValue}
+                onChange={(e) => setScoreValue(e.target.value)}
+                className="w-full accent-[var(--accent-primary)]"
+              />
+              <div className="mt-1 text-center text-xs font-mono font-black text-white">{scoreValue}/100</div>
+            </div>
+          )}
         </div>
 
         <button
@@ -356,7 +455,7 @@ export default function AddSubscriptionForm({ onClose }: { onClose?: () => void 
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Uložit předplatné</span>
+              <span>{isEditing ? 'Uložit změny' : 'Uložit předplatné'}</span>
             </>
           )}
         </button>

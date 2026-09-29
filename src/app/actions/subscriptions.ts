@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isCategory } from '@/utils/categories'
 
 export type SubscriptionState = {
   error?: string
@@ -9,15 +10,19 @@ export type SubscriptionState = {
   message?: string
 }
 
-export async function addSubscription(
-  prevState: SubscriptionState | null,
-  formData: FormData
-): Promise<SubscriptionState> {
+function parseSubscriptionForm(formData: FormData) {
   const name = formData.get('name') as string
   const rawAmount = formData.get('amount') as string
   const currency = (formData.get('currency') as string) || 'CZK'
   const billingCycle = (formData.get('billing_cycle') as string) || 'monthly'
   const nextPaymentDate = formData.get('next_payment_date') as string
+  const rawCategory = (formData.get('category') as string) || 'Ostatní'
+  const category = isCategory(rawCategory) ? rawCategory : 'Ostatní'
+  const lastUsedAt = (formData.get('last_used_at') as string) || null
+
+  const manualScoreEnabled = formData.get('health_score_manual') === 'on'
+  const rawScore = formData.get('health_score') as string
+  const healthScore = manualScoreEnabled && rawScore ? parseInt(rawScore, 10) : null
 
   if (!name || !rawAmount) {
     return { error: 'Vyplňte prosím název služby i částku.' }
@@ -27,6 +32,32 @@ export async function addSubscription(
   if (isNaN(amount) || amount <= 0) {
     return { error: 'Zadejte platnou částku větší než 0.' }
   }
+
+  if (manualScoreEnabled && (isNaN(healthScore as number) || (healthScore as number) < 1 || (healthScore as number) > 100)) {
+    return { error: 'Ruční skóre zdraví musí být mezi 1 a 100.' }
+  }
+
+  return {
+    values: {
+      name: name.trim(),
+      amount,
+      currency,
+      billing_cycle: billingCycle,
+      next_payment_date: nextPaymentDate || null,
+      category,
+      last_used_at: lastUsedAt,
+      health_score_manual: manualScoreEnabled,
+      health_score: manualScoreEnabled ? healthScore : null,
+    },
+  }
+}
+
+export async function addSubscription(
+  prevState: SubscriptionState | null,
+  formData: FormData
+): Promise<SubscriptionState> {
+  const parsed = parseSubscriptionForm(formData)
+  if ('error' in parsed) return { error: parsed.error }
 
   const supabase = await createClient()
 
@@ -41,11 +72,7 @@ export async function addSubscription(
 
   const { error } = await supabase.from('subscriptions').insert({
     user_id: user.id,
-    name: name.trim(),
-    amount,
-    currency,
-    billing_cycle: billingCycle,
-    next_payment_date: nextPaymentDate || null,
+    ...parsed.values,
   })
 
   if (error) {
@@ -54,6 +81,39 @@ export async function addSubscription(
 
   revalidatePath('/dashboard')
   return { success: true, message: 'Předplatné bylo úspěšně přidáno.' }
+}
+
+export async function updateSubscription(
+  id: string,
+  prevState: SubscriptionState | null,
+  formData: FormData
+): Promise<SubscriptionState> {
+  const parsed = parseSubscriptionForm(formData)
+  if ('error' in parsed) return { error: parsed.error }
+
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Uživatel není přihlášen.' }
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update(parsed.values)
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: `Chyba při ukládání: ${error.message}` }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true, message: 'Předplatné bylo upraveno.' }
 }
 
 export async function deleteSubscription(id: string): Promise<{ error?: string; success?: boolean }> {

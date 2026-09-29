@@ -121,6 +121,96 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Pricing Section */}
+      <section className="relative z-10 px-6 py-20 border-t border-white/[0.06] bg-[#090a0f]/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+            Jednoduché ceny, bez skrytých poplatků
+          </h2>
+          <p className="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+            Začněte zdarma a přejděte na Pro, jakmile budete potřebovat neomezená předplatná a AI import faktur.
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+            {/* Free Plan */}
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0d111c]/60 p-8 backdrop-blur-xl">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-300">Free</h3>
+              <p className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-black text-white">0 Kč</span>
+                <span className="text-xs text-slate-500">/ napořád</span>
+              </p>
+              <p className="mt-2 text-xs text-slate-400">Pro první kroky se správou předplatných.</p>
+
+              <ul className="mt-6 space-y-3 text-sm text-slate-300">
+                <li className="flex items-center gap-2.5">
+                  <span className="text-emerald-400">✓</span> Max. 5 předplatných
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-emerald-400">✓</span> Ruční přidávání a úpravy
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-emerald-400">✓</span> Kategorie a zdravotní skóre
+                </li>
+                <li className="flex items-center gap-2.5 opacity-40">
+                  <span>✕</span> Gemini AI import faktur
+                </li>
+                <li className="flex items-center gap-2.5 opacity-40">
+                  <span>✕</span> E-mailové notifikace
+                </li>
+                <li className="flex items-center gap-2.5 opacity-40">
+                  <span>✕</span> Cashflow kalendář
+                </li>
+              </ul>
+
+              <Link
+                href="/register"
+                className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/[0.08]"
+              >
+                Vyzkoušet zdarma
+              </Link>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="relative rounded-3xl border border-indigo-500/40 bg-gradient-to-b from-indigo-950/60 to-purple-950/40 p-8 shadow-2xl shadow-indigo-500/10 backdrop-blur-xl">
+              <span className="absolute -top-3 right-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg">
+                Nejoblíbenější
+              </span>
+              <h3 className="text-sm font-black uppercase tracking-wider text-indigo-300">Pro</h3>
+              <p className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-black text-white">149 Kč</span>
+                <span className="text-xs text-slate-400">/ měsíc</span>
+              </p>
+              <p className="mt-1 text-xs text-slate-400">nebo 1 290 Kč ročně (ušetříte 2 měsíce)</p>
+
+              <ul className="mt-6 space-y-3 text-sm text-slate-200">
+                <li className="flex items-center gap-2.5">
+                  <span className="text-indigo-400">✓</span> Neomezená předplatná
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-indigo-400">✓</span> Gemini AI import faktur
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-indigo-400">✓</span> E-mailové notifikace před obnovou
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-indigo-400">✓</span> Cashflow kalendář
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="text-indigo-400">✓</span> Sdílení přehledu jako obrázek
+                </li>
+              </ul>
+
+              <Link
+                href="/register"
+                className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:opacity-95 hover:shadow-indigo-500/50 active:scale-[0.98]"
+              >
+                Vyzkoušet zdarma
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.06] bg-[#090a0f]/60 py-6 text-center text-xs text-slate-500">
         <p>© 2026 Killsub VII. Inspirováno moderními rozhraními Linear, Raycast a Copilot Money.</p>

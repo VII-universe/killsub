@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 import Link from 'next/link'
-import { signIn } from '@/app/actions/auth'
+import { signIn, signInWithGoogle } from '@/app/actions/auth'
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(signIn, null)
@@ -100,6 +100,29 @@ export default function LoginPage() {
             ) : (
               'Přihlásit se do Killsub'
             )}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="mt-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/[0.08]" />
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">nebo</span>
+          <div className="h-px flex-1 bg-white/[0.08]" />
+        </div>
+
+        {/* Google OAuth */}
+        <form action={signInWithGoogle} className="mt-5">
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-3 px-4 text-xs font-semibold text-white transition-all hover:bg-white/[0.08] active:scale-[0.99]"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.766 12.276c0-.818-.074-1.606-.21-2.364H12.24v4.474h6.482a5.54 5.54 0 01-2.402 3.632v3.017h3.887c2.275-2.095 3.559-5.182 3.559-8.76z" />
+              <path fill="#34A853" d="M12.24 24c3.24 0 5.956-1.075 7.943-2.91l-3.887-3.017c-1.075.72-2.45 1.147-4.056 1.147-3.12 0-5.762-2.107-6.705-4.94H1.51v3.11A11.996 11.996 0 0012.24 24z" />
+              <path fill="#FBBC05" d="M5.535 14.28a7.19 7.19 0 010-4.56v-3.11H1.51a12.008 12.008 0 000 10.78z" />
+              <path fill="#EA4335" d="M12.24 4.78c1.763 0 3.346.606 4.59 1.796l3.443-3.443C18.19 1.19 15.475 0 12.24 0 7.517 0 3.44 2.7 1.51 6.61l4.025 3.11c.943-2.833 3.585-4.94 6.705-4.94z" />
+            </svg>
+            <span>Pokračovat s Google</span>
           </button>
         </form>
 

@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ThemeSelector from '@/components/ThemeSelector'
 import MobileAIHeroCard from '@/components/MobileAIHeroCard'
 import SubscriptionList, { Subscription } from '@/components/SubscriptionList'
 import AddSubscriptionForm from '@/components/AddSubscriptionForm'
+import CategoryChart from '@/components/CategoryChart'
+import CashflowCalendar from '@/components/CashflowCalendar'
+import ShareWrappedButton from '@/components/ShareWrappedButton'
+import NotificationSettingsPanel from '@/components/NotificationSettingsPanel'
 import { signOut } from '@/app/actions/auth'
+import { DEMO_SUBSCRIPTIONS } from '@/utils/demoData'
+import { exportSubscriptionsToCsv } from '@/utils/csv'
+
+const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
 export default function MobileDashboardView({
   userEmail,
@@ -17,25 +25,61 @@ export default function MobileDashboardView({
   dbError?: { message: string } | null
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
   const [activeTab, setActiveTab] = useState<'home' | 'subscriptions' | 'add' | 'settings'>('home')
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [isDemoMode, setIsDemoMode] = useState(false)
+
+  // Read localStorage after mount only, to avoid an SSR/client hydration mismatch.
+  useEffect(() => {
+    if (subscriptions.length === 0 && localStorage.getItem(DEMO_STORAGE_KEY) === '1') {
+      setIsDemoMode(true)
+    }
+  }, [subscriptions.length])
+
+  const handleLoadDemo = () => {
+    setIsDemoMode(true)
+    localStorage.setItem(DEMO_STORAGE_KEY, '1')
+  }
+
+  const handleClearDemo = () => {
+    setIsDemoMode(false)
+    localStorage.removeItem(DEMO_STORAGE_KEY)
+  }
+
+  const effectiveSubscriptions = isDemoMode && subscriptions.length === 0 ? DEMO_SUBSCRIPTIONS : subscriptions
+
+  const openEditModal = (sub: Subscription) => {
+    setEditingSubscription(sub)
+    setIsFormModalOpen(true)
+  }
+
+  const closeFormModal = () => {
+    setIsFormModalOpen(false)
+    setEditingSubscription(null)
+  }
 
   // Calculate totals
-  const totals = subscriptions.reduce(
-    (acc, sub) => {
-      const cur = sub.currency || 'CZK'
-      const amt = Number(sub.amount) || 0
-      const monthlyAmt = sub.billing_cycle === 'yearly' ? amt / 12 : amt
-      const yearlyAmt = sub.billing_cycle === 'yearly' ? amt : amt * 12
+  const totals = useMemo(
+    () =>
+      effectiveSubscriptions.reduce(
+        (acc, sub) => {
+          const cur = sub.currency || 'CZK'
+          const amt = Number(sub.amount) || 0
+          const monthlyAmt = sub.billing_cycle === 'yearly' ? amt / 12 : amt
+          const yearlyAmt = sub.billing_cycle === 'yearly' ? amt : amt * 12
 
-      if (!acc[cur]) acc[cur] = { monthly: 0, yearly: 0 }
-      acc[cur].monthly += monthlyAmt
-      acc[cur].yearly += yearlyAmt
-      return acc
-    },
-    {} as Record<string, { monthly: number; yearly: number }>
+          if (!acc[cur]) acc[cur] = { monthly: 0, yearly: 0 }
+          acc[cur].monthly += monthlyAmt
+          acc[cur].yearly += yearlyAmt
+          return acc
+        },
+        {} as Record<string, { monthly: number; yearly: number }>
+      ),
+    [effectiveSubscriptions]
   )
 
-  const upcomingPayments = [...subscriptions]
+  const upcomingPayments = [...effectiveSubscriptions]
     .filter((s) => s.next_payment_date)
     .sort((a, b) => new Date(a.next_payment_date!).getTime() - new Date(b.next_payment_date!).getTime())
 
@@ -97,6 +141,19 @@ export default function MobileDashboardView({
           </div>
         )}
 
+        {/* Demo mode banner */}
+        {isDemoMode && subscriptions.length === 0 && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/30 p-3.5 text-xs text-indigo-200">
+            <span className="font-bold">✨ Zobrazena ukázková data</span>
+            <button
+              onClick={handleClearDemo}
+              className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/10"
+            >
+              Vymazat demo data
+            </button>
+          </div>
+        )}
+
         {/* Tab 1: Home View (Hero + Metrics + Subscriptions Preview) */}
         {activeTab === 'home' && (
           <>
@@ -127,7 +184,7 @@ export default function MobileDashboardView({
                   )}
                 </div>
                 <span className="text-[10px] text-white/50 mt-1 block">
-                  {subscriptions.length} {subscriptions.length === 1 ? 'služba' : 'služeb'}
+                  {effectiveSubscriptions.length} {effectiveSubscriptions.length === 1 ? 'služba' : 'služeb'}
                 </span>
               </div>
 
@@ -156,24 +213,68 @@ export default function MobileDashboardView({
               </div>
             </div>
 
+            {effectiveSubscriptions.length > 0 && <CategoryChart subscriptions={effectiveSubscriptions} />}
+
             {/* Subscriptions List Section */}
             <div className="pt-2">
-              <div className="flex items-center justify-between pb-3">
+              <div className="flex items-center justify-between pb-3 gap-2">
                 <h3 className="text-sm font-black uppercase tracking-wider text-white">
                   Moje předplatná
                 </h3>
-                <button
-                  onClick={() => setIsFormModalOpen(true)}
-                  className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/15"
-                >
-                  + Přidat nové
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <ShareWrappedButton subscriptions={effectiveSubscriptions} />
+                  {effectiveSubscriptions.length > 0 && (
+                    <button
+                      onClick={() => exportSubscriptionsToCsv(effectiveSubscriptions)}
+                      title="Export CSV"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsFormModalOpen(true)}
+                    className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/15"
+                  >
+                    + Přidat nové
+                  </button>
+                </div>
               </div>
 
-              <SubscriptionList
-                subscriptions={subscriptions}
-                onOpenAddModal={() => setIsFormModalOpen(true)}
-              />
+              {effectiveSubscriptions.length > 0 && (
+                <div className="mb-3 flex rounded-xl border border-white/10 bg-white/[0.03] p-0.5 text-xs w-fit">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+                      viewMode === 'list' ? 'bg-white/15 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    📋 Seznam
+                  </button>
+                  <button
+                    onClick={() => setViewMode('calendar')}
+                    className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+                      viewMode === 'calendar' ? 'bg-white/15 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    📅 Kalendář
+                  </button>
+                </div>
+              )}
+
+              {viewMode === 'calendar' && effectiveSubscriptions.length > 0 ? (
+                <CashflowCalendar subscriptions={effectiveSubscriptions} />
+              ) : (
+                <SubscriptionList
+                  subscriptions={effectiveSubscriptions}
+                  onOpenAddModal={() => setIsFormModalOpen(true)}
+                  onLoadDemo={subscriptions.length === 0 ? handleLoadDemo : undefined}
+                  onEdit={isDemoMode && subscriptions.length === 0 ? undefined : openEditModal}
+                  readOnly={isDemoMode && subscriptions.length === 0}
+                />
+              )}
             </div>
           </>
         )}
@@ -181,19 +282,61 @@ export default function MobileDashboardView({
         {/* Tab 2: Subscriptions Only View */}
         {activeTab === 'subscriptions' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-black text-white">Všechna předplatná</h2>
-              <button
-                onClick={() => setIsFormModalOpen(true)}
-                className="rounded-full theme-accent-btn px-3 py-1.5 text-xs font-black"
-              >
-                + Přidat
-              </button>
+              <div className="flex items-center gap-1.5">
+                {effectiveSubscriptions.length > 0 && (
+                  <button
+                    onClick={() => exportSubscriptionsToCsv(effectiveSubscriptions)}
+                    title="Export CSV"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsFormModalOpen(true)}
+                  className="rounded-full theme-accent-btn px-3 py-1.5 text-xs font-black"
+                >
+                  + Přidat
+                </button>
+              </div>
             </div>
-            <SubscriptionList
-              subscriptions={subscriptions}
-              onOpenAddModal={() => setIsFormModalOpen(true)}
-            />
+
+            {effectiveSubscriptions.length > 0 && (
+              <div className="flex rounded-xl border border-white/10 bg-white/[0.03] p-0.5 text-xs w-fit">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    viewMode === 'list' ? 'bg-white/15 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  📋 Seznam
+                </button>
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+                    viewMode === 'calendar' ? 'bg-white/15 text-white shadow-sm' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  📅 Kalendář
+                </button>
+              </div>
+            )}
+
+            {viewMode === 'calendar' && effectiveSubscriptions.length > 0 ? (
+              <CashflowCalendar subscriptions={effectiveSubscriptions} />
+            ) : (
+              <SubscriptionList
+                subscriptions={effectiveSubscriptions}
+                onOpenAddModal={() => setIsFormModalOpen(true)}
+                onLoadDemo={subscriptions.length === 0 ? handleLoadDemo : undefined}
+                onEdit={isDemoMode && subscriptions.length === 0 ? undefined : openEditModal}
+                readOnly={isDemoMode && subscriptions.length === 0}
+              />
+            )}
           </div>
         )}
 
@@ -206,46 +349,50 @@ export default function MobileDashboardView({
 
         {/* Tab 4: Settings / Profile Tab */}
         {activeTab === 'settings' && (
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 space-y-4 backdrop-blur-xl">
-            <h2 className="text-base font-black text-white">Nastavení aplikace</h2>
+          <div className="space-y-4">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 space-y-4 backdrop-blur-xl">
+              <h2 className="text-base font-black text-white">Nastavení aplikace</h2>
 
-            <div className="space-y-3">
-              <div>
-                <span className="text-[11px] text-white/60 font-semibold block">Vizuální styl (Téma)</span>
-                <div className="mt-1.5">
-                  <ThemeSelector />
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[11px] text-white/60 font-semibold block">Vizuální styl (Téma)</span>
+                  <div className="mt-1.5">
+                    <ThemeSelector />
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-3">
+                  <span className="text-[11px] text-white/60 font-semibold block">Přihlášený uživatel</span>
+                  <span className="text-xs font-mono font-bold text-white">{userEmail}</span>
+                </div>
+
+                <div className="border-t border-white/10 pt-4">
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="w-full rounded-2xl border border-rose-500/40 bg-rose-500/10 py-3 text-xs font-black text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all"
+                    >
+                      Odhlásit se z účtu
+                    </button>
+                  </form>
                 </div>
               </div>
-
-              <div className="border-t border-white/10 pt-3">
-                <span className="text-[11px] text-white/60 font-semibold block">Přihlášený uživatel</span>
-                <span className="text-xs font-mono font-bold text-white">{userEmail}</span>
-              </div>
-
-              <div className="border-t border-white/10 pt-4">
-                <form action={signOut}>
-                  <button
-                    type="submit"
-                    className="w-full rounded-2xl border border-rose-500/40 bg-rose-500/10 py-3 text-xs font-black text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all"
-                  >
-                    Odhlásit se z účtu
-                  </button>
-                </form>
-              </div>
             </div>
+
+            <NotificationSettingsPanel />
           </div>
         )}
       </main>
 
-      {/* Floating Bottom Modal Drawer for Adding Subscription */}
+      {/* Floating Bottom Modal Drawer for Adding/Editing Subscription */}
       {isFormModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-md animate-in fade-in duration-200 p-0 sm:p-4 sm:items-center">
           <div
             className="fixed inset-0"
-            onClick={() => setIsFormModalOpen(false)}
+            onClick={closeFormModal}
           />
           <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-white/20 bg-[#0f0724] p-1 shadow-2xl animate-in slide-in-from-bottom-8 duration-200">
-            <AddSubscriptionForm onClose={() => setIsFormModalOpen(false)} />
+            <AddSubscriptionForm onClose={closeFormModal} subscription={editingSubscription || undefined} />
           </div>
         </div>
       )}

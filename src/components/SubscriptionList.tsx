@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import DeleteSubscriptionButton from './DeleteSubscriptionButton'
 import { getServiceBrand } from '@/utils/branding'
+import { computeHealthScore, getHealthTone } from '@/utils/health'
 
 export interface Subscription {
   id: string
@@ -12,15 +13,25 @@ export interface Subscription {
   currency: string
   billing_cycle: 'monthly' | 'yearly' | string
   next_payment_date: string | null
+  category: string
+  last_used_at?: string | null
+  health_score?: number | null
+  health_score_manual?: boolean | null
   created_at?: string
 }
 
 export default function SubscriptionList({
   subscriptions,
   onOpenAddModal,
+  onEdit,
+  onLoadDemo,
+  readOnly,
 }: {
   subscriptions: Subscription[]
   onOpenAddModal?: () => void
+  onEdit?: (sub: Subscription) => void
+  onLoadDemo?: () => void
+  readOnly?: boolean
 }) {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -31,12 +42,13 @@ export default function SubscriptionList({
     return subscriptions.map((s) => ({
       ...s,
       brand: getServiceBrand(s.name),
+      healthScore: computeHealthScore(s),
     }))
   }, [subscriptions])
 
   const categories = useMemo(() => {
     const set = new Set<string>()
-    enrichedSubs.forEach((s) => set.add(s.brand.category))
+    enrichedSubs.forEach((s) => set.add(s.category || 'Ostatní'))
     return ['all', ...Array.from(set)]
   }, [enrichedSubs])
 
@@ -44,7 +56,7 @@ export default function SubscriptionList({
     return enrichedSubs
       .filter((s) => {
         const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase())
-        const matchesCategory = filterCategory === 'all' || s.brand.category === filterCategory
+        const matchesCategory = filterCategory === 'all' || s.category === filterCategory
         const matchesCycle = filterCycle === 'all' || s.billing_cycle === filterCycle
         return matchesSearch && matchesCategory && matchesCycle
       })
@@ -178,13 +190,25 @@ export default function SubscriptionList({
               ? 'Začněte přidáním svého prvního předplatného tlačítkem níže nebo využijte AI sken faktur.'
               : 'Zkuste změnit hledaný výraz nebo vybranou kategorii.'}
           </p>
-          {subscriptions.length === 0 && onOpenAddModal && (
-            <button
-              onClick={onOpenAddModal}
-              className="mt-4 rounded-xl theme-accent-btn px-4 py-2.5 text-xs font-bold text-white shadow-lg inline-flex items-center gap-2"
-            >
-              <span>+ Přidat první službu</span>
-            </button>
+          {subscriptions.length === 0 && (onOpenAddModal || onLoadDemo) && (
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+              {onOpenAddModal && (
+                <button
+                  onClick={onOpenAddModal}
+                  className="rounded-xl theme-accent-btn px-4 py-2.5 text-xs font-bold text-white shadow-lg inline-flex items-center gap-2"
+                >
+                  <span>+ Přidat předplatné</span>
+                </button>
+              )}
+              {onLoadDemo && (
+                <button
+                  onClick={onLoadDemo}
+                  className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-white/80 hover:bg-white/10 inline-flex items-center gap-2"
+                >
+                  <span>✨ Načíst ukázková data</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
       ) : (
@@ -193,11 +217,21 @@ export default function SubscriptionList({
             const daysRemaining = getDaysRemaining(sub.next_payment_date)
             const isUrgent = daysRemaining !== null && daysRemaining <= 3 && daysRemaining >= 0
             const isOverdue = daysRemaining !== null && daysRemaining < 0
+            const healthTone = getHealthTone(sub.healthScore)
+            const isLowHealth = healthTone === 'low'
+            const yearlyCost = sub.billing_cycle === 'yearly' ? sub.amount : sub.amount * 12
 
             return (
               <div
                 key={sub.id}
-                className="group relative flex flex-col justify-between rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4.5 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99]"
+                title={
+                  isLowHealth
+                    ? `Zvažte zrušení — ušetříte ${Math.round(yearlyCost).toLocaleString('cs-CZ')} ${sub.currency}/rok`
+                    : undefined
+                }
+                className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4.5 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
+                  isLowHealth ? 'border-rose-500/50' : 'border-white/10'
+                }`}
               >
                 <div>
                   {/* Top card header */}
@@ -216,9 +250,9 @@ export default function SubscriptionList({
                             {sub.name}
                           </h4>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5">
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                           <span className={`inline-block rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${sub.brand.badgeBg}`}>
-                            {sub.brand.category}
+                            {sub.category}
                           </span>
                           <span className="text-[10px] text-white/50">
                             • {sub.billing_cycle === 'yearly' ? 'Ročně' : 'Měsíčně'}
@@ -227,7 +261,40 @@ export default function SubscriptionList({
                       </div>
                     </div>
 
-                    <DeleteSubscriptionButton id={sub.id} serviceName={sub.name} />
+                    {!readOnly && (
+                      <div className="flex items-center gap-1.5">
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(sub)}
+                            title="Upravit předplatné"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-slate-400 transition-all hover:border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/10 hover:text-white"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
+                        <DeleteSubscriptionButton id={sub.id} serviceName={sub.name} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Health score badge */}
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black font-mono border ${
+                        healthTone === 'low'
+                          ? 'bg-rose-500/15 text-rose-300 border-rose-500/40'
+                          : healthTone === 'warning'
+                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                      }`}
+                    >
+                      <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21s-6.716-4.35-9.428-8.28C.94 10.02 1.52 6.6 4.343 5.02 6.5 3.8 9.06 4.3 12 7.1c2.94-2.8 5.5-3.3 7.657-2.08 2.823 1.58 3.403 5 1.771 7.7C18.716 16.65 12 21 12 21z" />
+                      </svg>
+                      Zdraví {sub.healthScore}
+                    </span>
                   </div>
 
                   {/* Pricing Display */}

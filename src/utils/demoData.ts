@@ -1,0 +1,96 @@
+import { Subscription } from '@/components/SubscriptionList'
+
+// Local-only sample subscriptions used to preview the dashboard on an empty account.
+// These are never written to the database.
+export const DEMO_SUBSCRIPTIONS: Subscription[] = [
+  {
+    id: 'demo-netflix',
+    user_id: 'demo',
+    name: 'Netflix',
+    amount: 329,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(6),
+    category: 'Zábava',
+    last_used_at: addDays(-2),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-40),
+  },
+  {
+    id: 'demo-spotify',
+    user_id: 'demo',
+    name: 'Spotify',
+    amount: 159,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(12),
+    category: 'Zábava',
+    last_used_at: addDays(-1),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-120),
+  },
+  {
+    id: 'demo-adobe',
+    user_id: 'demo',
+    name: 'Adobe CC',
+    amount: 1290,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(20),
+    category: 'Produktivita',
+    last_used_at: addDays(-150),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-300),
+  },
+  {
+    id: 'demo-cursor',
+    user_id: 'demo',
+    name: 'Cursor Pro',
+    amount: 800,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(2),
+    category: 'AI nástroje',
+    last_used_at: addDays(0),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-60),
+  },
+  {
+    id: 'demo-chatgpt',
+    user_id: 'demo',
+    name: 'ChatGPT Plus',
+    amount: 500,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(9),
+    category: 'AI nástroje',
+    last_used_at: addDays(-3),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-90),
+  },
+  {
+    id: 'demo-icloud',
+    user_id: 'demo',
+    name: 'iCloud+',
+    amount: 79,
+    currency: 'CZK',
+    billing_cycle: 'monthly',
+    next_payment_date: addDays(25),
+    category: 'Úložiště',
+    last_used_at: addDays(-200),
+    health_score: null,
+    health_score_manual: false,
+    created_at: addDays(-400),
+  },
+]
+
+function addDays(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
