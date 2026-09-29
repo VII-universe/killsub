@@ -383,11 +383,11 @@ export default function AddSubscriptionForm({
                   name="currency"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="rounded-lg border-0 bg-transparent py-1 pl-1 pr-2 text-xs font-black font-mono text-[var(--accent-primary)] focus:ring-0 cursor-pointer"
+                  className="appearance-none rounded-lg border-0 bg-transparent py-1 pl-1 pr-2 text-xs font-black font-mono text-[var(--accent-primary)] focus:ring-0 cursor-pointer"
                 >
-                  <option value="CZK" className="bg-slate-900 text-white">CZK</option>
-                  <option value="EUR" className="bg-slate-900 text-white">EUR</option>
-                  <option value="USD" className="bg-slate-900 text-white">USD</option>
+                  <option value="CZK" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>CZK</option>
+                  <option value="EUR" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>EUR</option>
+                  <option value="USD" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>USD</option>
                 </select>
               </div>
             </div>
@@ -397,17 +397,22 @@ export default function AddSubscriptionForm({
             <label htmlFor="billing_cycle" className="block text-xs font-bold text-white/90">
               Frekvence
             </label>
-            <select
-              id="billing_cycle"
-              name="billing_cycle"
-              value={billingCycle}
-              onChange={(e) => setBillingCycle(e.target.value)}
-              className="mt-1.5 block w-full border px-3.5 py-3 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
-              style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
-            >
-              <option value="monthly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Měsíčně</option>
-              <option value="yearly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Ročně</option>
-            </select>
+            <div className="relative mt-1.5">
+              <select
+                id="billing_cycle"
+                name="billing_cycle"
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value)}
+                className="appearance-none block w-full border px-3.5 py-3 pr-9 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
+                style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
+              >
+                <option value="monthly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Měsíčně</option>
+                <option value="yearly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Ročně</option>
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -431,20 +436,25 @@ export default function AddSubscriptionForm({
             <label htmlFor="category" className="block text-xs font-bold text-white/90">
               Kategorie
             </label>
-            <select
-              id="category"
-              name="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="mt-1.5 block w-full border px-3.5 py-3 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
-              style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <div className="relative mt-1.5">
+              <select
+                id="category"
+                name="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="appearance-none block w-full border px-3.5 py-3 pr-9 text-xs font-bold focus:border-[var(--accent-primary)] focus:outline-none transition-all cursor-pointer"
+                style={{ backgroundColor: '#1a1d27', borderColor: 'rgba(255,255,255,0.12)', borderRadius: 10, color: '#e8eaf0' }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
 

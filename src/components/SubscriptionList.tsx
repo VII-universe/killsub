@@ -166,15 +166,20 @@ export default function SubscriptionList({
           </div>
 
           {/* Sort Selector */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="rounded-xl border border-white/10 bg-black/40 px-2.5 py-1.5 text-[11px] font-bold text-white/80 backdrop-blur-md focus:outline-none cursor-pointer"
-          >
-            <option value="date" className="bg-slate-900 text-white">📅 Dle data</option>
-            <option value="amount-desc" className="bg-slate-900 text-white">💰 Od nejdražších</option>
-            <option value="name" className="bg-slate-900 text-white">🔤 Dle abecedy</option>
-          </select>
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="appearance-none rounded-xl border border-white/10 bg-black/40 py-1.5 pl-2.5 pr-7 text-[11px] font-bold text-white/80 backdrop-blur-md focus:outline-none cursor-pointer"
+            >
+              <option value="date" className="bg-slate-900 text-white">📅 Dle data</option>
+              <option value="amount-desc" className="bg-slate-900 text-white">💰 Od nejdražších</option>
+              <option value="name" className="bg-slate-900 text-white">🔤 Dle abecedy</option>
+            </select>
+            <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
       </div>
 
