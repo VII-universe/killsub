@@ -132,7 +132,10 @@ export default function MobileDashboardView({
   const nextUpcoming = upcomingPayments[0]
 
   return (
-    <div className="min-h-screen flex flex-col text-white pb-24 sm:pb-12">
+    <div
+      className="min-h-screen flex flex-col text-white"
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)' }}
+    >
       {/* Mobile Top App Bar */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-2xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-lg items-center justify-between">
