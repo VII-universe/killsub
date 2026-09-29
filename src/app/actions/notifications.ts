@@ -47,6 +47,18 @@ export async function updateNotificationSettings(
     return { error: 'Uživatel není přihlášen.' }
   }
 
+  if (enabled) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('plan')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!profile || profile.plan !== 'pro') {
+      return { error: 'E-mailové notifikace jsou dostupné pouze pro Pro plán.' }
+    }
+  }
+
   const { error } = await supabase.from('notification_settings').upsert({
     user_id: user.id,
     enabled,

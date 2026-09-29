@@ -35,7 +35,10 @@ export async function updateSession(request: NextRequest) {
                         request.nextUrl.pathname === '/login' ||
                         request.nextUrl.pathname === '/register' ||
                         request.nextUrl.pathname.startsWith('/auth/') ||
-                        request.nextUrl.pathname.startsWith('/api/cron/')
+                        request.nextUrl.pathname.startsWith('/api/cron/') ||
+                        request.nextUrl.pathname.startsWith('/api/stripe/webhook') ||
+                        request.nextUrl.pathname.startsWith('/api/email/inbound') ||
+                        request.nextUrl.pathname.startsWith('/u/')
 
   if (!user && !isPublicRoute) {
     if (request.nextUrl.pathname.startsWith('/api')) {

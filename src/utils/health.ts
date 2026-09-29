@@ -26,6 +26,10 @@ export function computeHealthScore(sub: HealthInput): number {
   return Math.max(1, 100 - (daysSince - GRACE_DAYS))
 }
 
+export function daysSince(dateString: string): number {
+  return Math.floor((Date.now() - new Date(dateString).getTime()) / DAY_MS)
+}
+
 export function getHealthTone(score: number): 'good' | 'warning' | 'low' {
   if (score < 40) return 'low'
   if (score < 70) return 'warning'

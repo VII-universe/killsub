@@ -12,6 +12,16 @@ import NotificationSettingsPanel from '@/components/NotificationSettingsPanel'
 import { signOut } from '@/app/actions/auth'
 import { DEMO_SUBSCRIPTIONS } from '@/utils/demoData'
 import { exportSubscriptionsToCsv } from '@/utils/csv'
+import { UserProfileData } from '@/utils/plan'
+import PlanSettingsPanel from '@/components/PlanSettingsPanel'
+import ReferralPanel from '@/components/ReferralPanel'
+import PublicProfileToggle from '@/components/PublicProfileToggle'
+import UpgradeModal from '@/components/UpgradeModal'
+import PortfolioScoreCard from '@/components/PortfolioScoreCard'
+import BadgesPanel from '@/components/BadgesPanel'
+import CleanseChallenge from '@/components/CleanseChallenge'
+import ImportSettingsPanel from '@/components/ImportSettingsPanel'
+import { updateStreak } from '@/utils/badges'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
@@ -19,16 +29,38 @@ export default function MobileDashboardView({
   userEmail,
   subscriptions,
   dbError,
+  profile,
+  importDomain,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
   dbError?: { message: string } | null
+  profile: UserProfileData | null
+  importDomain: string
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
   const [activeTab, setActiveTab] = useState<'home' | 'subscriptions' | 'add' | 'settings'>('home')
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [isDemoMode, setIsDemoMode] = useState(false)
+  const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
+  const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
+
+  const isPro = profile?.plan === 'pro'
+
+  const openAiImport = () => {
+    if (isPro) {
+      setStartAddModalInAiMode(true)
+      setIsFormModalOpen(true)
+    } else {
+      setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
+    }
+  }
+
+  // Increment the daily-open streak once per mount (client-only, drives the "Věrný" badge).
+  useEffect(() => {
+    updateStreak()
+  }, [])
 
   // Read localStorage after mount only, to avoid an SSR/client hydration mismatch.
   useEffect(() => {
@@ -57,6 +89,7 @@ export default function MobileDashboardView({
   const closeFormModal = () => {
     setIsFormModalOpen(false)
     setEditingSubscription(null)
+    setStartAddModalInAiMode(false)
   }
 
   // Calculate totals
@@ -102,9 +135,15 @@ export default function MobileDashboardView({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-black tracking-tight font-mono">KILLSUB</span>
-                <span className="rounded-full bg-[var(--pill-bg)] px-1.5 text-[9px] font-black text-[var(--accent-primary)] border border-white/10">
-                  VII
-                </span>
+                {isPro ? (
+                  <span className="rounded-full bg-indigo-500/15 px-1.5 text-[9px] font-black text-indigo-300 border border-indigo-500/40">
+                    PRO
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-[var(--pill-bg)] px-1.5 text-[9px] font-black text-[var(--accent-primary)] border border-white/10">
+                    VII
+                  </span>
+                )}
               </div>
               <p className="text-[10px] text-white/50 truncate max-w-[140px] font-mono">
                 {userEmail || 'Uživatel'}
@@ -158,7 +197,11 @@ export default function MobileDashboardView({
         {activeTab === 'home' && (
           <>
             {/* Mascot AI Banner (Reference 1: CareAI Pro Experience) */}
-            <MobileAIHeroCard onOpenForm={() => setIsFormModalOpen(true)} />
+            <MobileAIHeroCard
+              onOpenForm={() => setIsFormModalOpen(true)}
+              onOpenAiImport={openAiImport}
+              isPro={isPro}
+            />
 
             {/* Financial Overview (Reference 2 & 3: UXDA RedDot Winner cards) */}
             <div className="grid grid-cols-2 gap-3">
@@ -213,7 +256,16 @@ export default function MobileDashboardView({
               </div>
             </div>
 
+            {effectiveSubscriptions.length > 0 && <PortfolioScoreCard subscriptions={effectiveSubscriptions} />}
+
             {effectiveSubscriptions.length > 0 && <CategoryChart subscriptions={effectiveSubscriptions} />}
+
+            <CleanseChallenge />
+
+            {/* Prominent viral share CTA */}
+            {effectiveSubscriptions.length > 0 && (
+              <ShareWrappedButton subscriptions={effectiveSubscriptions} variant="prominent" />
+            )}
 
             {/* Subscriptions List Section */}
             <div className="pt-2">
@@ -222,7 +274,6 @@ export default function MobileDashboardView({
                   Moje předplatná
                 </h3>
                 <div className="flex items-center gap-1.5">
-                  <ShareWrappedButton subscriptions={effectiveSubscriptions} />
                   {effectiveSubscriptions.length > 0 && (
                     <button
                       onClick={() => exportSubscriptionsToCsv(effectiveSubscriptions)}
@@ -343,7 +394,13 @@ export default function MobileDashboardView({
         {/* Tab 3: Direct Add / Scan Tab */}
         {activeTab === 'add' && (
           <div className="space-y-4">
-            <AddSubscriptionForm onClose={() => setActiveTab('home')} />
+            <AddSubscriptionForm
+              onClose={() => setActiveTab('home')}
+              startInAiMode={isPro}
+              isPro={isPro}
+              onAiLocked={() => setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')}
+              onLimitReached={() => setUpgradeMessage(`Dosáhli jste limitu Free plánu (5 předplatných).`)}
+            />
           </div>
         )}
 
@@ -379,10 +436,28 @@ export default function MobileDashboardView({
               </div>
             </div>
 
-            <NotificationSettingsPanel />
+            <PlanSettingsPanel profile={profile} />
+
+            <BadgesPanel subscriptions={subscriptions} />
+
+            <NotificationSettingsPanel isPro={isPro} onLocked={() => setUpgradeMessage('E-mailové notifikace jsou dostupné pouze pro Pro plán.')} />
+
+            {profile && (
+              <ImportSettingsPanel importToken={profile.importToken} importDomain={importDomain} isPro={isPro} />
+            )}
+
+            {profile && <ReferralPanel referralCode={profile.referralCode} />}
+
+            {profile && (
+              <PublicProfileToggle referralCode={profile.referralCode} initialIsPublic={profile.isPublic} />
+            )}
           </div>
         )}
       </main>
+
+      {upgradeMessage && (
+        <UpgradeModal message={upgradeMessage} onClose={() => setUpgradeMessage(null)} />
+      )}
 
       {/* Floating Bottom Modal Drawer for Adding/Editing Subscription */}
       {isFormModalOpen && (
@@ -392,7 +467,20 @@ export default function MobileDashboardView({
             onClick={closeFormModal}
           />
           <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-white/20 bg-[#0f0724] p-1 shadow-2xl animate-in slide-in-from-bottom-8 duration-200">
-            <AddSubscriptionForm onClose={closeFormModal} subscription={editingSubscription || undefined} />
+            <AddSubscriptionForm
+              onClose={closeFormModal}
+              subscription={editingSubscription || undefined}
+              startInAiMode={startAddModalInAiMode}
+              isPro={isPro}
+              onAiLocked={() => {
+                closeFormModal()
+                setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
+              }}
+              onLimitReached={() => {
+                closeFormModal()
+                setUpgradeMessage('Dosáhli jste limitu Free plánu (5 předplatných). Přejděte na Pro a spravujte neomezené předplatné.')
+              }}
+            />
           </div>
         </div>
       )}

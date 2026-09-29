@@ -3,11 +3,13 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { isCategory } from '@/utils/categories'
+import { FREE_PLAN_SUBSCRIPTION_LIMIT } from '@/utils/plan'
 
 export type SubscriptionState = {
   error?: string
   success?: boolean
   message?: string
+  limitReached?: boolean
 }
 
 function parseSubscriptionForm(formData: FormData) {
@@ -68,6 +70,26 @@ export async function addSubscription(
 
   if (authError || !user) {
     return { error: 'Uživatel není přihlášen.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('plan')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!profile || profile.plan === 'free') {
+    const { count } = await supabase
+      .from('subscriptions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if ((count || 0) >= FREE_PLAN_SUBSCRIPTION_LIMIT) {
+      return {
+        error: `Dosáhli jste limitu Free plánu (${FREE_PLAN_SUBSCRIPTION_LIMIT} předplatných).`,
+        limitReached: true,
+      }
+    }
   }
 
   const { error } = await supabase.from('subscriptions').insert({

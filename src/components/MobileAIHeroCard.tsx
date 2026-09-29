@@ -2,7 +2,15 @@
 
 import { useState } from 'react'
 
-export default function MobileAIHeroCard({ onOpenForm }: { onOpenForm: () => void }) {
+export default function MobileAIHeroCard({
+  onOpenForm,
+  onOpenAiImport,
+  isPro,
+}: {
+  onOpenForm: () => void
+  onOpenAiImport: () => void
+  isPro: boolean
+}) {
   const [isWaving, setIsWaving] = useState(false)
 
   return (
@@ -75,7 +83,7 @@ export default function MobileAIHeroCard({ onOpenForm }: { onOpenForm: () => voi
         </button>
 
         <button
-          onClick={onOpenForm}
+          onClick={onOpenAiImport}
           className="flex items-center gap-3 rounded-2xl border border-[var(--border-strong)] bg-gradient-to-r from-[var(--accent-primary)]/20 to-purple-600/20 p-3.5 text-left transition-all hover:brightness-110 active:scale-[0.98] group"
         >
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--accent-primary)] text-white shadow-md shadow-[var(--accent-primary)]/40 group-hover:scale-105 transition-transform">
@@ -86,7 +94,11 @@ export default function MobileAIHeroCard({ onOpenForm }: { onOpenForm: () => voi
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-1.5">
               <span>Skenovat / AI Import</span>
-              <span className="rounded bg-pink-500/30 px-1 text-[9px] font-extrabold text-pink-200">GEMINI</span>
+              {isPro ? (
+                <span className="rounded bg-pink-500/30 px-1 text-[9px] font-extrabold text-pink-200">GEMINI</span>
+              ) : (
+                <span className="rounded bg-white/15 px-1 text-[9px] font-extrabold text-white/80">🔒 PRO</span>
+              )}
             </div>
             <div className="text-[11px] text-white/70">Zkopírujte e-mail či fakturu</div>
           </div>

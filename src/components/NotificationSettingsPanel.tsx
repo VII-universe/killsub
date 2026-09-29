@@ -7,7 +7,13 @@ import {
   NotificationState,
 } from '@/app/actions/notifications'
 
-export default function NotificationSettingsPanel() {
+export default function NotificationSettingsPanel({
+  isPro,
+  onLocked,
+}: {
+  isPro: boolean
+  onLocked?: () => void
+}) {
   const [enabled, setEnabled] = useState(false)
   const [daysBefore, setDaysBefore] = useState<3 | 7 | 14>(3)
   const [loaded, setLoaded] = useState(false)
@@ -36,7 +42,10 @@ export default function NotificationSettingsPanel() {
     <form action={formAction} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold text-white">E-mail před obnovou předplatného</p>
+          <p className="text-xs font-bold text-white flex items-center gap-1.5">
+            E-mail před obnovou předplatného
+            {!isPro && <span className="rounded bg-white/10 px-1 text-[9px] font-extrabold text-white/60">🔒 PRO</span>}
+          </p>
           <p className="text-[11px] text-white/50 mt-0.5">Dostanete upozornění před strhnutím platby.</p>
         </div>
         <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
@@ -44,7 +53,13 @@ export default function NotificationSettingsPanel() {
             type="checkbox"
             name="enabled"
             checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
+            onChange={(e) => {
+              if (!isPro && e.target.checked) {
+                onLocked?.()
+                return
+              }
+              setEnabled(e.target.checked)
+            }}
             className="sr-only peer"
           />
           <div className="w-10 h-6 bg-white/10 peer-checked:bg-[var(--accent-primary)] rounded-full transition-colors" />

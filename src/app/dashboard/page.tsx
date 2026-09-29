@@ -23,11 +23,29 @@ export default async function DashboardPage() {
 
   const subscriptions: Subscription[] = rawSubscriptions || []
 
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('plan, plan_expires_at, referral_code, is_public, import_token')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   return (
     <MobileDashboardView
       userEmail={user.email}
       subscriptions={subscriptions}
       dbError={dbError}
+      importDomain={process.env.KILLSUB_IMPORT_DOMAIN || 'killsub.app'}
+      profile={
+        profile
+          ? {
+              plan: profile.plan,
+              planExpiresAt: profile.plan_expires_at,
+              referralCode: profile.referral_code,
+              isPublic: profile.is_public,
+              importToken: profile.import_token,
+            }
+          : null
+      }
     />
   )
 }

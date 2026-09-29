@@ -274,7 +274,13 @@ export default function SubscriptionList({
                             </svg>
                           </button>
                         )}
-                        <DeleteSubscriptionButton id={sub.id} serviceName={sub.name} />
+                        <DeleteSubscriptionButton
+                          id={sub.id}
+                          serviceName={sub.name}
+                          amount={sub.amount}
+                          currency={sub.currency}
+                          billingCycle={sub.billing_cycle}
+                        />
                       </div>
                     )}
                   </div>

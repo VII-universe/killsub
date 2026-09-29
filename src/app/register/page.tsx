@@ -1,11 +1,22 @@
 'use client'
 
-import { useActionState } from 'react'
+import { Suspense, useActionState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { signUp, signInWithGoogle } from '@/app/actions/auth'
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  )
+}
+
+function RegisterForm() {
   const [state, formAction, isPending] = useActionState(signUp, null)
+  const searchParams = useSearchParams()
+  const ref = searchParams.get('ref') || ''
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-12 bg-[#090a0f] text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -56,8 +67,15 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {ref && (
+          <div className="mt-4 rounded-xl border border-indigo-500/30 bg-indigo-950/30 p-2.5 text-center text-[11px] font-semibold text-indigo-300">
+            🎉 Pozváni s referral kódem {ref}
+          </div>
+        )}
+
         {/* Register form */}
         <form action={formAction} className="mt-6 space-y-4">
+          <input type="hidden" name="ref" value={ref} />
           <div>
             <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
               E-mailová adresa
@@ -121,6 +139,7 @@ export default function RegisterPage() {
 
         {/* Google OAuth */}
         <form action={signInWithGoogle} className="mt-5">
+          <input type="hidden" name="ref" value={ref} />
           <button
             type="submit"
             className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-white/[0.1] bg-white/[0.04] py-3 px-4 text-xs font-semibold text-white transition-all hover:bg-white/[0.08] active:scale-[0.99]"

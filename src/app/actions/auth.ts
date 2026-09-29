@@ -44,11 +44,14 @@ export async function signUp(prevState: AuthState | null, formData: FormData): P
     return { error: 'Heslo musí mít alespoň 6 znaků.' }
   }
 
+  const ref = (formData.get('ref') as string) || undefined
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: ref ? { data: { ref } } : undefined,
   })
 
   if (error) {
@@ -66,15 +69,20 @@ export async function signUp(prevState: AuthState | null, formData: FormData): P
   }
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(formData: FormData): Promise<void> {
+  const ref = (formData.get('ref') as string) || ''
   const supabase = await createClient()
   const headersList = await headers()
   const origin = headersList.get('origin') || `https://${headersList.get('host')}`
 
+  const callbackUrl = new URL('/auth/callback', origin)
+  callbackUrl.searchParams.set('next', '/dashboard')
+  if (ref) callbackUrl.searchParams.set('ref', ref)
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+      redirectTo: callbackUrl.toString(),
     },
   })
 

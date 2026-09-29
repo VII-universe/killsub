@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { addSubscription, updateSubscription, SubscriptionState } from '@/app/actions/subscriptions'
 import { Subscription } from './SubscriptionList'
 import { CATEGORIES, suggestCategory } from '@/utils/categories'
+import { markAiUsed } from '@/utils/badges'
 
 const QUICK_SUGGESTIONS = [
   { name: 'Netflix', amount: '259', currency: 'CZK', cycle: 'monthly' },
@@ -17,9 +18,17 @@ const QUICK_SUGGESTIONS = [
 export default function AddSubscriptionForm({
   onClose,
   subscription,
+  startInAiMode,
+  onLimitReached,
+  isPro = true,
+  onAiLocked,
 }: {
   onClose?: () => void
   subscription?: Subscription
+  startInAiMode?: boolean
+  onLimitReached?: () => void
+  isPro?: boolean
+  onAiLocked?: () => void
 }) {
   const isEditing = !!subscription
   const formRef = useRef<HTMLFormElement>(null)
@@ -51,7 +60,14 @@ export default function AddSubscriptionForm({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiSuccess, setAiSuccess] = useState<string | null>(null)
-  const [isAiOpen, setIsAiOpen] = useState(false)
+  const [isAiOpen, setIsAiOpen] = useState(!!startInAiMode)
+
+  // Surface the Free-plan limit as an upgrade prompt instead of an inline error.
+  useEffect(() => {
+    if (state?.limitReached && onLimitReached) {
+      onLimitReached()
+    }
+  }, [state, onLimitReached])
 
   // Reset form on success
   useEffect(() => {
@@ -118,6 +134,7 @@ export default function AddSubscriptionForm({
       }
 
       setAiSuccess('Předplatné bylo extrahováno a pole vyplněna!')
+      markAiUsed()
     } catch (err: any) {
       setAiError(err.message || 'Nastala chyba při analýze textu.')
     } finally {
@@ -160,7 +177,13 @@ export default function AddSubscriptionForm({
           {/* AI Toggle Button */}
           <button
             type="button"
-            onClick={() => setIsAiOpen(!isAiOpen)}
+            onClick={() => {
+              if (!isPro) {
+                onAiLocked?.()
+                return
+              }
+              setIsAiOpen(!isAiOpen)
+            }}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
               isAiOpen
                 ? 'bg-[var(--accent-primary)] text-white shadow-md shadow-[var(--accent-primary)]/30'
@@ -170,6 +193,7 @@ export default function AddSubscriptionForm({
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
             </svg>
+            {!isPro && <span className="text-[9px]">🔒</span>}
             <span>AI Import</span>
           </button>
 
@@ -270,7 +294,7 @@ export default function AddSubscriptionForm({
       )}
 
       {/* Form Status Messages */}
-      {state?.error && (
+      {state?.error && !state?.limitReached && (
         <div className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-950/50 p-3 text-xs font-semibold text-rose-300 flex items-center gap-2">
           <svg className="h-4 w-4 text-rose-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
