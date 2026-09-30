@@ -282,33 +282,118 @@ body {
 }
 
 /* ========================================================
-   "Ušetřit více" (/save) — quiz options + recommendation card entrance
+   "Ušetřit více" (/save) — v2 mockup-matched visuals: drifting blobs,
+   spinning banner icon, option checkmarks, card entrance stagger.
    ======================================================== */
 
-.quiz-option {
+@keyframes save-drift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-15px, 20px) scale(1.1); }
+}
+
+@keyframes save-drift2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, -15px); }
+}
+
+@keyframes save-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes save-fade-slide {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.save-quiz-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.save-quiz-banner::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(108, 71, 255, 0.35), transparent 70%);
+  top: -70px;
+  right: -30px;
+  animation: save-drift1 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.save-quiz-banner::after {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(61, 155, 255, 0.25), transparent 70%);
+  bottom: -50px;
+  left: 10px;
+  animation: save-drift2 11s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.save-savings-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.save-savings-banner::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(108, 71, 255, 0.3), transparent 70%);
+  top: -80px;
+  right: -40px;
+  animation: save-drift1 10s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.save-banner-icon {
+  animation: save-spin-slow 20s linear infinite;
+}
+
+.save-option {
   transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.quiz-option:hover:not(.quiz-option-selected) {
-  border-color: rgba(255, 255, 255, 0.2) !important;
+.save-option:hover:not(.save-option-selected) {
+  border-color: rgba(255, 255, 255, 0.14) !important;
   background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
-.savings-submit-btn:not(:disabled) {
-  box-shadow: 0 4px 24px rgba(108, 71, 255, 0.4);
+.save-cta-btn {
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes savings-card-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.save-cta-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent 60%);
+  pointer-events: none;
 }
 
-.savings-card-in {
-  animation: savings-card-in 0.3s ease-out both;
+.save-rec-card {
+  animation: save-fade-slide 0.3s ease-out both;
+}
+
+.save-rec-btn {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.save-rec-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.save-edit-btn:hover {
+  color: #8b8fa8 !important;
 }

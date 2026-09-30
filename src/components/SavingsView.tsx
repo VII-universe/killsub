@@ -73,32 +73,52 @@ function Quiz({
 
   return (
     <div className="space-y-7">
-      {/* Banner with animated gradient blobs, matching the dashboard hero card */}
+      {/* Banner with animated gradient blobs + spinning sparkle icon */}
       <div
-        className="relative overflow-hidden flex items-center gap-3"
+        className="save-quiz-banner flex items-center gap-3"
         style={{
           background: 'rgba(108,71,255,0.1)',
           border: '1px solid rgba(108,71,255,0.25)',
-          borderRadius: 12,
+          borderRadius: 16,
           padding: 16,
         }}
       >
         <div
-          className="animate-hero-drift-1 pointer-events-none absolute rounded-full"
-          style={{ width: 160, height: 160, top: -70, left: -50, background: 'radial-gradient(circle, #6c47ff, transparent 70%)', opacity: 0.15, filter: 'blur(40px)' }}
-        />
-        <div
-          className="animate-hero-drift-2 pointer-events-none absolute rounded-full"
-          style={{ width: 140, height: 140, top: -50, right: -30, background: 'radial-gradient(circle, #3d9bff, transparent 70%)', opacity: 0.15, filter: 'blur(40px)' }}
-        />
-        <span className="relative text-xl flex-shrink-0">✨</span>
-        <p className="relative text-sm font-semibold text-white">Odpověz na 4 otázky — najdeme kde ušetříš</p>
+          className="save-banner-icon relative flex flex-shrink-0 items-center justify-center"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: 'rgba(108,71,255,0.2)',
+            border: '1px solid rgba(108,71,255,0.35)',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <defs>
+              <linearGradient id="save-sparkle-grad" x1="0" y1="0" x2="24" y2="24">
+                <stop offset="0%" stopColor="#6c47ff" />
+                <stop offset="100%" stopColor="#3d9bff" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2z"
+              fill="url(#save-sparkle-grad)"
+            />
+            <path d="M19 14l0.8 2.3L22 17l-2.2 0.7L19 20l-0.8-2.3L16 17l2.2-0.7L19 14z" fill="rgba(255,255,255,0.6)" />
+          </svg>
+        </div>
+        <div className="relative flex flex-col gap-0.5">
+          <strong style={{ fontSize: 15, fontWeight: 700, color: '#e8eaf0' }}>Odpověz na 4 otázky</strong>
+          <span style={{ fontSize: 13, color: '#8b8fa8', lineHeight: 1.5 }}>
+            Najdeme kde platíš zbytečně a co by ti ušetřilo peníze.
+          </span>
+        </div>
       </div>
 
       {QUESTIONS.map((q) => (
         <div key={q.key}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#e8eaf0', marginBottom: 12 }}>{q.question}</p>
-          <div className="grid grid-cols-1 gap-2">
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#e8eaf0', marginBottom: 10 }}>{q.question}</p>
+          <div className="flex flex-col gap-2">
             {q.options.map((option) => {
               const selected = draft[q.key] === option
               return (
@@ -106,27 +126,34 @@ function Quiz({
                   key={option}
                   type="button"
                   onClick={() => setDraft((d) => ({ ...d, [q.key]: option }))}
-                  className={`quiz-option flex items-center justify-between text-left text-xs font-semibold ${selected ? 'quiz-option-selected' : ''}`}
+                  className={`save-option flex items-center justify-between text-left ${selected ? 'save-option-selected' : ''}`}
                   style={{
                     background: selected ? 'rgba(108,71,255,0.12)' : '#1a1d27',
                     border: `1px solid ${selected ? '#6c47ff' : 'rgba(255,255,255,0.08)'}`,
-                    boxShadow: selected ? '0 0 0 1px rgba(108,71,255,0.3)' : 'none',
-                    borderRadius: 14,
-                    padding: '16px 20px',
+                    boxShadow: selected ? '0 0 0 1px rgba(108,71,255,0.25)' : 'none',
+                    borderRadius: 12,
+                    padding: '14px 16px',
                     color: '#e8eaf0',
+                    fontSize: 14,
+                    fontWeight: 500,
                   }}
                 >
                   <span>{option}</span>
-                  {selected && (
-                    <span
-                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full"
-                      style={{ background: '#6c47ff' }}
-                    >
-                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <span
+                    className="flex flex-shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      border: selected ? 'none' : '2px solid rgba(255,255,255,0.14)',
+                      background: selected ? '#6c47ff' : 'transparent',
+                    }}
+                  >
+                    {selected && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                    </span>
-                  )}
+                    )}
+                  </span>
                 </button>
               )
             })}
@@ -138,7 +165,7 @@ function Quiz({
         type="button"
         disabled={!allAnswered}
         onClick={() => onComplete(draft as QuizAnswers)}
-        className="savings-submit-btn w-full text-white disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+        className="save-cta-btn w-full text-white disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
         style={{
           background: 'linear-gradient(135deg, #6c47ff, #3d9bff)',
           borderRadius: 14,
@@ -146,9 +173,10 @@ function Quiz({
           fontSize: 15,
           fontWeight: 700,
           opacity: allAnswered ? 1 : 0.4,
+          boxShadow: allAnswered ? '0 4px 24px rgba(108,71,255,0.4)' : 'none',
         }}
       >
-        Zobrazit doporučení
+        Zobrazit doporučení →
       </button>
     </div>
   )
@@ -186,17 +214,25 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <Link
             href="/dashboard"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+            className="flex flex-shrink-0 items-center justify-center"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: '#1a1d27',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#e8eaf0',
+            }}
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 3L5 8L10 13" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-gradient-hero text-sm font-black tracking-tight" style={{ fontWeight: 800 }}>
-              Ušetřit více
-            </h1>
-            <p className="text-[11px] text-white/50">Najdeme kde platíš zbytečně</p>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e8eaf0' }}>Ušetřit více</h1>
+            <p style={{ fontSize: 12, fontWeight: 500, color: '#8b6fff', marginTop: 2 }}>
+              Najdeme kde platíš zbytečně
+            </p>
           </div>
         </div>
       </header>
@@ -209,6 +245,7 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
             {/* Summary banner */}
             {totalSavings > 0 ? (
               <div
+                className="save-savings-banner"
                 style={{
                   background: 'linear-gradient(135deg, rgba(108,71,255,0.2) 0%, rgba(61,155,255,0.1) 100%)',
                   border: '1px solid rgba(108,71,255,0.3)',
@@ -216,30 +253,50 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
                   padding: 28,
                 }}
               >
-                <p style={{ fontSize: 13, color: '#8b8fa8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Mohl bys ušetřit
+                <p
+                  className="relative"
+                  style={{ fontSize: 11, fontWeight: 600, color: '#8b8fa8', textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                >
+                  Mohl bys ušetřit až
                 </p>
-                <p className="text-gradient-stat" style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.2 }}>
+                <p
+                  className="text-gradient-stat relative"
+                  style={{ fontSize: 48, fontWeight: 800, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}
+                >
                   {totalSavings.toLocaleString('cs-CZ')} Kč
                 </p>
-                <p style={{ fontSize: 13, color: '#8b8fa8' }}>
+                <p className="relative" style={{ fontSize: 13, color: '#8b8fa8' }}>
                   měsíčně · {(totalSavings * 12).toLocaleString('cs-CZ')} Kč ročně
                 </p>
               </div>
             ) : (
               <div
-                className="text-center"
+                className="flex flex-col items-center text-center"
                 style={{
-                  background: 'rgba(34,197,94,0.15)',
-                  border: '1px solid rgba(34,197,94,0.3)',
+                  background: '#1a1d27',
+                  border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 20,
                   padding: 28,
                 }}
               >
-                <div style={{ fontSize: 48, lineHeight: 1 }}>✅</div>
-                <p className="mt-3 text-base font-bold text-white">Tvá předplatná vypadají optimálně</p>
-                <p className="mt-1 text-xs" style={{ color: '#8b8fa8' }}>
-                  Přidej více předplatných pro přesnější analýzu
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    width: 56,
+                    height: 56,
+                    background: 'rgba(34,197,94,0.15)',
+                    border: '1px solid rgba(34,197,94,0.3)',
+                  }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#22c55e" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 14l4.5 4.5L21 9" />
+                  </svg>
+                </div>
+                <h2 className="mt-3" style={{ fontSize: 18, fontWeight: 700, color: '#e8eaf0' }}>
+                  Tvá předplatná vypadají optimálně
+                </h2>
+                <p className="mt-1" style={{ fontSize: 13, color: '#8b8fa8', lineHeight: 1.5 }}>
+                  Nepřeplácíš a nekupuješ zbytečné duplicity. Přidej více předplatných pro přesnější analýzu.
                 </p>
               </div>
             )}
@@ -250,56 +307,56 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
                 {recommendations.map((rec, idx) => (
                   <div
                     key={rec.id}
-                    className="savings-card-in relative overflow-hidden"
+                    className="save-rec-card relative overflow-hidden"
                     style={{
                       background: '#1a1d27',
                       border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: 20,
-                      padding: '24px 24px 24px 28px',
-                      marginBottom: 12,
+                      borderRadius: 18,
+                      padding: '20px 20px 20px 24px',
+                      marginBottom: 10,
                       animationDelay: `${idx * 80}ms`,
                     }}
                   >
                     <div
                       className="absolute left-0 top-0"
-                      style={{ width: 3, height: '100%', borderRadius: 2, background: getAccentColor(rec) }}
+                      style={{ width: 4, height: '100%', borderRadius: '2px 0 0 2px', background: getAccentColor(rec) }}
                     />
 
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <span style={{ fontSize: 28, lineHeight: 1 }} className="flex-shrink-0">{rec.emoji}</span>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{rec.title}</h3>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span style={{ fontSize: 22, lineHeight: 1 }} className="flex-shrink-0">{rec.emoji}</span>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e8eaf0' }}>{rec.title}</h3>
                       </div>
 
                       {rec.savings !== null && (
                         <span
-                          className="flex-shrink-0 font-semibold"
+                          className="flex-shrink-0"
                           style={
                             rec.savings > 0
                               ? {
                                   background: 'rgba(34,197,94,0.12)',
                                   color: '#22c55e',
-                                  border: '1px solid rgba(34,197,94,0.25)',
                                   borderRadius: 100,
-                                  padding: '4px 12px',
+                                  padding: '4px 10px',
                                   fontSize: 12,
+                                  fontWeight: 600,
                                 }
                               : {
-                                  background: 'rgba(108,71,255,0.12)',
-                                  color: '#a78bfa',
-                                  border: '1px solid rgba(108,71,255,0.3)',
+                                  background: 'rgba(139,111,255,0.15)',
+                                  color: '#8b6fff',
                                   borderRadius: 100,
-                                  padding: '4px 12px',
+                                  padding: '4px 10px',
                                   fontSize: 12,
+                                  fontWeight: 600,
                                 }
                           }
                         >
-                          {rec.savings > 0 ? `~${rec.savings} Kč/měs` : rec.badge || 'Lepší volba'}
+                          {rec.savings > 0 ? `~${rec.savings} Kč/měs` : rec.badge || 'Tip'}
                         </span>
                       )}
                     </div>
 
-                    <p style={{ fontSize: 14, color: '#8b8fa8', lineHeight: 1.6, marginTop: 8 }}>
+                    <p style={{ fontSize: 13, color: '#8b8fa8', lineHeight: 1.6, marginTop: 6, paddingLeft: 32 }}>
                       {rec.description}
                     </p>
 
@@ -307,36 +364,33 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
                       href={rec.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-semibold"
+                      className="save-rec-btn inline-flex items-center"
                       style={{
-                        marginTop: 14,
-                        border: '1px solid rgba(255,255,255,0.15)',
+                        marginTop: 12,
+                        marginLeft: 32,
+                        border: '1px solid rgba(255,255,255,0.14)',
                         background: 'transparent',
                         color: '#e8eaf0',
-                        borderRadius: 8,
-                        padding: '8px 16px',
+                        borderRadius: 9,
+                        padding: '8px 14px',
                         fontSize: 13,
+                        fontWeight: 500,
                       }}
                     >
-                      <span>Zjistit více</span>
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
+                      {rec.savings !== null && rec.savings > 0 ? 'Porovnat obsah →' : 'Zjistit více →'}
                     </a>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="font-semibold"
-                style={{ color: '#8b8fa8', fontSize: 12, background: 'transparent' }}
-              >
-                ← Upravit odpovědi
-              </button>
-            </div>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="save-edit-btn block w-full text-center transition-colors"
+              style={{ color: '#5a5e72', fontSize: 13, padding: 14, background: 'transparent' }}
+            >
+              ← Upravit odpovědi
+            </button>
           </>
         )}
       </main>
