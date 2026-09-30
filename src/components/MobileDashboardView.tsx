@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import ThemeSelector from '@/components/ThemeSelector'
 import MobileAIHeroCard from '@/components/MobileAIHeroCard'
 import ServiceLogo from '@/components/ServiceLogo'
@@ -585,6 +586,20 @@ export default function MobileDashboardView({
             </div>
             <span className="text-[10px]">Témata</span>
           </button>
+
+          {/* Ušetřit více — separate route, not an internal tab */}
+          <Link
+            href="/save"
+            className="flex flex-col items-center gap-1 transition-all active:scale-90 text-white/50 hover:text-white/80"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5a5 5 0 001 3v3h3v-2c.9.3 1.9.5 3 .5s2.1-.2 3-.5v2h3v-3a5 5 0 001-3c0-1-.4-2-1-3z" />
+                <circle cx="16" cy="9" r="0.5" fill="currentColor" />
+              </svg>
+            </div>
+            <span className="text-[10px]">Ušetřit</span>
+          </Link>
         </div>
       </nav>
     </div>
