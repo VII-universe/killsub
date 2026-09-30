@@ -22,6 +22,7 @@ import PortfolioScoreCard from '@/components/PortfolioScoreCard'
 import BadgesPanel from '@/components/BadgesPanel'
 import CleanseChallenge from '@/components/CleanseChallenge'
 import ImportSettingsPanel from '@/components/ImportSettingsPanel'
+import PushNotificationsPanel from '@/components/PushNotificationsPanel'
 import { updateStreak } from '@/utils/badges'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
@@ -455,6 +456,8 @@ export default function MobileDashboardView({
             <BadgesPanel subscriptions={subscriptions} />
 
             <NotificationSettingsPanel isPro={isPro} onLocked={() => setUpgradeMessage('E-mailové notifikace jsou dostupné pouze pro Pro plán.')} />
+
+            <PushNotificationsPanel />
 
             {profile && (
               <ImportSettingsPanel importToken={profile.importToken} importDomain={importDomain} isPro={isPro} />
