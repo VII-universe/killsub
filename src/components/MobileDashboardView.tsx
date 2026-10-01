@@ -25,6 +25,7 @@ import CleanseChallenge from '@/components/CleanseChallenge'
 import ImportSettingsPanel from '@/components/ImportSettingsPanel'
 import PushNotificationsPanel from '@/components/PushNotificationsPanel'
 import RemindersWidget from '@/components/RemindersWidget'
+import OnboardingOverlay from '@/components/OnboardingOverlay'
 import { updateStreak } from '@/utils/badges'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
@@ -145,6 +146,8 @@ export default function MobileDashboardView({
       className="min-h-screen flex flex-col text-white"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)' }}
     >
+      <OnboardingOverlay subscriptionsCount={subscriptions.length} onOpenAddModal={() => setIsFormModalOpen(true)} />
+
       {/* Mobile Top App Bar */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-2xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-lg items-center justify-between">
