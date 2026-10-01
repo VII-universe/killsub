@@ -334,7 +334,16 @@
 }
 .feat:last-child { border-bottom: 1px solid var(--border); }
 
-.featGlyph { font-size: 22px; padding-top: 2px; }
+.featIconBox {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(236,72,153,0.14), rgba(139,92,246,0.14));
+  border: 1px solid var(--border);
+  color: #e879c3;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform .2s cubic-bezier(0.16,1,0.3,1), border-color .2s;
+}
 
 .featTitle {
   font-family: 'Inter', system-ui, sans-serif;
@@ -541,4 +550,124 @@
   .psCell:last-child { border-bottom: none; }
   .how, .features, .previewSection, .proof, .cta { padding: 56px 20px; }
   .footer { padding: 20px; }
+}
+
+/* ── POLISH PASS: entrance motion, hover depth, ambient CTA glow ── */
+
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.heroAnim {
+  opacity: 0;
+  animation: heroFadeUp 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroAnim { opacity: 1; animation: none; }
+}
+
+.nav { transition: background .2s, border-color .2s; }
+
+.navLogo { transition: opacity .15s; }
+.navLogo:hover { opacity: 0.85; }
+
+.btnStart, .btnCta {
+  position: relative;
+  overflow: hidden;
+}
+.btnStart::after, .btnCta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform .6s ease;
+  pointer-events: none;
+}
+.btnStart:hover::after, .btnCta:hover::after {
+  transform: translateX(100%);
+}
+.btnStart:active, .btnCta:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.psCell { transition: background .2s ease; }
+.psCell:hover { background: rgba(255,255,255,0.025); }
+
+.step { transition: background .2s ease; }
+.step:hover { background: rgba(255,255,255,0.02); }
+.step:hover .stepCircle {
+  background: rgba(139,92,246,0.22);
+  color: #e9d5ff;
+}
+.stepCircle { transition: background .2s ease, color .2s ease; }
+
+.feat {
+  transition: background .2s ease, transform .2s cubic-bezier(0.16,1,0.3,1);
+}
+.feat:hover {
+  background: rgba(255,255,255,0.02);
+  transform: translateX(2px);
+}
+.feat:hover .featIconBox {
+  transform: scale(1.06);
+  border-color: rgba(236,72,153,0.4);
+}
+
+.tcard {
+  transition: background .2s ease, border-color .2s ease;
+  border-left: 2px solid transparent;
+  padding-left: 16px;
+  margin-left: -16px;
+}
+.tcard:hover {
+  background: rgba(255,255,255,0.02);
+  border-left-color: #8b5cf6;
+}
+
+.wsub { cursor: default; }
+
+.marqueeWrap {
+  position: relative;
+}
+.marqueeWrap::before, .marqueeWrap::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 64px;
+  z-index: 2;
+  pointer-events: none;
+}
+.marqueeWrap::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg2), transparent);
+}
+.marqueeWrap::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg2), transparent);
+}
+
+.cta { overflow: hidden; }
+.ctaGlow {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 500px; height: 500px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(236,72,153,0.14) 0%, transparent 70%);
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+  animation: ctaPulse 6s ease-in-out infinite;
+}
+@keyframes ctaPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+}
+.cta > *:not(.ctaGlow) { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaGlow { animation: none; }
+  .btnStart::after, .btnCta::after { display: none; }
 }
