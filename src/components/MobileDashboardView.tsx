@@ -24,6 +24,7 @@ import BadgesPanel from '@/components/BadgesPanel'
 import CleanseChallenge from '@/components/CleanseChallenge'
 import ImportSettingsPanel from '@/components/ImportSettingsPanel'
 import PushNotificationsPanel from '@/components/PushNotificationsPanel'
+import RemindersWidget from '@/components/RemindersWidget'
 import { updateStreak } from '@/utils/badges'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
@@ -299,6 +300,8 @@ export default function MobileDashboardView({
             {effectiveSubscriptions.length > 0 && <PortfolioScoreCard subscriptions={effectiveSubscriptions} />}
 
             {effectiveSubscriptions.length > 0 && <CategoryChart subscriptions={effectiveSubscriptions} />}
+
+            <RemindersWidget />
 
             {/* Subscriptions List Section */}
             <div className="pt-2">

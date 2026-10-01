@@ -17,11 +17,15 @@ import {
   getEfficiencyScore,
   getSavingsRecommendations,
   getTotalMonthlySavings,
-  hasReminder,
   hasStreamingSubscription,
   isQuizAnswers,
-  setReminder,
 } from '@/utils/savingsRecommendations'
+import {
+  cacheReminderLocally,
+  clearReminderCacheLocally,
+  createReminder,
+  isReminderCachedLocally,
+} from '@/utils/reminders'
 
 type Phase = 'quiz' | 'analysis' | 'results'
 type StepId = 'streaming' | 'household' | 'ai' | 'music' | 'gaming' | 'utilization'
@@ -650,10 +654,32 @@ function ScorePill({ score }: { score: number }) {
   )
 }
 
-function RecommendationCard({ rec, index }: { rec: SavingsRecommendation; index: number }) {
-  const [remindTick, setRemindTick] = useState(0)
+function RecommendationCard({
+  rec,
+  index,
+  onReminderError,
+}: {
+  rec: SavingsRecommendation
+  index: number
+  onReminderError: () => void
+}) {
+  const [reminded, setReminded] = useState(() => isReminderCachedLocally(rec.id))
   const chip = TYPE_CHIP[rec.type]
-  const reminded = remindTick >= 0 && hasReminder(rec.id)
+
+  const handleRemind = async () => {
+    setReminded(true)
+    cacheReminderLocally(rec.id)
+    const { error } = await createReminder({
+      subscriptionId: rec.subscriptionId ?? null,
+      recommendationType: rec.type,
+      recommendationTitle: rec.title,
+    })
+    if (error) {
+      setReminded(false)
+      clearReminderCacheLocally(rec.id)
+      onReminderError()
+    }
+  }
 
   return (
     <div
@@ -757,10 +783,7 @@ function RecommendationCard({ rec, index }: { rec: SavingsRecommendation; index:
         <button
           type="button"
           disabled={reminded}
-          onClick={() => {
-            setReminder(rec.id)
-            setRemindTick((t) => t + 1)
-          }}
+          onClick={handleRemind}
           className="save-rec-btn inline-flex items-center disabled:cursor-not-allowed"
           style={{
             border: '1px solid rgba(255,255,255,0.14)',
@@ -784,6 +807,12 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
   const [phase, setPhase] = useState<Phase>('quiz')
   const [loaded, setLoaded] = useState(false)
   const [draftAnswers, setDraftAnswers] = useState<QuizAnswers | null>(null)
+  const [reminderToast, setReminderToast] = useState(false)
+
+  const showReminderErrorToast = () => {
+    setReminderToast(true)
+    setTimeout(() => setReminderToast(false), 2500)
+  }
 
   useEffect(() => {
     const stored = loadStoredAnswers()
@@ -929,7 +958,7 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
             {recommendations.length > 0 && (
               <div>
                 {recommendations.map((rec, idx) => (
-                  <RecommendationCard key={rec.id} rec={rec} index={idx} />
+                  <RecommendationCard key={rec.id} rec={rec} index={idx} onReminderError={showReminderErrorToast} />
                 ))}
               </div>
             )}
@@ -944,6 +973,14 @@ export default function SavingsView({ subscriptions }: { subscriptions: Subscrip
           </>
         )}
       </main>
+
+      {reminderToast && (
+        <div className="fixed inset-x-0 bottom-24 z-[70] flex justify-center px-4 pointer-events-none">
+          <div className="rounded-full bg-gradient-to-r from-pink-500 to-purple-600 px-5 py-2.5 text-xs font-black text-white shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+            Nepodařilo se uložit připomenutí
+          </div>
+        </div>
+      )}
     </div>
   )
 }

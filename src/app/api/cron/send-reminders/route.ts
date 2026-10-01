@@ -231,5 +231,64 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent, skipped, pushSent, pushSkipped, errors })
+  // ---- Push for "Připomenout za 30 dní" reminders (from /save recommendations) ----
+  let remindersSent = 0
+
+  if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT || 'mailto:support@killsub.app',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - 25 * 60 * 60 * 1000)
+
+    const { data: dueReminders, error: remindersError } = await supabase
+      .from('reminders')
+      .select('id, user_id, recommendation_title')
+      .is('dismissed_at', null)
+      .lte('remind_at', now.toISOString())
+      .gt('remind_at', windowStart.toISOString())
+
+    if (remindersError) {
+      errors.push(remindersError.message)
+    }
+
+    for (const reminder of dueReminders || []) {
+      const { data: devices } = await supabase
+        .from('push_subscriptions')
+        .select('id, endpoint, p256dh, auth')
+        .eq('user_id', reminder.user_id)
+
+      const payload = JSON.stringify({
+        title: 'Killsub připomíná 🔔',
+        body: reminder.recommendation_title,
+        url: '/save',
+        data: { url: '/save' },
+      })
+
+      for (const device of devices || []) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: device.endpoint,
+              keys: { p256dh: device.p256dh, auth: device.auth },
+            },
+            payload
+          )
+          remindersSent++
+        } catch (err) {
+          const statusCode = err instanceof webpush.WebPushError ? err.statusCode : undefined
+          if (statusCode === 404 || statusCode === 410) {
+            await supabase.from('push_subscriptions').delete().eq('id', device.id)
+          } else {
+            errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání push připomínky.')
+          }
+        }
+      }
+    }
+  }
+
+  return NextResponse.json({ sent, skipped, pushSent, pushSkipped, remindersSent, errors })
 }

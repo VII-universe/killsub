@@ -17,7 +17,6 @@ export interface QuizAnswers {
 }
 
 export const QUIZ_STORAGE_KEY = 'ks_quiz_answers'
-export const REMINDER_KEY_PREFIX = 'ks_reminder_'
 
 // Narrows unknown localStorage content to the current QuizAnswers shape.
 // Older, pre-rebuild quiz data ({q1,q2,q3,q4}) fails this check and is
@@ -336,19 +335,3 @@ export function getEfficiencyScore(subscriptions: Subscription[], answers: QuizA
   return Math.round((utilized / rated.length) * 100)
 }
 
-export function setReminder(recId: string): void {
-  try {
-    const remindAt = Date.now() + 30 * 24 * 60 * 60 * 1000
-    localStorage.setItem(`${REMINDER_KEY_PREFIX}${recId}`, String(remindAt))
-  } catch {
-    // ignore storage failures
-  }
-}
-
-export function hasReminder(recId: string): boolean {
-  try {
-    return localStorage.getItem(`${REMINDER_KEY_PREFIX}${recId}`) !== null
-  } catch {
-    return false
-  }
-}
