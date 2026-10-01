@@ -412,6 +412,92 @@ body {
   to { opacity: 0; transform: translateX(-20px); }
 }
 
+/* ========================================================
+   Killsub Wrapped (/wrapped) — animated blob background,
+   gradient headline text, pulsing badge dot.
+   ======================================================== */
+
+@keyframes wrapped-drift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, 15px) scale(1.1); }
+  66% { transform: translate(-10px, 25px) scale(0.95); }
+}
+
+@keyframes wrapped-drift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-25px, 20px) scale(1.05); }
+  70% { transform: translate(10px, 10px) scale(0.9); }
+}
+
+@keyframes wrapped-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+.wrapped-card {
+  isolation: isolate;
+}
+
+.wrapped-blob-purple,
+.wrapped-blob-blue,
+.wrapped-blob-pink {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrapped-blob-purple {
+  width: 280px;
+  height: 280px;
+  top: -100px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(108, 71, 255, 0.4), transparent 70%);
+  animation: wrapped-drift1 9s ease-in-out infinite;
+}
+
+.wrapped-blob-blue {
+  width: 220px;
+  height: 220px;
+  bottom: -80px;
+  left: -60px;
+  background: radial-gradient(circle, rgba(61, 155, 255, 0.25), transparent 70%);
+  animation: wrapped-drift2 12s ease-in-out infinite;
+}
+
+.wrapped-blob-pink {
+  width: 160px;
+  height: 160px;
+  bottom: -40px;
+  right: -20px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.2), transparent 70%);
+  animation: wrapped-drift1 15s ease-in-out infinite reverse;
+}
+
+.wrapped-tile {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 8px;
+  text-align: center;
+}
+
+.wrapped-gradient-text {
+  background: linear-gradient(135deg, #fff 0%, #a78bfa 60%, #3d9bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wrapped-pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #a78bfa;
+  animation: wrapped-pulse 2s ease-in-out infinite;
+}
+
 @keyframes quiz-enter {
   from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }

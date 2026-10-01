@@ -217,6 +217,17 @@ export default function MobileDashboardView({
           </div>
         )}
 
+        {/* Wrapped banner — shown in Q4 (or always in dev, for testing) */}
+        {(new Date().getMonth() >= 9 || process.env.NODE_ENV === 'development') && (
+          <Link
+            href="/wrapped"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-[rgba(108,71,255,0.35)] bg-[rgba(108,71,255,0.12)] px-4 py-3 text-sm font-bold text-white hover:bg-[rgba(108,71,255,0.18)] transition-colors"
+          >
+            <span>🎁 Killsub Wrapped {new Date().getFullYear()} je připraven</span>
+            <span>→</span>
+          </Link>
+        )}
+
         {/* Tab 1: Home View (Hero + Metrics + Subscriptions Preview) */}
         {activeTab === 'home' && (
           <>
