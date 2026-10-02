@@ -313,6 +313,15 @@ export default function MobileDashboardView({
                   Moje předplatná
                 </h3>
                 <div className="flex items-center gap-1.5">
+                  <Link
+                    href="/dashboard/import"
+                    title="Import z bankovního výpisu"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14" />
+                    </svg>
+                  </Link>
                   {effectiveSubscriptions.length > 0 && (
                     <button
                       onClick={() => exportSubscriptionsToCsv(effectiveSubscriptions)}

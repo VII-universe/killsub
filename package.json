@@ -16,6 +16,9 @@
     "canvas-confetti": "^1.9.4",
     "html-to-image": "^1.11.13",
     "next": "16.3.6",
+    "openai": "^7.27.0",
+    "papaparse": "^5.7.0",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.30.0",
@@ -26,6 +29,8 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
