@@ -26,7 +26,9 @@ import ImportSettingsPanel from '@/components/ImportSettingsPanel'
 import PushNotificationsPanel from '@/components/PushNotificationsPanel'
 import RemindersWidget from '@/components/RemindersWidget'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
+import CatalogPicker from '@/components/CatalogPicker'
 import { updateStreak } from '@/utils/badges'
+import { detectDuplicates } from '@/utils/duplicates'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
@@ -50,6 +52,7 @@ export default function MobileDashboardView({
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [quickAddPrefill, setQuickAddPrefill] = useState<{
     name?: string
     amount?: string
@@ -62,6 +65,16 @@ export default function MobileDashboardView({
 
   const handleQuickAdd = (item: { name: string; amount: string; currency: string; billing_cycle: string }) => {
     setQuickAddPrefill(item)
+    setIsFormModalOpen(true)
+  }
+
+  const handleCatalogSelect = (item: { name: string; defaultAmount: number; currency: string; billing_cycle: string }) => {
+    setQuickAddPrefill({
+      name: item.name,
+      amount: String(item.defaultAmount),
+      currency: item.currency,
+      billing_cycle: item.billing_cycle,
+    })
     setIsFormModalOpen(true)
   }
 
@@ -114,6 +127,8 @@ export default function MobileDashboardView({
     setStartAddModalInAiMode(false)
     setQuickAddPrefill(null)
   }
+
+  const duplicates = useMemo(() => detectDuplicates(effectiveSubscriptions), [effectiveSubscriptions])
 
   // Calculate totals
   const totals = useMemo(
@@ -340,6 +355,15 @@ export default function MobileDashboardView({
 
             <RemindersWidget />
 
+            {duplicates.map((d) => (
+              <div key={d.category} className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3">
+                <p className="text-xs font-bold text-yellow-400">⚠️ Duplicitní {d.category}</p>
+                <p className="text-[11px] text-white/60 mt-0.5">
+                  {d.services.join(' + ')} — platíš {Math.round(d.totalAmount)} Kč/měs. za stejnou kategorii
+                </p>
+              </div>
+            ))}
+
             {/* Subscriptions List Section */}
             <div className="pt-2">
               <div className="flex items-center justify-between pb-3 gap-2">
@@ -367,6 +391,12 @@ export default function MobileDashboardView({
                       </svg>
                     </button>
                   )}
+                  <button
+                    onClick={() => setIsCatalogOpen(true)}
+                    className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-white/80 hover:bg-white/10"
+                  >
+                    📚 Z katalogu
+                  </button>
                   <button
                     onClick={() => setIsFormModalOpen(true)}
                     className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/15"
@@ -564,6 +594,10 @@ export default function MobileDashboardView({
 
       {upgradeMessage && (
         <UpgradeModal message={upgradeMessage} onClose={() => setUpgradeMessage(null)} />
+      )}
+
+      {isCatalogOpen && (
+        <CatalogPicker onSelect={handleCatalogSelect} onClose={() => setIsCatalogOpen(false)} />
       )}
 
       {/* Floating Bottom Modal Drawer for Adding/Editing Subscription */}
