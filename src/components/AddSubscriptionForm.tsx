@@ -65,6 +65,7 @@ export default function AddSubscriptionForm({
     subscription?.category || suggestCategory(subscription?.name || prefill?.name || '')
   )
   const [logoUrl, setLogoUrl] = useState(subscription?.logo_url || '')
+  const [note, setNote] = useState(subscription?.note || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
   const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
   const [scoreValue, setScoreValue] = useState(
@@ -534,6 +535,21 @@ export default function AddSubscriptionForm({
                   <div className="mt-1 text-center text-xs font-mono font-black text-white">{scoreValue}/100</div>
                 </div>
               )}
+            </div>
+
+            <div>
+              <label htmlFor="note" className="block text-xs font-bold text-white/90">
+                Poznámka <span className="font-normal text-white/40">(nepovinné)</span>
+              </label>
+              <textarea
+                id="note"
+                name="note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Poznámka (volitelné) — např. sdíleno s rodinou, vyhodnocení v prosinci..."
+                rows={2}
+                className="mt-1.5 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs text-white placeholder-white/40 resize-none focus:border-[var(--accent-primary)] focus:outline-none"
+              />
             </div>
           </div>
         </div>

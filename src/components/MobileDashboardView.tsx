@@ -29,6 +29,7 @@ import RemindersWidget from '@/components/RemindersWidget'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
 import CatalogPicker from '@/components/CatalogPicker'
 import SpendingTrends from '@/components/SpendingTrends'
+import HelpSheet from '@/components/HelpSheet'
 import { updateStreak } from '@/utils/badges'
 import { detectDuplicates } from '@/utils/duplicates'
 
@@ -55,6 +56,7 @@ export default function MobileDashboardView({
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const [quickAddPrefill, setQuickAddPrefill] = useState<{
     name?: string
     amount?: string
@@ -623,6 +625,14 @@ export default function MobileDashboardView({
       {isCatalogOpen && (
         <CatalogPicker onSelect={handleCatalogSelect} onClose={() => setIsCatalogOpen(false)} />
       )}
+
+      <button
+        onClick={() => setShowHelp(true)}
+        className="fixed bottom-24 right-4 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/60 backdrop-blur-md text-white/70 text-sm font-black hover:text-white hover:border-white/30"
+      >
+        ?
+      </button>
+      {showHelp && <HelpSheet onClose={() => setShowHelp(false)} />}
 
       {/* Floating Bottom Modal Drawer for Adding/Editing Subscription */}
       {isFormModalOpen && (

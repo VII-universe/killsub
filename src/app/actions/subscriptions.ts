@@ -22,6 +22,7 @@ function parseSubscriptionForm(formData: FormData) {
   const category = isCategory(rawCategory) ? rawCategory : 'Ostatní'
   const lastUsedAt = (formData.get('last_used_at') as string) || null
   const logoUrl = (formData.get('logo_url') as string) || null
+  const note = (formData.get('note') as string)?.trim() || null
 
   const manualScoreEnabled = formData.get('health_score_manual') === 'on'
   const rawScore = formData.get('health_score') as string
@@ -52,6 +53,7 @@ function parseSubscriptionForm(formData: FormData) {
       logo_url: logoUrl,
       health_score_manual: manualScoreEnabled,
       health_score: manualScoreEnabled ? healthScore : null,
+      note,
     },
   }
 }

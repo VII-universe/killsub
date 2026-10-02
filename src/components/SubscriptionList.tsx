@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import DeleteSubscriptionButton from './DeleteSubscriptionButton'
 import ServiceLogo from './ServiceLogo'
-import { getServiceBrand } from '@/utils/branding'
 import { computeHealthScore, getHealthTone } from '@/utils/health'
+import { CATEGORY_COLORS, Category } from '@/utils/categories'
 
 export interface Subscription {
   id: string
@@ -20,6 +20,7 @@ export interface Subscription {
   health_score_manual?: boolean | null
   logo_url?: string | null
   created_at?: string
+  note?: string | null
 }
 
 export default function SubscriptionList({
@@ -43,7 +44,6 @@ export default function SubscriptionList({
   const enrichedSubs = useMemo(() => {
     return subscriptions.map((s) => ({
       ...s,
-      brand: getServiceBrand(s.name),
       healthScore: computeHealthScore(s),
     }))
   }, [subscriptions])
@@ -228,6 +228,8 @@ export default function SubscriptionList({
             const isLowHealth = healthTone === 'low'
             const yearlyCost = sub.billing_cycle === 'yearly' ? sub.amount : sub.amount * 12
 
+            const catColor = CATEGORY_COLORS[sub.category as Category] || '#64748b'
+
             return (
               <div
                 key={sub.id}
@@ -236,6 +238,7 @@ export default function SubscriptionList({
                     ? `Zvažte zrušení — ušetříte ${Math.round(yearlyCost).toLocaleString('cs-CZ')} ${sub.currency}/rok`
                     : undefined
                 }
+                style={{ borderLeft: `3px solid ${catColor}` }}
                 className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
                   isLowHealth ? 'border-rose-500/50' : 'border-white/10'
                 }`}
@@ -254,7 +257,14 @@ export default function SubscriptionList({
                           </h4>
                         </div>
                         <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span className={`inline-block rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${sub.brand.badgeBg}`}>
+                          <span
+                            className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
+                            style={{
+                              backgroundColor: `${catColor}20`,
+                              color: catColor,
+                              border: `1px solid ${catColor}40`,
+                            }}
+                          >
                             {sub.category}
                           </span>
                           <span className="text-[10px] text-white/50">
@@ -305,6 +315,12 @@ export default function SubscriptionList({
                       Zdraví {sub.healthScore}
                     </span>
                   </div>
+
+                  {sub.note && (
+                    <p className="mt-1.5 text-[10px] text-white/50 italic leading-relaxed line-clamp-2">
+                      💬 {sub.note}
+                    </p>
+                  )}
 
                   {/* Pricing Display */}
                   <div className="mt-4 flex items-baseline justify-between border-t border-white/[0.06] pt-3.5">
