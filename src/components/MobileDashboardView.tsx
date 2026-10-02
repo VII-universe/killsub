@@ -29,6 +29,7 @@ import OnboardingOverlay from '@/components/OnboardingOverlay'
 import CatalogPicker from '@/components/CatalogPicker'
 import SpendingTrendsChart from '@/components/SpendingTrendsChart'
 import HelpSheet from '@/components/HelpSheet'
+import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
@@ -175,6 +176,8 @@ export default function MobileDashboardView({
         onboarded={profile?.onboarded ?? false}
         onOpenAddModal={() => setIsFormModalOpen(true)}
       />
+
+      <PwaInstallPrompt />
 
       {/* Mobile Top App Bar */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-2xl px-4 py-3 sm:px-6">

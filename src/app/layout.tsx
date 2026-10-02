@@ -29,7 +29,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#080313",
+  themeColor: "#ec4899",
 };
 
 export const metadata: Metadata = {
@@ -37,6 +37,12 @@ export const metadata: Metadata = {
   description: "Killsub ti ukáže kolik platíš za předplatná, pomůže ti zrušit ta zbytečná a ušetřit peníze. Netflix, Spotify, Adobe a stovky dalších.",
   keywords: "předplatné, správa předplatných, zrušit předplatné, Netflix, Spotify, ušetřit peníze",
   metadataBase: new URL("https://killsub.vercel.app"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Killsub",
+  },
   openGraph: {
     title: "Killsub — Zabij zbytečná předplatná",
     description: "Přehled všech předplatných na jednom místě. Zjisti kolik platíš a ušetři.",
@@ -67,6 +73,9 @@ export default function RootLayout({
       data-theme="neon"
       className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </head>
       <body className="min-h-full flex flex-col antialiased selection:bg-pink-500/30 selection:text-pink-200">
         <ThemeProvider>
           {children}
