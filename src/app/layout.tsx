@@ -33,8 +33,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Killsub VII — Mobilní správce předplatných",
-  description: "Inteligentní kontrola nákladů, AI extrakce faktur a eliminace zbytečných plateb v designu oceněném RedDot & UXDA.",
+  title: "Killsub — Přehled všech předplatných na jednom místě",
+  description: "Killsub ti ukáže kolik platíš za předplatná, pomůže ti zrušit ta zbytečná a ušetřit peníze. Netflix, Spotify, Adobe a stovky dalších.",
+  keywords: "předplatné, správa předplatných, zrušit předplatné, Netflix, Spotify, ušetřit peníze",
+  metadataBase: new URL("https://killsub.vercel.app"),
+  openGraph: {
+    title: "Killsub — Zabij zbytečná předplatná",
+    description: "Přehled všech předplatných na jednom místě. Zjisti kolik platíš a ušetři.",
+    url: "https://killsub.vercel.app",
+    siteName: "Killsub",
+    locale: "cs_CZ",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Killsub — Zabij zbytečná předplatná",
+    description: "Přehled všech předplatných na jednom místě.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

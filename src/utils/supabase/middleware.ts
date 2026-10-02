@@ -38,7 +38,9 @@ export async function updateSession(request: NextRequest) {
                         request.nextUrl.pathname.startsWith('/api/cron/') ||
                         request.nextUrl.pathname.startsWith('/api/stripe/webhook') ||
                         request.nextUrl.pathname.startsWith('/api/email/inbound') ||
-                        request.nextUrl.pathname.startsWith('/u/')
+                        request.nextUrl.pathname.startsWith('/u/') ||
+                        request.nextUrl.pathname === '/robots.txt' ||
+                        request.nextUrl.pathname === '/sitemap.xml'
 
   if (!user && !isPublicRoute) {
     if (request.nextUrl.pathname.startsWith('/api')) {

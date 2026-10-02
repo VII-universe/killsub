@@ -295,6 +295,25 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'Killsub',
+            url: 'https://killsub.vercel.app',
+            description: 'Správa předplatných — přehled, analýza a rušení zbytečných předplatných.',
+            applicationCategory: 'FinanceApplication',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'CZK',
+            },
+          }),
+        }}
+      />
     </div>
   )
 }
