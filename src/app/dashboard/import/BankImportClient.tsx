@@ -36,6 +36,7 @@ export default function BankImportClient() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [isDragging, setIsDragging] = useState(false)
   const [addedCount, setAddedCount] = useState(0)
+  const [editedNames, setEditedNames] = useState<Record<number, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const reset = () => {
@@ -44,6 +45,7 @@ export default function BankImportClient() {
     setDetected([])
     setSelected(new Set())
     setAddedCount(0)
+    setEditedNames({})
   }
 
   const handleFile = async (file: File) => {
@@ -109,12 +111,13 @@ export default function BankImportClient() {
 
     for (const idx of selected) {
       const sub = detected[idx]
+      const name = (editedNames[idx] ?? sub.name).trim() || sub.name
       const formData = new FormData()
-      formData.set('name', sub.name)
+      formData.set('name', name)
       formData.set('amount', String(sub.amount))
       formData.set('currency', sub.currency || 'CZK')
       formData.set('billing_cycle', sub.billing_cycle || 'monthly')
-      formData.set('category', suggestCategory(sub.name))
+      formData.set('category', suggestCategory(name))
 
       const result = await addSubscription(null, formData)
       if (result.success) successCount++
@@ -237,7 +240,14 @@ export default function BankImportClient() {
                   />
                   <div className={styles.cardBody}>
                     <div className={styles.cardTop}>
-                      <span className={styles.cardName}>{sub.name}</span>
+                      <input
+                        type="text"
+                        className={styles.cardNameInput}
+                        value={editedNames[idx] ?? sub.name}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setEditedNames((prev) => ({ ...prev, [idx]: e.target.value }))}
+                        title="Klepnutím přejmenuješ, co platba ve skutečnosti je"
+                      />
                       <span className={`${styles.badge} ${styles[`badge_${sub.confidence}`]}`}>
                         {CONFIDENCE_LABEL[sub.confidence] || sub.confidence}
                       </span>

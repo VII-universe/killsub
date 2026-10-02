@@ -186,6 +186,27 @@
   font-size: 15px; font-weight: 700; color: var(--ink);
 }
 
+.cardNameInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  padding: 0 0 1px;
+  font-family: inherit;
+  transition: border-color .15s ease;
+}
+.cardNameInput:hover {
+  border-bottom-color: rgba(255,255,255,0.2);
+}
+.cardNameInput:focus {
+  outline: none;
+  border-bottom-color: #8b5cf6;
+}
+
 .cardMeta {
   margin-top: 4px;
   font-size: 13px; color: var(--ink2);

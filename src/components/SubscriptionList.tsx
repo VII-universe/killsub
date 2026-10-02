@@ -243,13 +243,13 @@ export default function SubscriptionList({
                 <div>
                   {/* Top card header */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       {/* Brand Logo */}
                       <ServiceLogo name={sub.name} size={48} customLogoUrl={sub.logo_url} />
 
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-black text-white leading-tight">
+                          <h4 className="truncate text-sm font-black text-white leading-tight" title={sub.name}>
                             {sub.name}
                           </h4>
                         </div>
@@ -265,7 +265,7 @@ export default function SubscriptionList({
                     </div>
 
                     {!readOnly && (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-shrink-0 items-center gap-1.5">
                         {onEdit && (
                           <button
                             onClick={() => onEdit(sub)}
