@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type AnalyticsEvent =
   | 'subscription_added'
   | 'subscription_deleted'
+  | 'subscription_cancelled'
   | 'import_completed'
   | 'upgrade_clicked'
   | 'upgrade_completed'

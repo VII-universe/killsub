@@ -24,6 +24,7 @@ function parseSubscriptionForm(formData: FormData) {
   const lastUsedAt = (formData.get('last_used_at') as string) || null
   const logoUrl = (formData.get('logo_url') as string) || null
   const note = (formData.get('note') as string)?.trim() || null
+  const isTrial = formData.get('is_trial') === 'on'
 
   const manualScoreEnabled = formData.get('health_score_manual') === 'on'
   const rawScore = formData.get('health_score') as string
@@ -55,6 +56,7 @@ function parseSubscriptionForm(formData: FormData) {
       health_score_manual: manualScoreEnabled,
       health_score: manualScoreEnabled ? healthScore : null,
       note,
+      status: isTrial ? 'trial' : 'active',
     },
   }
 }
@@ -146,6 +148,34 @@ export async function updateSubscription(
 
   revalidatePath('/dashboard')
   return { success: true, message: 'Předplatné bylo upraveno.' }
+}
+
+export async function cancelSubscription(id: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { error: 'Uživatel není přihlášen.' }
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  trackEvent(supabase, user.id, 'subscription_cancelled', { id })
+
+  revalidatePath('/dashboard')
+  return { success: true }
 }
 
 export async function deleteSubscription(id: string): Promise<{ error?: string; success?: boolean }> {

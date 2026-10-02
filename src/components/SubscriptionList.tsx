@@ -1,10 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import DeleteSubscriptionButton from './DeleteSubscriptionButton'
 import ServiceLogo from './ServiceLogo'
+import CancelSheet from './CancelSheet'
 import { computeHealthScore, getHealthTone } from '@/utils/health'
 import { CATEGORY_COLORS, Category } from '@/utils/categories'
+import { cancelSubscription } from '@/app/actions/subscriptions'
+import { getCleanseState, recordCleanseCancellation } from '@/utils/cleanse'
 
 export interface Subscription {
   id: string
@@ -21,6 +23,7 @@ export interface Subscription {
   logo_url?: string | null
   created_at?: string
   note?: string | null
+  status?: 'active' | 'cancelled' | 'trial' | null
 }
 
 export default function SubscriptionList({
@@ -40,6 +43,21 @@ export default function SubscriptionList({
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterCycle, setFilterCycle] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'date' | 'amount-desc' | 'name'>('date')
+  const [showCancelled, setShowCancelled] = useState(false)
+  const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
+
+  const cancelledCount = subscriptions.filter((s) => s.status === 'cancelled').length
+
+  const handleConfirmCancel = async (id: string) => {
+    setIsCancelling(true)
+    const result = await cancelSubscription(id)
+    if (!result.error && getCleanseState().active) {
+      recordCleanseCancellation(id)
+    }
+    setIsCancelling(false)
+    setCancelTarget(null)
+  }
 
   const enrichedSubs = useMemo(() => {
     return subscriptions.map((s) => ({
@@ -60,7 +78,8 @@ export default function SubscriptionList({
         const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase())
         const matchesCategory = filterCategory === 'all' || s.category === filterCategory
         const matchesCycle = filterCycle === 'all' || s.billing_cycle === filterCycle
-        return matchesSearch && matchesCategory && matchesCycle
+        const matchesCancelled = showCancelled || s.status !== 'cancelled'
+        return matchesSearch && matchesCategory && matchesCycle && matchesCancelled
       })
       .sort((a, b) => {
         if (sortBy === 'amount-desc') {
@@ -75,7 +94,7 @@ export default function SubscriptionList({
         const bTime = b.next_payment_date ? new Date(b.next_payment_date).getTime() : Infinity
         return aTime - bTime
       })
-  }, [enrichedSubs, search, filterCategory, filterCycle, sortBy])
+  }, [enrichedSubs, search, filterCategory, filterCycle, sortBy, showCancelled])
 
   const getDaysRemaining = (dateString: string | null) => {
     if (!dateString) return null
@@ -181,6 +200,18 @@ export default function SubscriptionList({
             </svg>
           </div>
         </div>
+
+        {cancelledCount > 0 && (
+          <label className="flex items-center gap-2 self-start text-[11px] font-semibold text-white/60 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showCancelled}
+              onChange={(e) => setShowCancelled(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
+            />
+            Zobrazit zrušená ({cancelledCount})
+          </label>
+        )}
       </div>
 
       {/* Subscriptions List (Mobile optimized tactile cards) */}
@@ -229,6 +260,8 @@ export default function SubscriptionList({
             const yearlyCost = sub.billing_cycle === 'yearly' ? sub.amount : sub.amount * 12
 
             const catColor = CATEGORY_COLORS[sub.category as Category] || '#64748b'
+            const isCancelled = sub.status === 'cancelled'
+            const isTrial = sub.status === 'trial'
 
             return (
               <div
@@ -240,7 +273,7 @@ export default function SubscriptionList({
                 }
                 style={{ borderLeft: `3px solid ${catColor}` }}
                 className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
-                  isLowHealth ? 'border-rose-500/50' : 'border-white/10'
+                  isCancelled ? 'opacity-50' : isLowHealth ? 'border-rose-500/50' : 'border-white/10'
                 }`}
               >
                 <div>
@@ -252,7 +285,12 @@ export default function SubscriptionList({
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="truncate text-sm font-black text-white leading-tight" title={sub.name}>
+                          <h4
+                            className={`truncate text-sm font-black leading-tight ${
+                              isCancelled ? 'text-white/50 line-through' : 'text-white'
+                            }`}
+                            title={sub.name}
+                          >
                             {sub.name}
                           </h4>
                         </div>
@@ -270,11 +308,21 @@ export default function SubscriptionList({
                           <span className="text-[10px] text-white/50">
                             • {sub.billing_cycle === 'yearly' ? 'Ročně' : 'Měsíčně'}
                           </span>
+                          {isTrial && (
+                            <span className="inline-block rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">
+                              Trial
+                            </span>
+                          )}
+                          {isCancelled && (
+                            <span className="inline-block rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white/50">
+                              Zrušeno
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {!readOnly && (
+                    {!readOnly && !isCancelled && (
                       <div className="flex flex-shrink-0 items-center gap-1.5">
                         {onEdit && (
                           <button
@@ -287,13 +335,15 @@ export default function SubscriptionList({
                             </svg>
                           </button>
                         )}
-                        <DeleteSubscriptionButton
-                          id={sub.id}
-                          serviceName={sub.name}
-                          amount={sub.amount}
-                          currency={sub.currency}
-                          billingCycle={sub.billing_cycle}
-                        />
+                        <button
+                          onClick={() => setCancelTarget(sub)}
+                          title="Zrušit předplatné"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-slate-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -358,7 +408,7 @@ export default function SubscriptionList({
                     </span>
                   </div>
 
-                  {daysRemaining !== null && (
+                  {daysRemaining !== null && !isCancelled && (
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black font-mono shadow-sm ${
                         isOverdue
@@ -382,6 +432,14 @@ export default function SubscriptionList({
             )
           })}
         </div>
+      )}
+
+      {cancelTarget && (
+        <CancelSheet
+          subscription={cancelTarget}
+          onClose={() => !isCancelling && setCancelTarget(null)}
+          onConfirmCancel={handleConfirmCancel}
+        />
       )}
     </div>
   )

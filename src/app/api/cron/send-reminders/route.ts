@@ -35,6 +35,28 @@ function renderReminderEmail(name: string, amount: number, currency: string, day
   `
 }
 
+function renderTrialEndingEmail(name: string, amount: number, currency: string, daysLeft: number, dashboardUrl: string) {
+  const amountStr = `${amount.toLocaleString('cs-CZ')} ${currency}`
+  const headline =
+    daysLeft <= 0
+      ? `Pozor — tvůj trial <strong>${name}</strong> končí dnes, jinak ti strhnou <strong>${amountStr}</strong>.`
+      : `Pozor — tvůj trial <strong>${name}</strong> končí za ${daysLeft} ${daysLeft === 1 ? 'den' : daysLeft < 5 ? 'dny' : 'dní'}, jinak ti strhnou <strong>${amountStr}</strong>.`
+
+  return `
+    <div style="font-family: sans-serif; background: #090a0f; color: #fff; padding: 32px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #f59e0b, #ec4899);"></div>
+        <span style="font-weight: 900; font-size: 14px; letter-spacing: -0.2px;">Killsub</span>
+      </div>
+      <h2 style="margin: 0 0 12px; font-size: 18px;">Trial brzy končí</h2>
+      <p style="color: #cbd5e1; line-height: 1.6;">${headline}</p>
+      <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: bold;">
+        Spravovat v Killsub
+      </a>
+    </div>
+  `
+}
+
 interface RenewalSubscription {
   id: string
   name: string
@@ -167,6 +189,71 @@ export async function GET(request: NextRequest) {
         } catch (err: any) {
           errors.push(err?.message || 'Neznámá chyba při odesílání e-mailu.')
         }
+      }
+    }
+  }
+
+  // ---- Trial-ending e-mails: any 'trial' subscription renewing within 7 days, once per day ----
+  let trialSent = 0
+
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const todayStr = formatDate(new Date())
+    const trialWindowEnd = new Date()
+    trialWindowEnd.setDate(trialWindowEnd.getDate() + 7)
+    const trialWindowEndStr = formatDate(trialWindowEnd)
+
+    const { data: trialSubs, error: trialSubsError } = await supabase
+      .from('subscriptions')
+      .select('id, user_id, name, amount, currency, next_payment_date')
+      .eq('status', 'trial')
+      .not('next_payment_date', 'is', null)
+      .lte('next_payment_date', trialWindowEndStr)
+      .gte('next_payment_date', todayStr)
+
+    if (trialSubsError) {
+      errors.push(trialSubsError.message)
+    }
+
+    for (const sub of trialSubs || []) {
+      const { data: existingLog } = await supabase
+        .from('notification_log')
+        .select('id')
+        .eq('subscription_id', sub.id)
+        .eq('sent_for_date', todayStr)
+        .maybeSingle()
+
+      if (existingLog) {
+        skipped++
+        continue
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(sub.user_id)
+      if (userError || !userData?.user?.email) {
+        errors.push(`Chybí e-mail pro uživatele ${sub.user_id}`)
+        continue
+      }
+
+      const daysLeft = Math.round(
+        (new Date(sub.next_payment_date).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      try {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || 'Killsub <onboarding@resend.dev>',
+          to: userData.user.email,
+          subject: `Tvůj trial ${sub.name} brzy končí`,
+          html: renderTrialEndingEmail(sub.name, sub.amount, sub.currency, daysLeft, dashboardUrl),
+        })
+
+        await supabase.from('notification_log').insert({
+          subscription_id: sub.id,
+          sent_for_date: todayStr,
+        })
+
+        trialSent++
+      } catch (err) {
+        errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání e-mailu o trialu.')
       }
     }
   }
@@ -312,5 +399,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent, skipped, pushSent, pushSkipped, remindersSent, errors })
+  return NextResponse.json({ sent, skipped, trialSent, pushSent, pushSkipped, remindersSent, errors })
 }

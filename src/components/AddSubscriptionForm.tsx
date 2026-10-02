@@ -67,6 +67,7 @@ export default function AddSubscriptionForm({
   const [logoUrl, setLogoUrl] = useState(subscription?.logo_url || '')
   const [note, setNote] = useState(subscription?.note || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
+  const [isTrial, setIsTrial] = useState(subscription?.status === 'trial')
   const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
   const [scoreValue, setScoreValue] = useState(
     subscription?.health_score ? String(subscription.health_score) : '80'
@@ -99,6 +100,7 @@ export default function AddSubscriptionForm({
         setCategory('Ostatní')
         setLogoUrl('')
         setLastUsedAt('')
+        setIsTrial(false)
         setManualScore(false)
         setScoreValue('80')
       }
@@ -506,6 +508,22 @@ export default function AddSubscriptionForm({
               />
               <p className="mt-1 text-[10px] text-white/40">
                 Ovlivňuje zdravotní skóre — pokud službu dlouho nepoužíváte, skóre postupně klesá.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3.5">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="is_trial"
+                  checked={isTrial}
+                  onChange={(e) => setIsTrial(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/40 accent-amber-500"
+                />
+                <span className="text-xs font-bold text-white/90">Je to trial (zkušební verze)</span>
+              </label>
+              <p className="mt-1.5 text-[10px] text-white/40">
+                Před koncem trialu tě upozorníme e-mailem, než ti začnou účtovat plnou cenu.
               </p>
             </div>
 
