@@ -1,5 +1,4 @@
 import Papa from 'papaparse'
-import OpenAI from 'openai'
 
 export interface ParsedTransaction {
   date: string
@@ -98,25 +97,38 @@ export async function detectSubscriptionsFromText(
   transactionsText: string,
   defaultCurrency = 'CZK'
 ): Promise<DetectedSubscription[]> {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
-    throw new Error('Chybí platný OPENAI_API_KEY.')
+    throw new Error('Chybí platný OPENROUTER_API_KEY.')
   }
 
-  const openai = new OpenAI({ apiKey })
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 0.1,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: `Default currency if not specified in a transaction: ${defaultCurrency}\n\nTransactions:\n${transactionsText}`,
-      },
-    ],
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://killsub.vercel.app',
+      'X-Title': 'Killsub',
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: `Default currency if not specified in a transaction: ${defaultCurrency}\n\nTransactions:\n${transactionsText}`,
+        },
+      ],
+    }),
   })
 
-  const raw = completion.choices[0]?.message?.content?.trim() || '[]'
+  if (!response.ok) {
+    throw new Error(`OpenRouter API chyba: ${response.status} ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  const raw = (data.choices?.[0]?.message?.content || '[]').trim()
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim()
 
   let parsed: unknown
