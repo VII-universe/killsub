@@ -127,6 +127,28 @@ html[data-theme="emerald"] {
   --pill-bg: rgba(16, 185, 129, 0.15);
 }
 
+/* ========================================================
+   LIGHT MODE — a separate `data-mode` attribute (not `data-theme`),
+   so it layers on top of whichever of the 5 accent themes above is
+   active instead of competing with them for the same attribute.
+   Overrides the shared surface/text/border tokens; Tailwind utility
+   classes and inline styles elsewhere are intentionally left as-is
+   (see useColorMode.ts for why).
+   ======================================================== */
+html[data-mode="light"] {
+  --bg-app: #f8f5ff;
+  --bg-surface: #ede9fe;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-card-hover: rgba(255, 255, 255, 0.92);
+  --border-subtle: rgba(26, 15, 53, 0.12);
+  --border-strong: rgba(26, 15, 53, 0.25);
+  --text-main: #1a0f35;
+  --text-muted: rgba(26, 15, 53, 0.65);
+  --text-faint: rgba(26, 15, 53, 0.4);
+  --pill-bg: rgba(26, 15, 53, 0.08);
+  color-scheme: light;
+}
+
 /* Unified Theme Application */
 body {
   background-color: var(--bg-app);

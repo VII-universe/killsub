@@ -34,6 +34,7 @@ import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
 import { effectiveAmount } from '@/utils/subscriptionCost'
+import { useColorMode } from '@/hooks/useColorMode'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
@@ -56,6 +57,7 @@ export default function MobileDashboardView({
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
+  const { theme: colorMode, toggleTheme: toggleColorMode } = useColorMode()
 
   const openUpgrade = (message: string) => {
     trackClientEvent('upgrade_clicked', { message })
@@ -571,6 +573,34 @@ export default function MobileDashboardView({
               <h2 className="text-base font-black text-white">Nastavení aplikace</h2>
 
               <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={toggleColorMode}
+                  className="flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm"
+                  style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}
+                >
+                  <span className="text-lg">{colorMode === 'dark' ? '☀️' : '🌙'}</span>
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--text-main)' }}>
+                      {colorMode === 'dark' ? 'Světlý režim' : 'Tmavý režim'}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Aktuálně: {colorMode === 'dark' ? 'Tmavý' : 'Světlý'}
+                    </p>
+                  </div>
+                  <div className="ml-auto">
+                    <div
+                      className="relative h-6 w-11 rounded-full transition-colors"
+                      style={{ background: colorMode === 'dark' ? 'var(--accent-primary)' : 'var(--border-strong)' }}
+                    >
+                      <div
+                        className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                        style={{ transform: colorMode === 'dark' ? 'translateX(20px)' : 'translateX(2px)' }}
+                      />
+                    </div>
+                  </div>
+                </button>
+
                 <div>
                   <span className="text-[11px] text-white/60 font-semibold block">Vizuální styl (Téma)</span>
                   <div className="mt-1.5">

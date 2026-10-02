@@ -75,6 +75,16 @@ export default function RootLayout({
     >
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+  try {
+    const m = localStorage.getItem('killsub_theme');
+    if (m) document.documentElement.setAttribute('data-mode', m);
+  } catch(e) {}
+`,
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col antialiased selection:bg-pink-500/30 selection:text-pink-200">
         <ThemeProvider>
