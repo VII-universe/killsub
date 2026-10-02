@@ -5,6 +5,7 @@ import Link from 'next/link'
 import styles from './import.module.css'
 import { addSubscription } from '@/app/actions/subscriptions'
 import { suggestCategory } from '@/utils/categories'
+import UpgradeModal from '@/components/UpgradeModal'
 
 interface DetectedSubscription {
   name: string
@@ -14,7 +15,7 @@ interface DetectedSubscription {
   confidence: 'high' | 'medium' | 'low'
 }
 
-type Status = 'idle' | 'analyzing' | 'results' | 'error' | 'adding' | 'added'
+type Status = 'idle' | 'analyzing' | 'results' | 'error' | 'adding' | 'added' | 'pro_required'
 
 const CYCLE_LABEL: Record<string, string> = {
   monthly: 'měsíčně',
@@ -50,13 +51,34 @@ export default function BankImportClient() {
     setError(null)
 
     try {
-      const formData = new FormData()
-      formData.set('file', file)
+      const uploadRes = await fetch('/api/import/upload', {
+        method: 'PUT',
+        headers: {
+          'content-type': file.type || 'application/octet-stream',
+          'x-filename': encodeURIComponent(file.name),
+        },
+        body: file,
+      })
+      const uploadData = await uploadRes.json()
 
-      const res = await fetch('/api/import', { method: 'POST', body: formData })
+      if (!uploadRes.ok) {
+        setError(uploadData?.error || 'Nepodařilo se nahrát soubor.')
+        setStatus('error')
+        return
+      }
+
+      const res = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ blobUrl: uploadData.url, filename: file.name }),
+      })
       const data = await res.json()
 
       if (!res.ok) {
+        if (res.status === 403 && data?.error === 'pro_required') {
+          setStatus('pro_required')
+          return
+        }
         setError(data?.error || 'Nastala chyba při analýze výpisu.')
         setStatus('error')
         return
@@ -131,9 +153,10 @@ export default function BankImportClient() {
           Nahraj CSV nebo PDF výpis z banky a AI za tebe najde opakující se platby za předplatná.
         </p>
 
-        {status === 'idle' && (
+        {(status === 'idle' || status === 'analyzing' || status === 'pro_required') && (
           <div
             className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''}`}
+            style={status === 'analyzing' ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
             onDragOver={(e) => {
               e.preventDefault()
               setIsDragging(true)
@@ -160,6 +183,13 @@ export default function BankImportClient() {
             <p className={styles.dropzoneTitle}>Přetáhni sem výpis z banky</p>
             <p className={styles.dropzoneHint}>nebo klikni pro výběr souboru · CSV nebo PDF, max 10 MB</p>
           </div>
+        )}
+
+        {status === 'pro_required' && (
+          <UpgradeModal
+            message="Import z bankovního výpisu pomocí AI je dostupný pouze pro Pro plán."
+            onClose={() => setStatus('idle')}
+          />
         )}
 
         {status === 'analyzing' && (

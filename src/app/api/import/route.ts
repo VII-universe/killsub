@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
+import { del } from '@vercel/blob'
 import { createClient } from '@/utils/supabase/server'
 import { parseCsvTransactions, transactionsToText, extractPdfText, detectSubscriptionsFromText } from '@/utils/bankImport'
 
-const MAX_SIZE = 10 * 1024 * 1024
-
 export async function POST(request: Request) {
+  let blobUrl: string | undefined
+
   try {
     const supabase = await createClient()
     const {
@@ -15,26 +16,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Uživatel není přihlášen.' }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const file = formData.get('file')
+    const body = await request.json().catch(() => null)
+    blobUrl = typeof body?.blobUrl === 'string' ? body.blobUrl : undefined
+    const filename: string = typeof body?.filename === 'string' ? body.filename : ''
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: 'Nahrajte prosím soubor s výpisem (CSV nebo PDF).' }, { status: 400 })
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('plan')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!profile || profile.plan !== 'pro') {
+      return NextResponse.json({ error: 'pro_required' }, { status: 403 })
     }
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'Soubor je příliš velký. Maximální velikost je 10 MB.' }, { status: 400 })
+    if (!blobUrl) {
+      return NextResponse.json({ error: 'Chybí odkaz na nahraný soubor.' }, { status: 400 })
     }
 
-    const lowerName = file.name.toLowerCase()
-    const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf')
-    const isCsv = file.type === 'text/csv' || lowerName.endsWith('.csv')
+    const fileRes = await fetch(blobUrl)
+    if (!fileRes.ok) {
+      return NextResponse.json({ error: 'Nepodařilo se stáhnout nahraný soubor.' }, { status: 400 })
+    }
+    const buffer = Buffer.from(await fileRes.arrayBuffer())
+
+    const lowerName = filename.toLowerCase()
+    const isPdf = lowerName.endsWith('.pdf')
+    const isCsv = lowerName.endsWith('.csv')
 
     if (!isPdf && !isCsv) {
       return NextResponse.json({ error: 'Podporované formáty jsou CSV a PDF.' }, { status: 400 })
     }
-
-    const buffer = Buffer.from(await file.arrayBuffer())
 
     let transactionsText: string
     if (isCsv) {
@@ -60,5 +72,13 @@ export async function POST(request: Request) {
     console.error('Chyba při importu bankovního výpisu:', error)
     const message = error instanceof Error ? error.message : 'Nastala neočekávaná chyba při analýze výpisu.'
     return NextResponse.json({ error: message }, { status: 500 })
+  } finally {
+    if (blobUrl) {
+      try {
+        await del(blobUrl, { token: process.env.BLOB_READ_WRITE_TOKEN })
+      } catch (cleanupError) {
+        console.error('Nepodařilo se smazat dočasný blob:', cleanupError)
+      }
+    }
   }
 }
