@@ -300,9 +300,43 @@ export default function MobileDashboardView({
               </div>
             </div>
 
-            {effectiveSubscriptions.length > 0 && <PortfolioScoreCard subscriptions={effectiveSubscriptions} />}
+            {effectiveSubscriptions.length > 0 && (
+              <div className="relative">
+                <div className={!isPro ? 'pointer-events-none select-none blur-sm opacity-50' : ''}>
+                  <PortfolioScoreCard subscriptions={effectiveSubscriptions} />
+                </div>
+                {!isPro && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
+                    <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
+                    <button
+                      onClick={() => setUpgradeMessage('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
+                      className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
+                    >
+                      Odemknout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {effectiveSubscriptions.length > 0 && <CategoryChart subscriptions={effectiveSubscriptions} />}
+            {effectiveSubscriptions.length > 0 && (
+              <div className="relative">
+                <div className={!isPro ? 'pointer-events-none select-none blur-sm opacity-50' : ''}>
+                  <CategoryChart subscriptions={effectiveSubscriptions} />
+                </div>
+                {!isPro && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
+                    <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
+                    <button
+                      onClick={() => setUpgradeMessage('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
+                      className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
+                    >
+                      Odemknout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <RemindersWidget />
 
@@ -374,10 +408,39 @@ export default function MobileDashboardView({
                   readOnly={isDemoMode && subscriptions.length === 0}
                 />
               )}
+
+              {!isPro && effectiveSubscriptions.length >= 4 && (
+                <div className="mt-3 rounded-2xl border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/10 p-3 flex items-center justify-between">
+                  <p className="text-xs text-white/70">
+                    <span className="font-bold text-white">1 předplatné do limitu.</span> Free plán = max 5.
+                  </p>
+                  <button
+                    onClick={() => setUpgradeMessage('Přejděte na Pro a spravujte neomezené množství předplatných.')}
+                    className="ml-3 shrink-0 rounded-xl theme-accent-btn px-3 py-1.5 text-xs font-black"
+                  >
+                    Pro
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Cleanse challenge + viral share — last thing before the bottom nav */}
-            <CleanseChallenge />
+            <div className="relative">
+              <div className={!isPro ? 'pointer-events-none select-none blur-sm opacity-50' : ''}>
+                <CleanseChallenge />
+              </div>
+              {!isPro && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
+                  <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
+                  <button
+                    onClick={() => setUpgradeMessage('Cleanse Challenge je součástí Killsub Pro.')}
+                    className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
+                  >
+                    Odemknout
+                  </button>
+                </div>
+              )}
+            </div>
 
             {effectiveSubscriptions.length > 0 && (
               <ShareWrappedButton subscriptions={effectiveSubscriptions} variant="prominent" />

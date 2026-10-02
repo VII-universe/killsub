@@ -46,6 +46,21 @@ export default function UpgradeModal({
         <h3 className="text-lg font-black text-white">Přejděte na Killsub Pro</h3>
         <p className="mt-2 text-xs text-white/70 leading-relaxed">{message}</p>
 
+        <ul className="mt-3 mb-1 space-y-1.5">
+          {[
+            'Neomezený počet předplatných',
+            'AI skenování bankovních výpisů',
+            'E-mailové notifikace a připomínky',
+            'Killsub Wrapped — roční přehled',
+            'Správa sdílených předplatných',
+          ].map((benefit) => (
+            <li key={benefit} className="flex items-center gap-2 text-xs text-white/80">
+              <span className="text-[var(--accent-primary)]">✓</span>
+              {benefit}
+            </li>
+          ))}
+        </ul>
+
         {error && (
           <div className="mt-3 rounded-xl border border-rose-500/40 bg-rose-950/50 p-2.5 text-xs text-rose-300">
             {error}
@@ -61,14 +76,19 @@ export default function UpgradeModal({
             <span>Měsíčně</span>
             <span>{PRO_PRICE_MONTHLY_CZK} Kč/měs.</span>
           </button>
-          <button
-            onClick={() => startCheckout('yearly')}
-            disabled={isLoading}
-            className="flex w-full items-center justify-between rounded-2xl border border-white/15 bg-white/5 py-3 px-4 text-xs font-black text-white hover:bg-white/10 disabled:opacity-50"
-          >
-            <span>Ročně</span>
-            <span>{PRO_PRICE_YEARLY_CZK} Kč/rok</span>
-          </button>
+          <div className="relative">
+            <span className="absolute -top-2 right-3 rounded-full bg-green-500/20 border border-green-500/40 px-2 py-0.5 text-[10px] font-black text-green-400">
+              Ušetříš {Math.round((PRO_PRICE_MONTHLY_CZK * 12 - PRO_PRICE_YEARLY_CZK) / PRO_PRICE_MONTHLY_CZK)} měsíce zdarma
+            </span>
+            <button
+              onClick={() => startCheckout('yearly')}
+              disabled={isLoading}
+              className="flex w-full items-center justify-between rounded-2xl border border-white/15 bg-white/5 py-3 px-4 text-xs font-black text-white hover:bg-white/10 disabled:opacity-50"
+            >
+              <span>Ročně</span>
+              <span>{PRO_PRICE_YEARLY_CZK} Kč/rok</span>
+            </button>
+          </div>
         </div>
 
         <button
