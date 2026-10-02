@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { isCategory } from '@/utils/categories'
 import { FREE_PLAN_SUBSCRIPTION_LIMIT } from '@/utils/plan'
+import { trackEvent } from '@/utils/analytics'
 
 export type SubscriptionState = {
   error?: string
@@ -105,6 +106,11 @@ export async function addSubscription(
     return { error: `Chyba při ukládání: ${error.message}` }
   }
 
+  trackEvent(supabase, user.id, 'subscription_added', {
+    category: parsed.values.category,
+    billing_cycle: parsed.values.billing_cycle,
+  })
+
   revalidatePath('/dashboard')
   return { success: true, message: 'Předplatné bylo úspěšně přidáno.' }
 }
@@ -163,6 +169,8 @@ export async function deleteSubscription(id: string): Promise<{ error?: string; 
   if (error) {
     return { error: error.message }
   }
+
+  trackEvent(supabase, user.id, 'subscription_deleted', { id })
 
   revalidatePath('/dashboard')
   return { success: true }

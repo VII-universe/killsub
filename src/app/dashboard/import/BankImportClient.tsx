@@ -6,6 +6,7 @@ import styles from './import.module.css'
 import { addSubscription } from '@/app/actions/subscriptions'
 import { suggestCategory } from '@/utils/categories'
 import UpgradeModal from '@/components/UpgradeModal'
+import { trackClientEvent } from '@/utils/analyticsClient'
 
 interface DetectedSubscription {
   name: string
@@ -78,6 +79,7 @@ export default function BankImportClient() {
 
       if (!res.ok) {
         if (res.status === 403 && data?.error === 'pro_required') {
+          trackClientEvent('upgrade_clicked', { message: 'bank_import' })
           setStatus('pro_required')
           return
         }

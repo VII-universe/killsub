@@ -30,6 +30,7 @@ import CatalogPicker from '@/components/CatalogPicker'
 import SpendingTrendsChart from '@/components/SpendingTrendsChart'
 import HelpSheet from '@/components/HelpSheet'
 import { updateStreak } from '@/utils/badges'
+import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
@@ -53,6 +54,11 @@ export default function MobileDashboardView({
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
+
+  const openUpgrade = (message: string) => {
+    trackClientEvent('upgrade_clicked', { message })
+    setUpgradeMessage(message)
+  }
   const [startAddModalInAiMode, setStartAddModalInAiMode] = useState(false)
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -91,7 +97,7 @@ export default function MobileDashboardView({
       setStartAddModalInAiMode(true)
       setIsFormModalOpen(true)
     } else {
-      setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
+      openUpgrade('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
     }
   }
 
@@ -331,7 +337,7 @@ export default function MobileDashboardView({
                   <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
                     <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
                     <button
-                      onClick={() => setUpgradeMessage('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
+                      onClick={() => openUpgrade('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
                       className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
                     >
                       Odemknout
@@ -350,7 +356,7 @@ export default function MobileDashboardView({
                   <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
                     <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
                     <button
-                      onClick={() => setUpgradeMessage('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
+                      onClick={() => openUpgrade('Portfolio skóre a kategorizace jsou součástí Killsub Pro.')}
                       className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
                     >
                       Odemknout
@@ -364,7 +370,7 @@ export default function MobileDashboardView({
               <SpendingTrendsChart
                 subscriptions={effectiveSubscriptions}
                 isPro={isPro}
-                onUpgrade={() => setUpgradeMessage('Vývoj výdajů za 12 měsíců je součástí Killsub Pro.')}
+                onUpgrade={() => openUpgrade('Vývoj výdajů za 12 měsíců je součástí Killsub Pro.')}
               />
             )}
 
@@ -460,7 +466,7 @@ export default function MobileDashboardView({
                     <span className="font-bold text-white">1 předplatné do limitu.</span> Free plán = max 5.
                   </p>
                   <button
-                    onClick={() => setUpgradeMessage('Přejděte na Pro a spravujte neomezené množství předplatných.')}
+                    onClick={() => openUpgrade('Přejděte na Pro a spravujte neomezené množství předplatných.')}
                     className="ml-3 shrink-0 rounded-xl theme-accent-btn px-3 py-1.5 text-xs font-black"
                   >
                     Pro
@@ -478,7 +484,7 @@ export default function MobileDashboardView({
                 <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
                   <p className="text-xs font-bold text-white/80 mb-2">Dostupné v Pro</p>
                   <button
-                    onClick={() => setUpgradeMessage('Cleanse Challenge je součástí Killsub Pro.')}
+                    onClick={() => openUpgrade('Cleanse Challenge je součástí Killsub Pro.')}
                     className="rounded-xl theme-accent-btn px-4 py-1.5 text-xs font-black"
                   >
                     Odemknout
@@ -590,7 +596,7 @@ export default function MobileDashboardView({
 
             <BadgesPanel subscriptions={subscriptions} />
 
-            <NotificationSettingsPanel isPro={isPro} onLocked={() => setUpgradeMessage('E-mailové notifikace jsou dostupné pouze pro Pro plán.')} />
+            <NotificationSettingsPanel isPro={isPro} onLocked={() => openUpgrade('E-mailové notifikace jsou dostupné pouze pro Pro plán.')} />
 
             <PushNotificationsPanel />
 
@@ -659,11 +665,11 @@ export default function MobileDashboardView({
               isPro={isPro}
               onAiLocked={() => {
                 closeFormModal()
-                setUpgradeMessage('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
+                openUpgrade('AI import faktur pomocí Gemini je dostupný pouze pro Pro plán.')
               }}
               onLimitReached={() => {
                 closeFormModal()
-                setUpgradeMessage('Dosáhli jste limitu Free plánu (5 předplatných). Přejděte na Pro a spravujte neomezené předplatné.')
+                openUpgrade('Dosáhli jste limitu Free plánu (5 předplatných). Přejděte na Pro a spravujte neomezené předplatné.')
               }}
             />
           </div>

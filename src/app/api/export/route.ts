@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { trackEvent } from '@/utils/analytics'
 
 function escapeCsvField(value: string | number): string {
   const str = String(value)
@@ -73,6 +74,8 @@ export async function GET() {
     )
     csv = [header, ...rows].join('\n')
   }
+
+  trackEvent(supabase, user.id, 'export_downloaded', { isPro, count: subscriptions.length })
 
   return new NextResponse(csv, {
     status: 200,

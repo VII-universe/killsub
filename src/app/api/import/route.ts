@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { del, get } from '@vercel/blob'
 import { createClient } from '@/utils/supabase/server'
 import { parseCsvTransactions, transactionsToText, extractPdfText, detectSubscriptionsFromText } from '@/utils/bankImport'
+import { trackEvent } from '@/utils/analytics'
 
 export async function POST(request: Request) {
   let blobUrl: string | undefined
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
     }
 
     const subscriptions = await detectSubscriptionsFromText(transactionsText)
+    trackEvent(supabase, user.id, 'import_completed', { detectedCount: subscriptions.length })
     return NextResponse.json({ subscriptions })
   } catch (error) {
     console.error('Chyba při importu bankovního výpisu:', error)

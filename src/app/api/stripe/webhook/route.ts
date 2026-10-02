@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import Stripe from 'stripe'
 import { getStripe } from '@/utils/stripe'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { trackEvent } from '@/utils/analytics'
 
 // Stripe moved `current_period_end` from the Subscription object onto each SubscriptionItem.
 function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number | null {
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
         .eq('user_id', userId)
 
       await grantReferralBonus(admin, userId)
+      trackEvent(admin, userId, 'upgrade_completed', { customerId, subscriptionId })
       break
     }
 
