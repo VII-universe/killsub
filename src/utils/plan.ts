@@ -8,4 +8,5 @@ export interface UserProfileData {
   referralCode: string
   isPublic: boolean
   importToken: string
+  onboarded: boolean
 }

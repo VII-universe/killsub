@@ -97,3 +97,23 @@ export async function togglePublicProfile(
   revalidatePath('/dashboard')
   return { success: true }
 }
+
+export async function markOnboarded(): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Uživatel není přihlášen.' }
+  }
+
+  const { error } = await supabase.from('user_profiles').update({ onboarded: true }).eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true }
+}

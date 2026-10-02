@@ -164,7 +164,11 @@ export default function MobileDashboardView({
       className="min-h-screen flex flex-col text-white"
       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 112px)' }}
     >
-      <OnboardingOverlay subscriptionsCount={subscriptions.length} onOpenAddModal={() => setIsFormModalOpen(true)} />
+      <OnboardingOverlay
+        subscriptions={subscriptions}
+        onboarded={profile?.onboarded ?? false}
+        onOpenAddModal={() => setIsFormModalOpen(true)}
+      />
 
       {/* Mobile Top App Bar */}
       <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-2xl px-4 py-3 sm:px-6">
