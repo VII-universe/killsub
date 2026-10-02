@@ -107,6 +107,13 @@ export default function Home() {
             <Link href="/register" className={`${styles.btnStart} ${styles.heroAnim}`} style={{ animationDelay: '360ms' }}>
               Začít zdarma <span className={styles.arrow}>→</span>
             </Link>
+            <a
+              href="/try"
+              className={`${styles.heroAnim} inline-block rounded-2xl border border-white/20 px-6 py-3 text-sm text-white/70 transition-colors hover:border-white/40 hover:text-white`}
+              style={{ animationDelay: '400ms' }}
+            >
+              Zkusit bez registrace →
+            </a>
             <div className={`${styles.heroNote} ${styles.heroAnim}`} style={{ animationDelay: '440ms' }}>
               Průměrná úspora po prvním měsíci: <strong>420 Kč</strong>
             </div>

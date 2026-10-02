@@ -34,10 +34,12 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = request.nextUrl.pathname === '/' ||
                         request.nextUrl.pathname === '/login' ||
                         request.nextUrl.pathname === '/register' ||
+                        request.nextUrl.pathname === '/try' ||
                         request.nextUrl.pathname.startsWith('/auth/') ||
                         request.nextUrl.pathname.startsWith('/api/cron/') ||
                         request.nextUrl.pathname.startsWith('/api/stripe/webhook') ||
                         request.nextUrl.pathname.startsWith('/api/email/inbound') ||
+                        request.nextUrl.pathname.startsWith('/api/analytics') ||
                         request.nextUrl.pathname.startsWith('/u/') ||
                         request.nextUrl.pathname === '/robots.txt' ||
                         request.nextUrl.pathname === '/sitemap.xml'
