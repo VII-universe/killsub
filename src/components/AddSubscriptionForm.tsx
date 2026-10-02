@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { addSubscription, updateSubscription, SubscriptionState } from '@/app/actions/subscriptions'
 import { Subscription } from './SubscriptionList'
 import { CATEGORIES, suggestCategory } from '@/utils/categories'
@@ -202,18 +203,31 @@ export default function AddSubscriptionForm({
               }
               setIsAiOpen(!isAiOpen)
             }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+            title="AI Import"
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-bold transition-all sm:px-3 ${
               isAiOpen
                 ? 'bg-[var(--accent-primary)] text-white shadow-md shadow-[var(--accent-primary)]/30'
                 : 'border border-white/15 bg-white/5 text-white/80 hover:bg-white/10'
             }`}
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
             </svg>
             {!isPro && <span className="text-[9px]">🔒</span>}
-            <span>AI Import</span>
+            <span className="hidden sm:inline">AI Import</span>
           </button>
+
+          {/* Bank statement import — separate page, not an inline mode */}
+          <Link
+            href="/dashboard/import"
+            title="Import z bankovního výpisu"
+            className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-white/80 transition-all hover:bg-white/10 sm:px-3"
+          >
+            <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14" />
+            </svg>
+            <span className="hidden sm:inline">Import z výpisu</span>
+          </Link>
 
           {onClose && (
             <button
