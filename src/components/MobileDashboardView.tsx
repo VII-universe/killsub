@@ -33,6 +33,7 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
+import { effectiveAmount } from '@/utils/subscriptionCost'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
@@ -146,7 +147,7 @@ export default function MobileDashboardView({
       effectiveSubscriptions.reduce(
         (acc, sub) => {
           const cur = sub.currency || 'CZK'
-          const amt = Number(sub.amount) || 0
+          const amt = effectiveAmount(sub)
           const monthlyAmt = sub.billing_cycle === 'yearly' ? amt / 12 : amt
           const yearlyAmt = sub.billing_cycle === 'yearly' ? amt : amt * 12
 

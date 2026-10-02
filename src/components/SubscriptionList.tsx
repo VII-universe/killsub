@@ -7,6 +7,7 @@ import { computeHealthScore, getHealthTone } from '@/utils/health'
 import { CATEGORY_COLORS, Category } from '@/utils/categories'
 import { cancelSubscription } from '@/app/actions/subscriptions'
 import { getCleanseState, recordCleanseCancellation } from '@/utils/cleanse'
+import { effectiveAmount } from '@/utils/subscriptionCost'
 
 export interface Subscription {
   id: string
@@ -24,6 +25,9 @@ export interface Subscription {
   created_at?: string
   note?: string | null
   status?: 'active' | 'cancelled' | 'trial' | null
+  shared?: boolean | null
+  shared_with?: string | null
+  my_share?: number | null
 }
 
 export default function SubscriptionList({
@@ -257,7 +261,8 @@ export default function SubscriptionList({
             const isOverdue = daysRemaining !== null && daysRemaining < 0
             const healthTone = getHealthTone(sub.healthScore)
             const isLowHealth = healthTone === 'low'
-            const yearlyCost = sub.billing_cycle === 'yearly' ? sub.amount : sub.amount * 12
+            const effAmount = effectiveAmount(sub)
+            const yearlyCost = sub.billing_cycle === 'yearly' ? effAmount : effAmount * 12
 
             const catColor = CATEGORY_COLORS[sub.category as Category] || '#64748b'
             const isCancelled = sub.status === 'cancelled'
@@ -318,6 +323,11 @@ export default function SubscriptionList({
                               Zrušeno
                             </span>
                           )}
+                          {sub.shared && (
+                            <span className="inline-block rounded-md border border-sky-500/40 bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-300">
+                              👥 Sdílené
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -376,23 +386,32 @@ export default function SubscriptionList({
                   <div className="mt-4 flex items-baseline justify-between border-t border-white/[0.06] pt-3.5">
                     <div>
                       <span className="text-[22px] font-black font-mono tracking-tight text-white">
-                        {sub.amount.toLocaleString('cs-CZ')}
+                        {effAmount.toLocaleString('cs-CZ')}
                       </span>
                       <span className="ml-1 text-xs font-black font-mono text-[var(--accent-primary)]">
                         {sub.currency}
                       </span>
+                      {sub.shared && (
+                        <span className="ml-1.5 text-[10px] font-bold text-white/40">
+                          (celkem {sub.amount.toLocaleString('cs-CZ')} {sub.currency})
+                        </span>
+                      )}
                     </div>
 
                     {sub.billing_cycle === 'yearly' ? (
                       <span className="text-[11px] font-mono font-bold text-white/60 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
-                        ~{(sub.amount / 12).toFixed(0)} {sub.currency}/měs.
+                        ~{(effAmount / 12).toFixed(0)} {sub.currency}/měs.
                       </span>
                     ) : (
                       <span className="text-[11px] font-mono font-bold text-white/60 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
-                        ~{(sub.amount * 12).toLocaleString('cs-CZ')} {sub.currency}/rok
+                        ~{(effAmount * 12).toLocaleString('cs-CZ')} {sub.currency}/rok
                       </span>
                     )}
                   </div>
+
+                  {sub.shared && sub.shared_with && (
+                    <p className="mt-1.5 text-[10px] text-white/40">Sdílím s: {sub.shared_with}</p>
+                  )}
                 </div>
 
                 {/* Bottom Footer: Next Payment + Due Badge */}

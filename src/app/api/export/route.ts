@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { trackEvent } from '@/utils/analytics'
+import { effectiveAmount } from '@/utils/subscriptionCost'
 
 function escapeCsvField(value: string | number): string {
   const str = String(value)
@@ -54,7 +55,7 @@ export async function GET() {
     const rows = subscriptions.map((s) =>
       [
         escapeCsvField(s.name),
-        s.amount,
+        effectiveAmount(s),
         cycleLabel(s.billing_cycle),
         escapeCsvField(s.category || ''),
         s.next_payment_date || '',
@@ -62,7 +63,7 @@ export async function GET() {
       ].join(',')
     )
     const totalMonthly = subscriptions.reduce(
-      (sum, s) => sum + monthlyAmount(Number(s.amount) || 0, s.billing_cycle),
+      (sum, s) => sum + monthlyAmount(effectiveAmount(s), s.billing_cycle),
       0
     )
     const footer = `,,,,Celkem měsíčně,${Math.round(totalMonthly)} Kč`
@@ -70,7 +71,7 @@ export async function GET() {
   } else {
     const header = 'Název,Cena (CZK),Frekvence,Kategorie'
     const rows = subscriptions.map((s) =>
-      [escapeCsvField(s.name), s.amount, cycleLabel(s.billing_cycle), escapeCsvField(s.category || '')].join(',')
+      [escapeCsvField(s.name), effectiveAmount(s), cycleLabel(s.billing_cycle), escapeCsvField(s.category || '')].join(',')
     )
     csv = [header, ...rows].join('\n')
   }

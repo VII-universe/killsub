@@ -2,11 +2,12 @@
 
 import { useMemo } from 'react'
 import { Subscription } from './SubscriptionList'
+import { effectiveAmount } from '@/utils/subscriptionCost'
 
 const MONTH_LABELS = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čer', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro']
 
 function monthlyAmount(sub: Subscription): number {
-  const amt = Number(sub.amount) || 0
+  const amt = effectiveAmount(sub)
   if (sub.billing_cycle === 'yearly') return amt / 12
   if (sub.billing_cycle === 'weekly') return amt * 4
   return amt

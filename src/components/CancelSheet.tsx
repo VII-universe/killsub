@@ -47,6 +47,14 @@ export default function CancelSheet({
           </div>
         </div>
 
+        {subscription.shared && (
+          <div className="mt-4 rounded-2xl border border-sky-500/40 bg-sky-500/10 p-3.5 text-xs text-sky-200 leading-relaxed">
+            👥 Toto předplatné sdílíš
+            {subscription.shared_with ? <> s <strong>{subscription.shared_with}</strong></> : ' s někým'} — ujisti
+            se, že ví o zrušení.
+          </div>
+        )}
+
         <div className="mt-6">
           <h3 className="text-xs font-black uppercase tracking-wider text-[var(--accent-primary)]">Jak zrušit</h3>
 

@@ -9,7 +9,7 @@ const SECTIONS = [
   {
     icon: '📋',
     title: 'Předplatná',
-    body: 'Správa, filtrování, přidání z katalogu nebo ručně.',
+    body: 'Správa, filtrování, přidání z katalogu nebo ručně. Sdílíš předplatné s někým? Označ ho jako sdílené a zadej jen svou část ceny — ve výdajích a grafech se pak počítá jen ta.',
   },
   {
     icon: '🤖',

@@ -25,6 +25,10 @@ function parseSubscriptionForm(formData: FormData) {
   const logoUrl = (formData.get('logo_url') as string) || null
   const note = (formData.get('note') as string)?.trim() || null
   const isTrial = formData.get('is_trial') === 'on'
+  const isShared = formData.get('shared') === 'on'
+  const sharedWith = (formData.get('shared_with') as string)?.trim() || null
+  const rawMyShare = formData.get('my_share') as string
+  const myShare = isShared && rawMyShare ? parseFloat(rawMyShare) : null
 
   const manualScoreEnabled = formData.get('health_score_manual') === 'on'
   const rawScore = formData.get('health_score') as string
@@ -43,6 +47,10 @@ function parseSubscriptionForm(formData: FormData) {
     return { error: 'Ruční skóre zdraví musí být mezi 1 a 100.' }
   }
 
+  if (isShared && rawMyShare && (myShare === null || isNaN(myShare) || myShare < 0)) {
+    return { error: 'Zadejte platnou výši vaší části ceny.' }
+  }
+
   return {
     values: {
       name: name.trim(),
@@ -57,6 +65,9 @@ function parseSubscriptionForm(formData: FormData) {
       health_score: manualScoreEnabled ? healthScore : null,
       note,
       status: isTrial ? 'trial' : 'active',
+      shared: isShared,
+      shared_with: isShared ? sharedWith : null,
+      my_share: isShared ? myShare : null,
     },
   }
 }

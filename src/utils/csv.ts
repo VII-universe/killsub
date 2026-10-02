@@ -1,5 +1,6 @@
 import { Subscription } from '@/components/SubscriptionList'
 import { computeHealthScore } from './health'
+import { effectiveAmount } from './subscriptionCost'
 
 function escapeCsvField(value: string | number): string {
   const str = String(value)
@@ -13,7 +14,7 @@ export function exportSubscriptionsToCsv(subscriptions: Subscription[]) {
   const headers = ['Název', 'Cena', 'Měna', 'Perioda', 'Kategorie', 'Datum příští platby', 'Skóre']
   const rows = subscriptions.map((s) => [
     s.name,
-    s.amount,
+    effectiveAmount(s),
     s.currency,
     s.billing_cycle === 'yearly' ? 'Ročně' : 'Měsíčně',
     s.category || 'Ostatní',

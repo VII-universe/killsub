@@ -68,6 +68,9 @@ export default function AddSubscriptionForm({
   const [note, setNote] = useState(subscription?.note || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
   const [isTrial, setIsTrial] = useState(subscription?.status === 'trial')
+  const [isShared, setIsShared] = useState(!!subscription?.shared)
+  const [sharedWith, setSharedWith] = useState(subscription?.shared_with || '')
+  const [myShare, setMyShare] = useState(subscription?.my_share != null ? String(subscription.my_share) : '')
   const [manualScore, setManualScore] = useState(!!subscription?.health_score_manual)
   const [scoreValue, setScoreValue] = useState(
     subscription?.health_score ? String(subscription.health_score) : '80'
@@ -101,6 +104,9 @@ export default function AddSubscriptionForm({
         setLogoUrl('')
         setLastUsedAt('')
         setIsTrial(false)
+        setIsShared(false)
+        setSharedWith('')
+        setMyShare('')
         setManualScore(false)
         setScoreValue('80')
       }
@@ -525,6 +531,64 @@ export default function AddSubscriptionForm({
               <p className="mt-1.5 text-[10px] text-white/40">
                 Před koncem trialu tě upozorníme e-mailem, než ti začnou účtovat plnou cenu.
               </p>
+            </div>
+
+            {/* Sdílení předplatného */}
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3.5">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="shared"
+                  checked={isShared}
+                  onChange={(e) => setIsShared(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black/40 accent-sky-500"
+                />
+                <span className="text-xs font-bold text-white/90">Sdílím toto předplatné s někým</span>
+              </label>
+
+              {isShared && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label htmlFor="shared_with" className="block text-[11px] font-bold text-white/60">
+                      S kým sdílím
+                    </label>
+                    <input
+                      id="shared_with"
+                      name="shared_with"
+                      type="text"
+                      value={sharedWith}
+                      onChange={(e) => setSharedWith(e.target.value)}
+                      placeholder="např. bratr, přítelkyně"
+                      className="mt-1 block w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-[11px] text-white placeholder-white/30 focus:border-sky-500 focus:bg-black/60 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="my_share" className="block text-[11px] font-bold text-white/60">
+                      Moje část (Kč)
+                    </label>
+                    <input
+                      id="my_share"
+                      name="my_share"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={myShare}
+                      onChange={(e) => setMyShare(e.target.value)}
+                      placeholder={amount ? String(Math.round((parseFloat(amount) || 0) / 2)) : '0'}
+                      className="mt-1 block w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-[11px] font-mono font-bold text-white placeholder-white/30 focus:border-sky-500 focus:bg-black/60 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <p className="text-[10px] text-white/40">
+                    Celková cena: {(parseFloat(amount) || 0).toLocaleString('cs-CZ')} {currency} · Tvoje část:{' '}
+                    {(myShare ? parseFloat(myShare) : Math.round((parseFloat(amount) || 0) / 2)).toLocaleString(
+                      'cs-CZ'
+                    )}{' '}
+                    {currency}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Manual health score override */}
