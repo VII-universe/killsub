@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { del } from '@vercel/blob'
+import { del, get } from '@vercel/blob'
 import { createClient } from '@/utils/supabase/server'
 import { parseCsvTransactions, transactionsToText, extractPdfText, detectSubscriptionsFromText } from '@/utils/bankImport'
 
@@ -34,11 +34,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Chybí odkaz na nahraný soubor.' }, { status: 400 })
     }
 
-    const fileRes = await fetch(blobUrl)
-    if (!fileRes.ok) {
+    const blobResult = await get(blobUrl, {
+      access: 'private',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    })
+    if (!blobResult || !blobResult.stream) {
       return NextResponse.json({ error: 'Nepodařilo se stáhnout nahraný soubor.' }, { status: 400 })
     }
-    const buffer = Buffer.from(await fileRes.arrayBuffer())
+    const buffer = Buffer.from(await new Response(blobResult.stream).arrayBuffer())
 
     const lowerName = filename.toLowerCase()
     const isPdf = lowerName.endsWith('.pdf')

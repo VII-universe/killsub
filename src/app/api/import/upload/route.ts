@@ -31,7 +31,7 @@ export async function PUT(request: Request) {
     const pathname = `bank-imports/${user.id}-${Date.now()}-${safeName}`
 
     const blob = await put(pathname, body, {
-      access: 'public',
+      access: 'private',
       token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
