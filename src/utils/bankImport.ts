@@ -69,7 +69,17 @@ export function transactionsToText(transactions: ParsedTransaction[]): string {
   return transactions.map((t) => `${t.date} | ${t.description} | ${t.amount}`).join('\n')
 }
 
+// pdf-parse uses pdfjs-dist internally, which expects browser globals (DOMMatrix)
+// that don't exist in Node's serverless runtime — polyfill before first use.
+async function ensurePdfJsGlobals(): Promise<void> {
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    const { default: DOMMatrixPolyfill } = await import('dommatrix')
+    ;(globalThis as unknown as { DOMMatrix: unknown }).DOMMatrix = DOMMatrixPolyfill
+  }
+}
+
 export async function extractPdfText(buffer: Buffer): Promise<string> {
+  await ensurePdfJsGlobals()
   const { PDFParse } = await import('pdf-parse')
   const parser = new PDFParse({ data: buffer })
   try {

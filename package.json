@@ -15,6 +15,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@vercel/blob": "^2.8.0",
     "canvas-confetti": "^1.9.4",
+    "dommatrix": "^0.1.1",
     "html-to-image": "^1.11.13",
     "next": "16.3.6",
     "papaparse": "^5.7.0",
