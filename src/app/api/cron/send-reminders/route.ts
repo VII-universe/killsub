@@ -12,13 +12,22 @@ function formatCzechDate(dateStr: string) {
 }
 
 function renderReminderEmail(name: string, amount: number, currency: string, daysBefore: number, dashboardUrl: string) {
+  const amountStr = `${amount.toLocaleString('cs-CZ')} ${currency}`
+  const headline =
+    daysBefore === 1
+      ? `Zítra ti strhnou ${amountStr} za ${name}.`
+      : daysBefore === 7
+      ? `Za týden ti strhnou ${amountStr} za ${name}.`
+      : `Za ${daysBefore} ${daysBefore < 5 ? 'dny' : 'dní'} se obnoví <strong>${name}</strong> za <strong>${amountStr}</strong>.`
+
   return `
     <div style="font-family: sans-serif; background: #090a0f; color: #fff; padding: 32px; border-radius: 16px;">
-      <h2 style="margin: 0 0 12px;">Killsub připomínka</h2>
-      <p style="color: #cbd5e1; line-height: 1.6;">
-        Za <strong>${daysBefore} ${daysBefore === 1 ? 'den' : daysBefore < 5 ? 'dny' : 'dní'}</strong> se obnoví
-        <strong>${name}</strong> za <strong>${amount.toLocaleString('cs-CZ')} ${currency}</strong>.
-      </p>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #ec4899, #8b5cf6);"></div>
+        <span style="font-weight: 900; font-size: 14px; letter-spacing: -0.2px;">Killsub</span>
+      </div>
+      <h2 style="margin: 0 0 12px; font-size: 18px;">Killsub připomínka</h2>
+      <p style="color: #cbd5e1; line-height: 1.6;">${headline}</p>
       <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: bold;">
         Otevřít Killsub Dashboard
       </a>
@@ -94,6 +103,19 @@ export async function GET(request: NextRequest) {
     }
 
     for (const setting of settings || []) {
+      // Email reminders are a Pro feature (the settings toggle is already
+      // Pro-gated in the UI) — re-check here too, in case a user downgraded
+      // after enabling it, leaving a stale enabled=true row behind.
+      const { data: senderProfile } = await supabase
+        .from('user_profiles')
+        .select('plan')
+        .eq('user_id', setting.user_id)
+        .maybeSingle()
+
+      if (!senderProfile || senderProfile.plan !== 'pro') {
+        continue
+      }
+
       const targetDate = new Date()
       targetDate.setDate(targetDate.getDate() + setting.days_before)
       const targetDateStr = formatDate(targetDate)
