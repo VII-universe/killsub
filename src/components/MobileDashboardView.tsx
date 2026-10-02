@@ -12,6 +12,7 @@ import CashflowCalendar from '@/components/CashflowCalendar'
 import ShareWrappedButton from '@/components/ShareWrappedButton'
 import NotificationSettingsPanel from '@/components/NotificationSettingsPanel'
 import { signOut } from '@/app/actions/auth'
+import { exportSubscriptionsCSV } from '@/app/actions/subscriptions'
 import { DEMO_SUBSCRIPTIONS } from '@/utils/demoData'
 import { exportSubscriptionsToCsv } from '@/utils/csv'
 import { UserProfileData } from '@/utils/plan'
@@ -27,6 +28,7 @@ import PushNotificationsPanel from '@/components/PushNotificationsPanel'
 import RemindersWidget from '@/components/RemindersWidget'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
 import CatalogPicker from '@/components/CatalogPicker'
+import SpendingTrends from '@/components/SpendingTrends'
 import { updateStreak } from '@/utils/badges'
 import { detectDuplicates } from '@/utils/duplicates'
 
@@ -353,6 +355,8 @@ export default function MobileDashboardView({
               </div>
             )}
 
+            {effectiveSubscriptions.length > 0 && <SpendingTrends subscriptions={effectiveSubscriptions} />}
+
             <RemindersWidget />
 
             {duplicates.map((d) => (
@@ -588,6 +592,26 @@ export default function MobileDashboardView({
             {profile && (
               <PublicProfileToggle referralCode={profile.referralCode} initialIsPublic={profile.isPublic} />
             )}
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-bold text-white">Export dat</p>
+              <p className="text-[11px] text-white/50 mt-0.5">Stáhni všechna předplatná jako CSV soubor.</p>
+              <button
+                onClick={async () => {
+                  const csv = await exportSubscriptionsCSV()
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'killsub-export.csv'
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                className="mt-3 w-full rounded-2xl border border-white/10 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10"
+              >
+                📥 Stáhnout CSV
+              </button>
+            </div>
           </div>
         )}
       </main>

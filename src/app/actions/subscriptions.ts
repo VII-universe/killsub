@@ -165,3 +165,29 @@ export async function deleteSubscription(id: string): Promise<{ error?: string; 
   revalidatePath('/dashboard')
   return { success: true }
 }
+
+export async function exportSubscriptionsCSV(): Promise<string> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Nepřihlášen')
+
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  const rows = data || []
+  const header = 'Název,Částka,Měna,Frekvence,Kategorie,Datum přidání'
+  const csv = [
+    header,
+    ...rows.map(
+      (r) =>
+        `"${r.name}",${r.amount},${r.currency || 'CZK'},${r.billing_cycle},${r.category || ''},${r.created_at?.slice(0, 10) || ''}`
+    ),
+  ].join('\n')
+
+  return csv
+}
