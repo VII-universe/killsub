@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ThemeSelector from '@/components/ThemeSelector'
 import MobileAIHeroCard from '@/components/MobileAIHeroCard'
@@ -33,6 +34,8 @@ import BudgetProgressBar from '@/components/BudgetProgressBar'
 import BudgetSettingsPanel from '@/components/BudgetSettingsPanel'
 import HelpSheet from '@/components/HelpSheet'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
+import BankConnectButton from '@/components/BankConnectButton'
+import BankConnectModal from '@/components/BankConnectModal'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -50,6 +53,7 @@ export default function MobileDashboardView({
   profile,
   importDomain,
   benchmarkMonthlyCzk,
+  bankConnected,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
@@ -57,6 +61,7 @@ export default function MobileDashboardView({
   profile: UserProfileData | null
   importDomain: string
   benchmarkMonthlyCzk?: number | null
+  bankConnected?: boolean
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -67,6 +72,34 @@ export default function MobileDashboardView({
   const { theme: colorMode, toggleTheme: toggleColorMode } = useColorMode()
   const { lang, setLang, t } = useLanguage()
   usePushNotifications()
+  const searchParams = useSearchParams()
+  const [showBankConnectModal, setShowBankConnectModal] = useState(false)
+  const [isBankConnected, setIsBankConnected] = useState(!!bankConnected)
+  const [isDisconnectingBank, setIsDisconnectingBank] = useState(false)
+
+  useEffect(() => {
+    const bankParam = searchParams.get('bank')
+    if (bankParam !== 'connected' && bankParam !== 'error') return
+
+    window.history.replaceState(null, '', window.location.pathname)
+    if (bankParam !== 'connected') return
+
+    const timer = setTimeout(() => {
+      setShowBankConnectModal(true)
+      setIsBankConnected(true)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [searchParams])
+
+  const handleDisconnectBank = async () => {
+    setIsDisconnectingBank(true)
+    try {
+      const res = await fetch('/api/bank/disconnect', { method: 'POST' })
+      if (res.ok) setIsBankConnected(false)
+    } finally {
+      setIsDisconnectingBank(false)
+    }
+  }
 
   const openUpgrade = (message: string) => {
     trackClientEvent('upgrade_clicked', { message })
@@ -696,6 +729,24 @@ export default function MobileDashboardView({
               <PublicProfileToggle referralCode={profile.referralCode} initialIsPublic={profile.isPublic} />
             )}
 
+            {isBankConnected ? (
+              <button
+                onClick={handleDisconnectBank}
+                disabled={isDisconnectingBank}
+                className="flex w-full items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-4 py-3.5 text-left text-sm text-white/80 hover:bg-rose-500/10 disabled:opacity-50"
+              >
+                <span className="text-lg">🏦</span>
+                <div>
+                  <p className="font-medium text-white">Odpojit banku</p>
+                  <p className="text-xs text-white/50">
+                    {isDisconnectingBank ? 'Odpojuji…' : 'Zruší propojení s bankou přes TrueLayer'}
+                  </p>
+                </div>
+              </button>
+            ) : (
+              <BankConnectButton />
+            )}
+
             <button
               onClick={async () => {
                 const res = await fetch('/api/export')
@@ -725,6 +776,10 @@ export default function MobileDashboardView({
 
       {isCatalogOpen && (
         <CatalogPicker onSelect={handleCatalogSelect} onClose={() => setIsCatalogOpen(false)} />
+      )}
+
+      {showBankConnectModal && (
+        <BankConnectModal onClose={() => setShowBankConnectModal(false)} />
       )}
 
       <button
