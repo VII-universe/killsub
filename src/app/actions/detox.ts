@@ -60,7 +60,49 @@ export async function startDetoxSession(freezeIds: string[]): Promise<ActionResu
   return { success: true }
 }
 
+// Ending early skips the "did you miss it?" survey entirely — status goes
+// straight to 'abandoned' (closed, no results to show) rather than
+// 'completed' (which means "Results phase, survey pending").
 export async function endDetoxEarly(sessionId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Uživatel není přihlášen.' }
+  }
+
+  const { error: sessionError } = await supabase
+    .from('detox_sessions')
+    .update({ status: 'abandoned' })
+    .eq('id', sessionId)
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+
+  if (sessionError) {
+    return { error: sessionError.message }
+  }
+
+  const { error: unfreezeError } = await supabase
+    .from('subscriptions')
+    .update({ detox_paused: false })
+    .eq('user_id', user.id)
+    .eq('detox_paused', true)
+
+  if (unfreezeError) {
+    return { error: unfreezeError.message }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/detox')
+  return { success: true }
+}
+
+// Server-side flip for a session whose 30 days are up but a cron hasn't
+// reached it yet — lets a user who clicks the completion e-mail land on
+// status='completed' immediately instead of waiting for the next cron run.
+export async function markDetoxCompletedIfExpired(sessionId: string): Promise<ActionResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -72,17 +114,16 @@ export async function endDetoxEarly(sessionId: string): Promise<ActionResult> {
 
   const { error } = await supabase
     .from('detox_sessions')
-    .update({ status: 'completed', ends_at: new Date().toISOString() })
+    .update({ status: 'completed' })
     .eq('id', sessionId)
     .eq('user_id', user.id)
     .eq('status', 'active')
+    .lte('ends_at', new Date().toISOString())
 
   if (error) {
     return { error: error.message }
   }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/detox')
   return { success: true }
 }
 
@@ -121,12 +162,15 @@ export async function finishDetoxCancelMissed(sessionId: string, cancelIds: stri
     return { error: unfreezeError.message }
   }
 
+  // Resolved — close the cycle so the next visit lands on Setup, not stuck
+  // showing this same Results screen forever (status stays 'completed' only
+  // while the survey is still pending).
   await supabase
     .from('detox_sessions')
-    .update({ status: 'completed' })
+    .update({ status: 'abandoned' })
     .eq('id', sessionId)
     .eq('user_id', user.id)
-    .eq('status', 'active')
+    .in('status', ['active', 'completed'])
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/detox')
@@ -156,10 +200,10 @@ export async function finishDetoxRestoreAll(sessionId: string): Promise<ActionRe
 
   await supabase
     .from('detox_sessions')
-    .update({ status: 'completed' })
+    .update({ status: 'abandoned' })
     .eq('id', sessionId)
     .eq('user_id', user.id)
-    .eq('status', 'active')
+    .in('status', ['active', 'completed'])
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/detox')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Subscription } from './SubscriptionList'
@@ -10,7 +10,13 @@ import {
   monthlyEquivalent,
   suggestFreezeDefault,
 } from '@/utils/detox'
-import { startDetoxSession, endDetoxEarly, finishDetoxCancelMissed, finishDetoxRestoreAll } from '@/app/actions/detox'
+import {
+  startDetoxSession,
+  endDetoxEarly,
+  markDetoxCompletedIfExpired,
+  finishDetoxCancelMissed,
+  finishDetoxRestoreAll,
+} from '@/app/actions/detox'
 
 function formatCzk(amount: number): string {
   return `${Math.round(amount).toLocaleString('cs-CZ')} Kč`
@@ -29,13 +35,37 @@ export default function DetoxView({
 
   const activeSubs = subscriptions.filter((s) => s.status !== 'cancelled')
   const frozenSubs = activeSubs.filter((s) => s.detox_paused)
-  const liveSession = useMemo(
-    () => !!session && new Date(session.ends_at).getTime() > new Date().getTime(),
+
+  // A session can be 'active' past its own ends_at for a bit — until the
+  // next /api/cron/detox-check run flips it, or until this effect does it
+  // on the user's first post-expiry visit. Either way we already know this
+  // should render as Results, so we don't wait on the PATCH to do it.
+  const isExpiredActive = useMemo(
+    () => !!session && session.status === 'active' && new Date(session.ends_at).getTime() <= new Date().getTime(),
     [session]
   )
 
-  const phase: 'setup' | 'active' | 'results' =
-    frozenSubs.length > 0 && !liveSession ? 'results' : session && liveSession ? 'active' : 'setup'
+  useEffect(() => {
+    if (session && isExpiredActive) {
+      markDetoxCompletedIfExpired(session.id)
+    }
+  }, [session, isExpiredActive])
+
+  // Status drives the phase directly — no guessing from side-effects like
+  // "are there still frozen subscriptions". 'abandoned' (ended early, or a
+  // previously resolved cycle) and "no session at all" both mean Setup.
+  // The completion e-mail links to /dashboard/detox?phase=results, but no
+  // special handling of that param is needed: a completed session already
+  // resolves to Results below on its own, and the param can't (and
+  // shouldn't) force Results onto a session that isn't actually completed.
+  let phase: 'setup' | 'active' | 'results'
+  if (!session || session.status === 'abandoned') {
+    phase = 'setup'
+  } else if (session.status === 'completed' || isExpiredActive) {
+    phase = 'results'
+  } else {
+    phase = 'active'
+  }
 
   if (phase === 'setup') {
     return <DetoxSetup subscriptions={activeSubs} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} error={error} setError={setError} router={router} />
@@ -205,12 +235,13 @@ function DetoxActive({
   router: ReturnType<typeof useRouter>
 }) {
   const progress = useMemo(() => getDetoxProgress(session, frozenSubs), [session, frozenSubs])
+  const [confirmEnd, setConfirmEnd] = useState(false)
 
   const handleEndEarly = async () => {
-    if (!confirm('Opravdu chceš detox ukončit předčasně?')) return
     setIsSubmitting(true)
     await endDetoxEarly(session.id)
     setIsSubmitting(false)
+    setConfirmEnd(false)
     router.refresh()
   }
 
@@ -259,14 +290,39 @@ function DetoxActive({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handleEndEarly}
-        disabled={isSubmitting}
-        className="mt-6 flex w-full items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/10 py-3 px-4 text-xs font-black text-rose-300 transition-all hover:bg-rose-500/20 active:scale-[0.98] disabled:opacity-50"
-      >
-        Ukončit detox předčasně
-      </button>
+      {!confirmEnd ? (
+        <button
+          type="button"
+          onClick={() => setConfirmEnd(true)}
+          className="mt-6 flex w-full items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/10 py-3 px-4 text-xs font-black text-rose-300 transition-all hover:bg-rose-500/20 active:scale-[0.98]"
+        >
+          Ukončit detox předčasně
+        </button>
+      ) : (
+        <div className="mt-6 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-3.5">
+          <p className="text-xs font-bold text-rose-200">
+            Opravdu ukončit? Všechna zmrazená předplatná budou obnovena.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={handleEndEarly}
+              disabled={isSubmitting}
+              className="flex-1 rounded-xl border border-rose-500/50 bg-rose-500/20 py-2.5 text-xs font-black text-rose-100 active:scale-[0.98] disabled:opacity-50"
+            >
+              {isSubmitting ? 'Ukončuji…' : 'Ano, ukončit'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmEnd(false)}
+              disabled={isSubmitting}
+              className="flex-1 rounded-xl border border-white/15 bg-white/[0.03] py-2.5 text-xs font-bold text-white/70 active:scale-[0.98] disabled:opacity-50"
+            >
+              Ne, pokračovat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

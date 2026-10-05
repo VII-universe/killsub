@@ -22,12 +22,18 @@ export default async function DetoxPage() {
 
   const subscriptions: Subscription[] = rawSubscriptions || []
 
-  const { data: session } = await supabase
+  // Fetch the most recent session regardless of status — filtering to
+  // status='active' here meant a completed/abandoned session (and therefore
+  // its Results or Setup phase) simply vanished from this query the moment
+  // it stopped being active, which is the root cause of the blank-page bug.
+  const { data: sessions } = await supabase
     .from('detox_sessions')
     .select('id, started_at, ends_at, status')
     .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle()
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const session = sessions?.[0] ?? null
 
   return <DetoxView subscriptions={subscriptions} session={session} />
 }

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://killsub.app'}/dashboard/detox`
+  const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://killsub.app'}/dashboard/detox?phase=results`
 
   let completed = 0
   let milestoneNotificationsSent = 0
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         session.user_id,
         '🎉 Tvůj Detox skončil!',
         `Ušetřil jsi ${formatCzk(totalMonthly)}. Podívej se na výsledky →`,
-        '/dashboard/detox'
+        '/dashboard/detox?phase=results'
       )
 
       if (process.env.RESEND_API_KEY) {

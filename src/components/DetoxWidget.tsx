@@ -20,6 +20,7 @@ export default function DetoxWidget({
 }) {
   const router = useRouter()
   const [isEnding, setIsEnding] = useState(false)
+  const [confirmEnd, setConfirmEnd] = useState(false)
 
   const activeSubs = subscriptions.filter((s) => s.status !== 'cancelled')
   const frozenSubs = activeSubs.filter((s) => s.detox_paused)
@@ -32,10 +33,10 @@ export default function DetoxWidget({
 
   const handleEndEarly = async () => {
     if (!session) return
-    if (!confirm('Opravdu chceš detox ukončit předčasně?')) return
     setIsEnding(true)
     await endDetoxEarly(session.id)
     setIsEnding(false)
+    setConfirmEnd(false)
     router.refresh()
   }
 
@@ -60,14 +61,39 @@ export default function DetoxWidget({
           <span>Zatím ušetřeno: {formatCzk(progress.savedSoFar)}</span>
           <span>Zbývá: {formatCzk(progress.remaining)}</span>
         </div>
-        <button
-          type="button"
-          onClick={handleEndEarly}
-          disabled={isEnding}
-          className="mt-2.5 text-[11px] font-bold text-rose-300 hover:text-rose-200 disabled:opacity-50"
-        >
-          Ukončit detox předčasně
-        </button>
+        {!confirmEnd ? (
+          <button
+            type="button"
+            onClick={() => setConfirmEnd(true)}
+            className="mt-2.5 text-[11px] font-bold text-rose-300 hover:text-rose-200"
+          >
+            Ukončit detox předčasně
+          </button>
+        ) : (
+          <div className="mt-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5">
+            <p className="text-[11px] font-bold text-rose-200">
+              Opravdu ukončit? Všechna zmrazená předplatná budou obnovena.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={handleEndEarly}
+                disabled={isEnding}
+                className="flex-1 rounded-lg border border-rose-500/50 bg-rose-500/20 py-1.5 text-[11px] font-black text-rose-100 disabled:opacity-50"
+              >
+                {isEnding ? 'Ukončuji…' : 'Ano, ukončit'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmEnd(false)}
+                disabled={isEnding}
+                className="flex-1 rounded-lg border border-white/15 bg-white/[0.03] py-1.5 text-[11px] font-bold text-white/70 disabled:opacity-50"
+              >
+                Ne, pokračovat
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
