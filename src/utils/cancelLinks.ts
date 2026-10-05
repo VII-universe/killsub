@@ -71,6 +71,44 @@ export const CANCEL_LINKS: Record<string, { url: string; steps: string[] }> = {
     url: 'https://www.max.com/settings/subscription',
     steps: ['Otevři max.com', 'Nastavení → Předplatné', 'Zrušit předplatné'],
   },
+  'Apple': {
+    url: 'https://appleid.apple.com/account/manage',
+    steps: ['Otevři appleid.apple.com', 'Předplatná', 'Vyber službu → Zrušit'],
+  },
+  'Amazon Prime': {
+    url: 'https://www.amazon.com/clv/manageplans',
+    steps: ['Otevři amazon.com/manageplans', 'Najdi Prime', 'Klikni "End membership"'],
+  },
+  'Canva': {
+    url: 'https://www.canva.com/settings/billing',
+    steps: ['Otevři canva.com nastavení', 'Fakturace', 'Zrušit Canva Pro'],
+  },
+  'LinkedIn Premium': {
+    url: 'https://www.linkedin.com/premium/manage',
+    steps: ['Otevři linkedin.com/premium/manage', 'Spravovat předplatné', 'Zrušit předplatné'],
+  },
+  'Duolingo Plus': {
+    url: 'https://www.duolingo.com/settings/subscription',
+    steps: ['Otevři nastavení Duolingo', 'Předplatné', 'Zrušit Super Duolingo'],
+  },
+  'Tinder Gold': {
+    url: 'https://www.help.tinder.com/hc/en-us/articles/115003382006',
+    steps: ['Otevři nastavení aplikace', 'Správa předplatného', 'Zrušit Tinder Gold'],
+  },
+  'LastPass': {
+    url: 'https://lastpass.com/my_account.php',
+    steps: ['Otevři lastpass.com/my_account.php', 'Spravovat předplatné', 'Zrušit plán'],
+  },
+  'NordVPN': {
+    url: 'https://my.nordaccount.com/billing/',
+    steps: ['Otevři my.nordaccount.com/billing', 'Předplatné', 'Zrušit automatické obnovení'],
+  },
+}
+
+// Simple URL-only lookup for the inline "Jak zrušit →" card link — the full
+// getCancelInfo() above (url + steps) powers the guided CancelSheet flow.
+export function findCancelLink(serviceName: string): string | null {
+  return getCancelInfo(serviceName)?.url ?? null
 }
 
 export function getCancelInfo(serviceName: string) {

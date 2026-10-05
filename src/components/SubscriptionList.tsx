@@ -9,6 +9,7 @@ import { cancelSubscription } from '@/app/actions/subscriptions'
 import { getCleanseState, recordCleanseCancellation } from '@/utils/cleanse'
 import { effectiveAmount } from '@/utils/subscriptionCost'
 import { useLanguage } from '@/context/LanguageContext'
+import { findCancelLink } from '@/utils/cancelLinks'
 
 export interface Subscription {
   id: string
@@ -275,6 +276,7 @@ export default function SubscriptionList({
             const catColor = CATEGORY_COLORS[sub.category as Category] || '#64748b'
             const isCancelled = sub.status === 'cancelled'
             const isTrial = sub.status === 'trial'
+            const cancelLink = isCancelled ? null : findCancelLink(sub.name)
 
             return (
               <div
@@ -419,6 +421,18 @@ export default function SubscriptionList({
 
                   {sub.shared && sub.shared_with && (
                     <p className="mt-1.5 text-[10px] text-white/40">{t('card.sharedWith', { name: sub.shared_with })}</p>
+                  )}
+
+                  {cancelLink && (
+                    <a
+                      href={cancelLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-1.5 inline-block text-[10px] font-semibold text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition-colors"
+                    >
+                      Jak zrušit →
+                    </a>
                   )}
                 </div>
 
