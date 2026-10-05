@@ -10,9 +10,20 @@ const SCOPES = 'accounts transactions offline_access'
 
 // TrueLayer's sandbox auth page needs an explicit provider list — without it
 // the auth server has nothing to resolve against and rejects the request
-// outright with a generic Bad Request, which is what was actually causing
-// the error (not the redirect_uri, which was already correct).
-const PROVIDERS = 'uk-ob-all uk-oauth-all de-ob-all at-ob-all cz-ob-all'
+// outright with a generic Bad Request.
+//
+// `uk-ob-all`, `de-ob-all`, etc. are production Open Banking provider-group
+// wildcards — they don't exist against auth.truelayer-sandbox.com, so using
+// them here was itself producing the Bad Request this value is meant to fix.
+// Sandbox only recognizes the mock bank, `uk-cs-mock` (login: john / doe).
+//
+// This module's AUTH_BASE/API_BASE are hardcoded to the -sandbox hosts (per
+// the original integration task), so PROVIDERS is hardcoded to match rather
+// than guessing environment from e.g. a client_id prefix — TrueLayer client
+// IDs aren't documented to carry a "sandbox-" prefix, and a provider switch
+// that didn't also flip AUTH_BASE/API_BASE would be worse than this. Going
+// live later means updating all three together.
+const PROVIDERS = 'uk-cs-mock'
 
 function base64url(input: Buffer): string {
   return input.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
