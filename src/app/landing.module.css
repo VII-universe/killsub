@@ -314,6 +314,68 @@
   }
 }
 
+/* ── SECURITY ── */
+.security {
+  padding: 64px 0;
+  position: relative; z-index: 1;
+}
+
+.securityInner {
+  border-radius: 24px;
+  border: 1px solid rgba(236,72,153,0.25);
+  background: linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(139,92,246,0.08) 100%);
+  padding: 40px 32px;
+}
+
+.securityH2 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -0.8px; line-height: 1.1;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.securityGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.securityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.securityIcon {
+  flex-shrink: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.securityText {
+  color: var(--ink2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.securityNote {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--ink3);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (min-width: 900px) {
+  .securityGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+}
+
 .steps { display: flex; flex-direction: column; }
 
 .step {

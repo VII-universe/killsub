@@ -130,6 +130,38 @@ export default function Home() {
         </div>
       </section>
 
+      <ScrollReveal>
+        <section className={styles.security}>
+          <div className={`${styles.container} ${styles.securityInner}`}>
+            <h2 className={styles.securityH2}>Vaše data jsou v bezpečí</h2>
+            <div className={styles.securityGrid}>
+              {[
+                {
+                  icon: '🔒',
+                  text: 'Přístup pouze pro čtení — nikdy nemůžeme provést platbu ani přesun peněz',
+                },
+                {
+                  icon: '🏦',
+                  text: 'Zajištěno přes TrueLayer — regulovanou finanční platformu pod dohledem FCA',
+                },
+                {
+                  icon: '🔐',
+                  text: 'Vaše přihlašovací údaje k bance nikdy nevidíme ani neukládáme',
+                },
+              ].map((item) => (
+                <div key={item.icon} className={styles.securityItem}>
+                  <span className={styles.securityIcon}>{item.icon}</span>
+                  <p className={styles.securityText}>{item.text}</p>
+                </div>
+              ))}
+            </div>
+            <p className={styles.securityNote}>
+              TrueLayer je registrován u FCA (Financial Conduct Authority) a používán tisíci finančními aplikacemi po celé Evropě.
+            </p>
+          </div>
+        </section>
+      </ScrollReveal>
+
       <div className={styles.marqueeWrap}>
         <div className={styles.marqueeTrack}>
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
