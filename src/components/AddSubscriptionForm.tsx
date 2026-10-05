@@ -10,6 +10,8 @@ import { getLogoUrl } from '@/utils/serviceLogos'
 import ServiceLogo from './ServiceLogo'
 import { createClient } from '@/utils/supabase/client'
 import { useLanguage } from '@/context/LanguageContext'
+import { shouldOfferAppleSplit, type AppleService } from '@/data/appleBundles'
+import AppleBillSplitModal from './AppleBillSplitModal'
 
 const NEW_CATEGORY_VALUE = '__new_category__'
 
@@ -54,6 +56,8 @@ export default function AddSubscriptionForm({
   const { t } = useLanguage()
   const isEditing = !!subscription
   const formRef = useRef<HTMLFormElement>(null)
+  const bypassAppleCheckRef = useRef(false)
+  const [showAppleModal, setShowAppleModal] = useState(false)
   const boundUpdateAction = subscription
     ? updateSubscription.bind(null, subscription.id)
     : null
@@ -274,6 +278,37 @@ export default function AddSubscriptionForm({
     setCategory(suggestCategory(item.name))
   }
 
+  const handleFormSubmit = (e: { preventDefault: () => void }) => {
+    if (bypassAppleCheckRef.current) {
+      bypassAppleCheckRef.current = false
+      return
+    }
+    if (!isEditing && shouldOfferAppleSplit(name, 'manual')) {
+      e.preventDefault()
+      setShowAppleModal(true)
+    }
+  }
+
+  const handleAddAsAppleBill = () => {
+    setShowAppleModal(false)
+    bypassAppleCheckRef.current = true
+    formRef.current?.requestSubmit()
+  }
+
+  const handleAddAppleServices = async (services: AppleService[]) => {
+    setShowAppleModal(false)
+    for (const service of services) {
+      const fd = new FormData()
+      fd.set('name', service.name)
+      fd.set('amount', String(service.monthlyPrice))
+      fd.set('currency', 'CZK')
+      fd.set('billing_cycle', 'monthly')
+      fd.set('category', suggestCategory(service.name))
+      await addSubscription(null, fd)
+    }
+    onClose?.()
+  }
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-b from-[#140c29]/95 to-[#0b0518]/95 p-5 shadow-2xl backdrop-blur-2xl transition-all">
       {/* Top accent line */}
@@ -450,7 +485,7 @@ export default function AddSubscriptionForm({
       )}
 
       {/* Main Inputs */}
-      <form ref={formRef} action={formAction} className="mt-4 space-y-4">
+      <form ref={formRef} action={formAction} onSubmit={handleFormSubmit} className="mt-4 space-y-4">
         <div>
           <label htmlFor="name" className="block text-xs font-bold text-white/90">
             {t('form.name')}
@@ -807,6 +842,16 @@ export default function AddSubscriptionForm({
           )}
         </button>
       </form>
+
+      {showAppleModal && (
+        <AppleBillSplitModal
+          detectedName={name}
+          detectedAmount={parseFloat(amount) || 0}
+          onAddAsBill={handleAddAsAppleBill}
+          onAddSelected={handleAddAppleServices}
+          onClose={() => setShowAppleModal(false)}
+        />
+      )}
     </div>
   )
 }

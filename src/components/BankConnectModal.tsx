@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { addSubscription } from '@/app/actions/subscriptions'
 import { suggestCategory } from '@/utils/categories'
 import type { DetectedBankSubscription, TrueLayerTransaction } from '@/utils/trueLayer'
+import { shouldOfferAppleSplit, type AppleService } from '@/data/appleBundles'
+import AppleBillSplitModal from './AppleBillSplitModal'
 
 type Status = 'loading' | 'results' | 'empty' | 'error' | 'adding' | 'added'
 
@@ -13,6 +15,7 @@ export default function BankConnectModal({ onClose }: { onClose: () => void }) {
   const [detected, setDetected] = useState<DetectedBankSubscription[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [addedCount, setAddedCount] = useState(0)
+  const [appleTarget, setAppleTarget] = useState<{ idx: number; sub: DetectedBankSubscription } | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -52,11 +55,9 @@ export default function BankConnectModal({ onClose }: { onClose: () => void }) {
     })
   }
 
-  const handleAddSelected = async () => {
-    setStatus('adding')
+  const runAddLoop = async (indices: number[]) => {
     let successCount = 0
-
-    for (const idx of selected) {
+    for (const idx of indices) {
       const sub = detected[idx]
       const formData = new FormData()
       formData.set('name', sub.name)
@@ -68,8 +69,55 @@ export default function BankConnectModal({ onClose }: { onClose: () => void }) {
       const result = await addSubscription(null, formData)
       if (result.success) successCount++
     }
+    return successCount
+  }
 
+  const handleAddSelected = async () => {
+    const indices = Array.from(selected)
+    const appleIdx = indices.find((idx) => shouldOfferAppleSplit(detected[idx].name, 'bank'))
+
+    if (appleIdx !== undefined) {
+      setAppleTarget({ idx: appleIdx, sub: detected[appleIdx] })
+      return
+    }
+
+    setStatus('adding')
+    const successCount = await runAddLoop(indices)
     setAddedCount(successCount)
+    setStatus('added')
+  }
+
+  const handleAppleAddAsBill = async () => {
+    if (!appleTarget) return
+    const remaining = Array.from(selected).filter((i) => i !== appleTarget.idx)
+    setAppleTarget(null)
+    setStatus('adding')
+    const billCount = await runAddLoop([appleTarget.idx])
+    const restCount = await runAddLoop(remaining)
+    setAddedCount(billCount + restCount)
+    setStatus('added')
+  }
+
+  const handleAppleAddServices = async (services: AppleService[]) => {
+    if (!appleTarget) return
+    const remaining = Array.from(selected).filter((i) => i !== appleTarget.idx)
+    setAppleTarget(null)
+    setStatus('adding')
+
+    let successCount = 0
+    for (const service of services) {
+      const fd = new FormData()
+      fd.set('name', service.name)
+      fd.set('amount', String(service.monthlyPrice))
+      fd.set('currency', 'CZK')
+      fd.set('billing_cycle', 'monthly')
+      fd.set('category', suggestCategory(service.name))
+      const result = await addSubscription(null, fd)
+      if (result.success) successCount++
+    }
+
+    const restCount = await runAddLoop(remaining)
+    setAddedCount(successCount + restCount)
     setStatus('added')
   }
 
@@ -175,6 +223,16 @@ export default function BankConnectModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
+
+      {appleTarget && (
+        <AppleBillSplitModal
+          detectedName={appleTarget.sub.name}
+          detectedAmount={appleTarget.sub.amount}
+          onAddAsBill={handleAppleAddAsBill}
+          onAddSelected={handleAppleAddServices}
+          onClose={() => setAppleTarget(null)}
+        />
+      )}
     </div>
   )
 }
