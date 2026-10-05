@@ -5,6 +5,7 @@ import MobileDashboardView from '@/components/MobileDashboardView'
 import { Subscription } from '@/components/SubscriptionList'
 import { isBankConnectionExpiringSoon } from '@/utils/trueLayer'
 import type { PriceChangeAlert } from '@/components/PriceChangeAlertBanner'
+import type { DetoxSession } from '@/utils/detox'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -78,6 +79,13 @@ export default async function DashboardPage() {
       changePercent: Number(a.change_percent),
     }))
 
+  const { data: detoxSession } = await supabase
+    .from('detox_sessions')
+    .select('id, started_at, ends_at, status')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle<DetoxSession>()
+
   return (
     <MobileDashboardView
       userEmail={user.email}
@@ -88,6 +96,7 @@ export default async function DashboardPage() {
       bankConnectionCount={bankConnectionCount || 0}
       bankExpiryWarning={bankExpiryWarning}
       priceChangeAlerts={priceChangeAlerts}
+      detoxSession={detoxSession}
       profile={
         profile
           ? {

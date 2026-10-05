@@ -41,6 +41,8 @@ import CalendarExportButton from '@/components/CalendarExportButton'
 import BankExpiryBanner from '@/components/BankExpiryBanner'
 import PriceChangeAlertBanner, { PriceChangeAlert } from '@/components/PriceChangeAlertBanner'
 import TaxShieldSection from '@/components/TaxShieldSection'
+import DetoxWidget from '@/components/DetoxWidget'
+import type { DetoxSession } from '@/utils/detox'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -61,6 +63,7 @@ export default function MobileDashboardView({
   bankConnectionCount,
   bankExpiryWarning,
   priceChangeAlerts,
+  detoxSession,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
@@ -71,6 +74,7 @@ export default function MobileDashboardView({
   bankConnectionCount?: number
   bankExpiryWarning?: { expired: boolean; daysLeft: number } | null
   priceChangeAlerts?: PriceChangeAlert[]
+  detoxSession?: DetoxSession | null
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -180,6 +184,12 @@ export default function MobileDashboardView({
 
   const effectiveSubscriptions = isDemoMode && subscriptions.length === 0 ? DEMO_SUBSCRIPTIONS : subscriptions
 
+  // Frozen (detox_paused) subscriptions stay visible in the list/calendar with
+  // a "❄️ Detox" badge, but are excluded from the headline monthly-spend
+  // figures (hero total, budget bar, tax shield) since they aren't actually
+  // being billed right now.
+  const nonFrozenSubscriptions = effectiveSubscriptions.filter((s) => !s.detox_paused)
+
   const openEditModal = (sub: Subscription) => {
     setEditingSubscription(sub)
     setIsFormModalOpen(true)
@@ -194,10 +204,10 @@ export default function MobileDashboardView({
 
   const duplicates = useMemo(() => detectDuplicates(effectiveSubscriptions), [effectiveSubscriptions])
 
-  // Calculate totals
+  // Calculate totals — excludes detox-frozen subscriptions, see nonFrozenSubscriptions above.
   const totals = useMemo(
     () =>
-      effectiveSubscriptions.reduce(
+      nonFrozenSubscriptions.reduce(
         (acc, sub) => {
           const cur = sub.currency || 'CZK'
           const amt = effectiveAmount(sub)
@@ -211,7 +221,7 @@ export default function MobileDashboardView({
         },
         {} as Record<string, { monthly: number; yearly: number }>
       ),
-    [effectiveSubscriptions]
+    [nonFrozenSubscriptions]
   )
 
   const upcomingPayments = [...effectiveSubscriptions]
@@ -457,7 +467,11 @@ export default function MobileDashboardView({
               </div>
             ))}
 
-            <BudgetProgressBar subscriptions={effectiveSubscriptions} monthlyBudget={profile?.monthlyBudget ?? null} />
+            <BudgetProgressBar subscriptions={nonFrozenSubscriptions} monthlyBudget={profile?.monthlyBudget ?? null} />
+
+            {effectiveSubscriptions.length > 0 && (
+              <DetoxWidget subscriptions={effectiveSubscriptions} session={detoxSession ?? null} />
+            )}
 
             {bankExpiryWarning && <BankExpiryBanner warning={bankExpiryWarning} />}
 
@@ -558,7 +572,7 @@ export default function MobileDashboardView({
               )}
             </div>
 
-            {effectiveSubscriptions.length > 0 && <TaxShieldSection subscriptions={effectiveSubscriptions} />}
+            {nonFrozenSubscriptions.length > 0 && <TaxShieldSection subscriptions={nonFrozenSubscriptions} />}
 
             {/* Cleanse challenge + viral share — last thing before the bottom nav */}
             <div className="relative">

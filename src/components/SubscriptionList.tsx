@@ -33,6 +33,7 @@ export interface Subscription {
   shared_with?: string | null
   my_share?: number | null
   tax_category?: 'personal' | 'business' | null
+  detox_paused?: boolean | null
 }
 
 export default function SubscriptionList({
@@ -283,6 +284,7 @@ export default function SubscriptionList({
             const catColor = CATEGORY_COLORS[sub.category as Category] || '#64748b'
             const isCancelled = sub.status === 'cancelled'
             const isTrial = sub.status === 'trial'
+            const isFrozen = !!sub.detox_paused
             const cancelLink = isCancelled ? null : findCancelLink(sub.name)
 
             return (
@@ -293,11 +295,20 @@ export default function SubscriptionList({
                     ? `Zvažte zrušení — ušetříte ${Math.round(yearlyCost).toLocaleString('cs-CZ')} ${sub.currency}/rok`
                     : undefined
                 }
-                style={{ borderLeft: `3px solid ${catColor}` }}
+                style={{ borderLeft: `3px solid ${isFrozen ? '#93c5fd' : catColor}` }}
                 className={`group relative flex flex-col justify-between rounded-3xl border bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-4 shadow-lg backdrop-blur-2xl transition-all duration-200 hover:border-white/20 active:scale-[0.99] ${
-                  isCancelled ? 'opacity-50' : isLowHealth ? 'border-rose-500/50' : 'border-white/10'
+                  isFrozen
+                    ? 'border-blue-300/30 grayscale-[0.4]'
+                    : isCancelled
+                    ? 'opacity-50'
+                    : isLowHealth
+                    ? 'border-rose-500/50'
+                    : 'border-white/10'
                 }`}
               >
+                {isFrozen && (
+                  <div className="pointer-events-none absolute inset-0 z-10 rounded-3xl bg-blue-950/25 backdrop-blur-[1px]" />
+                )}
                 <div>
                   {/* Top card header */}
                   <div className="flex items-start justify-between gap-3">
@@ -347,6 +358,11 @@ export default function SubscriptionList({
                           )}
                           {!isCancelled && (
                             <TaxCategoryBadge subscriptionId={sub.id} taxCategory={sub.tax_category ?? null} />
+                          )}
+                          {isFrozen && (
+                            <span className="inline-block rounded-md border border-blue-300/40 bg-blue-400/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-blue-200">
+                              ❄️ Detox
+                            </span>
                           )}
                         </div>
                       </div>
