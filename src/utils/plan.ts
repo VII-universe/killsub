@@ -10,4 +10,5 @@ export interface UserProfileData {
   importToken: string
   onboarded: boolean
   monthlyBudget: number | null
+  monthlyReportEnabled: boolean
 }

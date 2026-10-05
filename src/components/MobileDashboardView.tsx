@@ -32,6 +32,7 @@ import SpendingTrendsChart from '@/components/SpendingTrendsChart'
 import BenchmarkBadge from '@/components/BenchmarkBadge'
 import BudgetProgressBar from '@/components/BudgetProgressBar'
 import BudgetSettingsPanel from '@/components/BudgetSettingsPanel'
+import MonthlyReportSettingsPanel from '@/components/MonthlyReportSettingsPanel'
 import HelpSheet from '@/components/HelpSheet'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import BankConnectButton from '@/components/BankConnectButton'
@@ -720,6 +721,8 @@ export default function MobileDashboardView({
             <BadgesPanel subscriptions={subscriptions} />
 
             <NotificationSettingsPanel isPro={isPro} onLocked={() => openUpgrade('E-mailové notifikace jsou dostupné pouze pro Pro plán.')} />
+
+            <MonthlyReportSettingsPanel enabled={profile?.monthlyReportEnabled ?? true} />
 
             <PushNotificationsPanel />
 

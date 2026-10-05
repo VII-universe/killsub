@@ -26,7 +26,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('plan, plan_expires_at, referral_code, is_public, import_token, onboarded, monthly_budget')
+    .select('plan, plan_expires_at, referral_code, is_public, import_token, onboarded, monthly_budget, monthly_report_enabled')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -63,6 +63,7 @@ export default async function DashboardPage() {
               importToken: profile.import_token,
               onboarded: !!profile.onboarded,
               monthlyBudget: profile.monthly_budget !== null ? Number(profile.monthly_budget) : null,
+              monthlyReportEnabled: profile.monthly_report_enabled !== false,
             }
           : null
       }
