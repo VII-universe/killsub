@@ -33,6 +33,7 @@ import BudgetProgressBar from '@/components/BudgetProgressBar'
 import BudgetSettingsPanel from '@/components/BudgetSettingsPanel'
 import HelpSheet from '@/components/HelpSheet'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
@@ -65,6 +66,7 @@ export default function MobileDashboardView({
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const { theme: colorMode, toggleTheme: toggleColorMode } = useColorMode()
   const { lang, setLang, t } = useLanguage()
+  usePushNotifications()
 
   const openUpgrade = (message: string) => {
     trackClientEvent('upgrade_clicked', { message })
