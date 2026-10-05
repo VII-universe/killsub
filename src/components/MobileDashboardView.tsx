@@ -28,6 +28,7 @@ import RemindersWidget from '@/components/RemindersWidget'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
 import CatalogPicker from '@/components/CatalogPicker'
 import SpendingTrendsChart from '@/components/SpendingTrendsChart'
+import BenchmarkBadge from '@/components/BenchmarkBadge'
 import BudgetProgressBar from '@/components/BudgetProgressBar'
 import BudgetSettingsPanel from '@/components/BudgetSettingsPanel'
 import HelpSheet from '@/components/HelpSheet'
@@ -46,12 +47,14 @@ export default function MobileDashboardView({
   dbError,
   profile,
   importDomain,
+  benchmarkMonthlyCzk,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
   dbError?: { message: string } | null
   profile: UserProfileData | null
   importDomain: string
+  benchmarkMonthlyCzk?: number | null
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -306,6 +309,12 @@ export default function MobileDashboardView({
                 <span className="text-[10px] text-white/50 mt-1 block">
                   {effectiveSubscriptions.length} {effectiveSubscriptions.length === 1 ? 'služba' : 'služeb'}
                 </span>
+                <div className="mt-1.5">
+                  <BenchmarkBadge
+                    userMonthlyCzk={totals['CZK']?.monthly ?? 0}
+                    benchmarkMonthlyCzk={benchmarkMonthlyCzk}
+                  />
+                </div>
               </div>
 
               {/* Next Due Date Card — secondary */}

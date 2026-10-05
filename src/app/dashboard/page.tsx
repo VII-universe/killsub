@@ -29,12 +29,19 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
+  const { data: benchmark } = await supabase
+    .from('spend_benchmarks')
+    .select('avg_monthly_czk')
+    .eq('category', '_total')
+    .maybeSingle()
+
   return (
     <MobileDashboardView
       userEmail={user.email}
       subscriptions={subscriptions}
       dbError={dbError}
       importDomain={process.env.KILLSUB_IMPORT_DOMAIN || 'killsub.app'}
+      benchmarkMonthlyCzk={benchmark ? Number(benchmark.avg_monthly_czk) : null}
       profile={
         profile
           ? {
