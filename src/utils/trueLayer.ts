@@ -211,7 +211,9 @@ export async function detectSubscriptionsFromTransactions(
   })
 
   if (!response.ok) {
-    throw new Error(`OpenRouter API chyba: ${response.status} ${response.statusText}`)
+    const errorBody = await response.text()
+    console.error('[detectSubscriptionsFromTransactions] OpenRouter error body:', errorBody)
+    throw new Error(`OpenRouter API chyba: ${response.status} ${response.statusText} — ${errorBody}`)
   }
 
   const data = await response.json()
