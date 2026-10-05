@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { FREE_PLAN_SUBSCRIPTION_LIMIT } from '@/utils/plan'
 import { trackEvent } from '@/utils/analytics'
+import { suggestTaxCategory } from '@/utils/taxCategory'
 
 export type SubscriptionState = {
   error?: string
@@ -113,6 +114,7 @@ export async function addSubscription(
   const { error } = await supabase.from('subscriptions').insert({
     user_id: user.id,
     ...parsed.values,
+    tax_category: suggestTaxCategory(parsed.values.name),
   })
 
   if (error) {

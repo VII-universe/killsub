@@ -40,6 +40,7 @@ import BankConnectModal from '@/components/BankConnectModal'
 import CalendarExportButton from '@/components/CalendarExportButton'
 import BankExpiryBanner from '@/components/BankExpiryBanner'
 import PriceChangeAlertBanner, { PriceChangeAlert } from '@/components/PriceChangeAlertBanner'
+import TaxShieldSection from '@/components/TaxShieldSection'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -556,6 +557,8 @@ export default function MobileDashboardView({
                 </div>
               )}
             </div>
+
+            {effectiveSubscriptions.length > 0 && <TaxShieldSection subscriptions={effectiveSubscriptions} />}
 
             {/* Cleanse challenge + viral share — last thing before the bottom nav */}
             <div className="relative">

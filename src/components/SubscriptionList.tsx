@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import ServiceLogo from './ServiceLogo'
 import CancelSheet from './CancelSheet'
 import CancellationCelebration from './CancellationCelebration'
+import TaxCategoryBadge from './TaxCategoryBadge'
 import { computeHealthScore, getHealthTone } from '@/utils/health'
 import { CATEGORY_COLORS, Category } from '@/utils/categories'
 import { cancelSubscription } from '@/app/actions/subscriptions'
@@ -31,6 +32,7 @@ export interface Subscription {
   shared?: boolean | null
   shared_with?: string | null
   my_share?: number | null
+  tax_category?: 'personal' | 'business' | null
 }
 
 export default function SubscriptionList({
@@ -342,6 +344,9 @@ export default function SubscriptionList({
                             <span className="inline-block rounded-md border border-sky-500/40 bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-300">
                               {t('card.shared')}
                             </span>
+                          )}
+                          {!isCancelled && (
+                            <TaxCategoryBadge subscriptionId={sub.id} taxCategory={sub.tax_category ?? null} />
                           )}
                         </div>
                       </div>
