@@ -1,4 +1,4 @@
-export default function BankConnectButton() {
+export default function BankConnectButton({ hasExisting }: { hasExisting?: boolean }) {
   return (
     <a
       href="/api/bank/connect"
@@ -6,8 +6,12 @@ export default function BankConnectButton() {
     >
       <span className="text-lg">🏦</span>
       <div>
-        <p className="font-medium text-white">Propojit banku</p>
-        <p className="text-xs text-white/50">Automaticky najdi předplatná v bankovních transakcích</p>
+        <p className="font-medium text-white">{hasExisting ? 'Přidat další banku' : 'Propojit banku'}</p>
+        <p className="text-xs text-white/50">
+          {hasExisting
+            ? 'Propoj další bankovní účet stejným způsobem'
+            : 'Automaticky najdi předplatná v bankovních transakcích'}
+        </p>
       </div>
     </a>
   )

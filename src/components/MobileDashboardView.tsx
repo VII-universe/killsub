@@ -36,6 +36,7 @@ import HelpSheet from '@/components/HelpSheet'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import BankConnectButton from '@/components/BankConnectButton'
 import BankConnectModal from '@/components/BankConnectModal'
+import CalendarExportButton from '@/components/CalendarExportButton'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -53,7 +54,7 @@ export default function MobileDashboardView({
   profile,
   importDomain,
   benchmarkMonthlyCzk,
-  bankConnected,
+  bankConnectionCount,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
@@ -61,7 +62,7 @@ export default function MobileDashboardView({
   profile: UserProfileData | null
   importDomain: string
   benchmarkMonthlyCzk?: number | null
-  bankConnected?: boolean
+  bankConnectionCount?: number
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -74,7 +75,7 @@ export default function MobileDashboardView({
   usePushNotifications()
   const searchParams = useSearchParams()
   const [showBankConnectModal, setShowBankConnectModal] = useState(false)
-  const [isBankConnected, setIsBankConnected] = useState(!!bankConnected)
+  const [bankCount, setBankCount] = useState(bankConnectionCount ?? 0)
   const [isDisconnectingBank, setIsDisconnectingBank] = useState(false)
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function MobileDashboardView({
 
     const timer = setTimeout(() => {
       setShowBankConnectModal(true)
-      setIsBankConnected(true)
+      setBankCount((c) => c + 1)
     }, 0)
     return () => clearTimeout(timer)
   }, [searchParams])
@@ -95,7 +96,7 @@ export default function MobileDashboardView({
     setIsDisconnectingBank(true)
     try {
       const res = await fetch('/api/bank/disconnect', { method: 'POST' })
-      if (res.ok) setIsBankConnected(false)
+      if (res.ok) setBankCount(0)
     } finally {
       setIsDisconnectingBank(false)
     }
@@ -477,6 +478,9 @@ export default function MobileDashboardView({
                       </svg>
                     </button>
                   )}
+                  {effectiveSubscriptions.length > 0 && (
+                    <CalendarExportButton subscriptions={effectiveSubscriptions} />
+                  )}
                   <button
                     onClick={() => setIsCatalogOpen(true)}
                     className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-white/80 hover:bg-white/10"
@@ -729,23 +733,31 @@ export default function MobileDashboardView({
               <PublicProfileToggle referralCode={profile.referralCode} initialIsPublic={profile.isPublic} />
             )}
 
-            {isBankConnected ? (
-              <button
-                onClick={handleDisconnectBank}
-                disabled={isDisconnectingBank}
-                className="flex w-full items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-4 py-3.5 text-left text-sm text-white/80 hover:bg-rose-500/10 disabled:opacity-50"
-              >
-                <span className="text-lg">🏦</span>
-                <div>
-                  <p className="font-medium text-white">Odpojit banku</p>
-                  <p className="text-xs text-white/50">
-                    {isDisconnectingBank ? 'Odpojuji…' : 'Zruší propojení s bankou přes TrueLayer'}
-                  </p>
-                </div>
-              </button>
-            ) : (
-              <BankConnectButton />
-            )}
+            <div className="space-y-2">
+              {bankCount > 0 && (
+                <p className="px-1 text-[11px] font-semibold text-white/50">
+                  Připojené banky: {bankCount}
+                </p>
+              )}
+
+              <BankConnectButton hasExisting={bankCount > 0} />
+
+              {bankCount > 0 && (
+                <button
+                  onClick={handleDisconnectBank}
+                  disabled={isDisconnectingBank}
+                  className="flex w-full items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/5 px-4 py-3.5 text-left text-sm text-white/80 hover:bg-rose-500/10 disabled:opacity-50"
+                >
+                  <span className="text-lg">🏦</span>
+                  <div>
+                    <p className="font-medium text-white">Odpojit banku</p>
+                    <p className="text-xs text-white/50">
+                      {isDisconnectingBank ? 'Odpojuji…' : 'Zruší propojení se všemi bankami přes TrueLayer'}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
 
             <button
               onClick={async () => {

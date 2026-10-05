@@ -36,15 +36,14 @@ export default async function DashboardPage() {
     .eq('category', '_total')
     .maybeSingle()
 
-  // Only checking existence here — bank_connections.access_token is never
+  // Only counting rows here — bank_connections.access_token is never
   // selected outside the service-role routes that actually need it.
   const admin = createAdminClient()
-  const { data: bankConnection } = await admin
+  const { count: bankConnectionCount } = await admin
     .from('bank_connections')
-    .select('id')
+    .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .eq('provider', 'truelayer')
-    .maybeSingle()
 
   return (
     <MobileDashboardView
@@ -53,7 +52,7 @@ export default async function DashboardPage() {
       dbError={dbError}
       importDomain={process.env.KILLSUB_IMPORT_DOMAIN || 'killsub.app'}
       benchmarkMonthlyCzk={benchmark ? Number(benchmark.avg_monthly_czk) : null}
-      bankConnected={!!bankConnection}
+      bankConnectionCount={bankConnectionCount || 0}
       profile={
         profile
           ? {
