@@ -176,12 +176,48 @@ export interface DetectedBankSubscription {
   first_seen: string | null
 }
 
-const DETECT_SYSTEM_PROMPT = `You are a financial analyst. Given a list of bank transactions (JSON), identify recurring payments that look like subscriptions (streaming, software, SaaS, cloud storage, memberships, etc.).
+const DETECT_SYSTEM_PROMPT = `You are a financial analyst. Given a list of bank transactions, identify recurring payments that look like subscriptions (streaming, software, SaaS, cloud storage, memberships, etc.).
 For each one found, return an object: { name: string, amount: number, currency: string, frequency: "monthly"|"yearly", first_seen: string (ISO date of the earliest matching transaction) }.
 Return ONLY a valid JSON array, no explanation.`
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+// TrueLayer's real transaction objects carry far more than the fields in
+// TrueLayerTransaction (meta, running_balance, transaction_classification,
+// etc. — TS types don't strip runtime data), and JSON.stringify-ing them raw
+// blew past OpenRouter's 128k-token limit at 216k tokens for a single
+// account's 90-day history. Two fixes, mirroring the condensed-text approach
+// the working CSV importer already uses (src/utils/bankImport.ts):
+// 1. Extract only the few fields the model actually needs.
+// 2. Drop transactions that never repeat — a one-off payment is never a
+//    subscription, and most of a 90-day statement is one-off noise anyway.
+function condenseTransactionsForPrompt(transactions: TrueLayerTransaction[]): string {
+  const groups = new Map<string, { description: string; amount: number; currency: string; dates: string[] }>()
+
+  for (const t of transactions) {
+    const description = t.merchant_name || t.description || 'Unknown'
+    const amount = Math.abs(t.amount)
+    const key = `${description.toLowerCase().trim()}|${amount}|${t.currency}`
+
+    const existing = groups.get(key)
+    if (existing) {
+      existing.dates.push(t.timestamp)
+    } else {
+      groups.set(key, { description, amount, currency: t.currency, dates: [t.timestamp] })
+    }
+  }
+
+  const lines: string[] = []
+  for (const group of groups.values()) {
+    if (group.dates.length < 2) continue // one-off payment, never a subscription
+    const sortedDates = [...group.dates].sort()
+    lines.push(
+      `${group.description} | ${group.amount} ${group.currency} | seen ${group.dates.length}x | first ${sortedDates[0]} | last ${sortedDates[sortedDates.length - 1]}`
+    )
+  }
+  return lines.join('\n')
 }
 
 export async function detectSubscriptionsFromTransactions(
@@ -190,6 +226,11 @@ export async function detectSubscriptionsFromTransactions(
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) {
     throw new Error('Chybí platný OPENROUTER_API_KEY.')
+  }
+
+  const condensed = condenseTransactionsForPrompt(transactions)
+  if (!condensed.trim()) {
+    return []
   }
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -205,7 +246,7 @@ export async function detectSubscriptionsFromTransactions(
       temperature: 0.1,
       messages: [
         { role: 'system', content: DETECT_SYSTEM_PROMPT },
-        { role: 'user', content: JSON.stringify(transactions) },
+        { role: 'user', content: condensed },
       ],
     }),
   })
