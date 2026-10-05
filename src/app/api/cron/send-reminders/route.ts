@@ -67,6 +67,7 @@ interface RenewalSubscription {
 
 const PUSH_OFFSETS = [
   { label: '7d', days: 7 },
+  { label: '3d', days: 3 },
   { label: '1d', days: 1 },
   { label: '0d', days: 0 },
 ] as const
@@ -80,6 +81,11 @@ function buildPushCopy(offsetLabel: string, sub: RenewalSubscription) {
       return {
         title: `⏰ ${sub.name} se obnovuje za týden`,
         body: `Dne ${date} ti strhnou ${amount}. Chceš pokračovat?`,
+      }
+    case '3d':
+      return {
+        title: `⏰ ${sub.name} se obnovuje za 3 dny`,
+        body: `Dne ${date} ti strhnou ${amount}.`,
       }
     case '1d':
       return {

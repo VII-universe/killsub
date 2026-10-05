@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { isBankConnectionExpiringSoon } from '@/utils/trueLayer'
+import { sendPushToUser } from '@/utils/sendPush'
 
 export const runtime = 'nodejs'
 
@@ -53,43 +54,58 @@ export async function GET(request: NextRequest) {
     errors.push(connectionsError.message)
   }
 
-  if (process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY)
+  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+  let pushSent = 0
 
-    for (const conn of connections || []) {
-      if (conn.expiry_reminder_sent_at) {
-        skipped++
-        continue
-      }
+  for (const conn of connections || []) {
+    if (conn.expiry_reminder_sent_at) {
+      skipped++
+      continue
+    }
 
-      const { daysLeft } = isBankConnectionExpiringSoon(conn.connected_at)
-      if (daysLeft > REMINDER_DAYS_LEFT) continue
+    const { daysLeft } = isBankConnectionExpiringSoon(conn.connected_at)
+    if (daysLeft > REMINDER_DAYS_LEFT) continue
 
+    let notifiedSomehow = false
+
+    if (resend) {
       const { data: userData, error: userError } = await supabase.auth.admin.getUserById(conn.user_id)
       if (userError || !userData?.user?.email) {
         errors.push(`Chybí e-mail pro uživatele ${conn.user_id}`)
-        continue
+      } else {
+        try {
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'Killsub <onboarding@resend.dev>',
+            to: userData.user.email,
+            subject: 'Váš přístup k bance vyprší za 7 dní',
+            html: renderExpiryReminderEmail(REMINDER_DAYS_LEFT, dashboardUrl),
+          })
+          sent++
+          notifiedSomehow = true
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání e-mailu o expiraci banky.')
+        }
       }
+    }
 
-      try {
-        await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || 'Killsub <onboarding@resend.dev>',
-          to: userData.user.email,
-          subject: 'Váš přístup k bance vyprší za 7 dní',
-          html: renderExpiryReminderEmail(REMINDER_DAYS_LEFT, dashboardUrl),
-        })
+    const { sent: devicesSent } = await sendPushToUser(
+      conn.user_id,
+      `⚠️ Bankovní připojení vyprší za ${daysLeft} dní`,
+      'Obnovte připojení, ať nepřijdete o detekci předplatných z banky.',
+      dashboardUrl
+    )
+    if (devicesSent > 0) {
+      pushSent++
+      notifiedSomehow = true
+    }
 
-        await supabase
-          .from('bank_connections')
-          .update({ expiry_reminder_sent_at: new Date().toISOString() })
-          .eq('id', conn.id)
-
-        sent++
-      } catch (err) {
-        errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání e-mailu o expiraci banky.')
-      }
+    if (notifiedSomehow) {
+      await supabase
+        .from('bank_connections')
+        .update({ expiry_reminder_sent_at: new Date().toISOString() })
+        .eq('id', conn.id)
     }
   }
 
-  return NextResponse.json({ sent, skipped, errors })
+  return NextResponse.json({ sent, pushSent, skipped, errors })
 }

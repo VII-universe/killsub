@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { sendPushToUser } from '@/utils/sendPush'
 
 export const runtime = 'nodejs'
 
@@ -81,35 +82,53 @@ export async function GET(request: NextRequest) {
     byUser.set(alert.user_id, entry)
   }
 
-  if (process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY)
+  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+  let pushSent = 0
 
-    for (const [userId, entry] of byUser) {
+  for (const [userId, entry] of byUser) {
+    let notifiedSomehow = false
+
+    if (resend) {
       const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId)
       if (userError || !userData?.user?.email) {
         errors.push(`Chybí e-mail pro uživatele ${userId}`)
-        continue
+      } else {
+        try {
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'Killsub <onboarding@resend.dev>',
+            to: userData.user.email,
+            subject: 'Zjistili jsme zdražení předplatných',
+            html: renderPriceAlertsEmail(entry.changes, dashboardUrl),
+          })
+          sent++
+          notifiedSomehow = true
+        } catch (err) {
+          errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání e-mailu o zdražení.')
+        }
       }
+    }
 
-      try {
-        await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || 'Killsub <onboarding@resend.dev>',
-          to: userData.user.email,
-          subject: 'Zjistili jsme zdražení předplatných',
-          html: renderPriceAlertsEmail(entry.changes, dashboardUrl),
-        })
+    const pushTitle =
+      entry.changes.length === 1
+        ? `📈 ${entry.changes[0].subscriptionName} zdražil o ${Math.round(
+            entry.changes[0].newAmount - entry.changes[0].oldAmount
+          )} ${entry.changes[0].currency}`
+        : `📈 ${entry.changes.length} předplatných zdražilo`
+    const pushBody = entry.changes.map((c) => c.subscriptionName).join(', ')
 
-        await supabase
-          .from('price_change_alerts')
-          .update({ notified_at: new Date().toISOString() })
-          .in('id', entry.ids)
+    const { sent: devicesSent } = await sendPushToUser(userId, pushTitle, pushBody, dashboardUrl)
+    if (devicesSent > 0) {
+      pushSent++
+      notifiedSomehow = true
+    }
 
-        sent++
-      } catch (err) {
-        errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání e-mailu o zdražení.')
-      }
+    if (notifiedSomehow) {
+      await supabase
+        .from('price_change_alerts')
+        .update({ notified_at: new Date().toISOString() })
+        .in('id', entry.ids)
     }
   }
 
-  return NextResponse.json({ sent, errors })
+  return NextResponse.json({ sent, pushSent, errors })
 }

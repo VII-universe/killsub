@@ -1,5 +1,3 @@
-import { createClient } from './supabase/client'
-
 export function isPushSupported(): boolean {
   return (
     typeof window !== 'undefined' &&
@@ -50,27 +48,16 @@ export async function subscribeToPush(): Promise<{ error?: string }> {
     })
 
     const json = subscription.toJSON()
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
-    if (!user) {
-      return { error: 'Uživatel není přihlášen.' }
-    }
+    const res = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: json }),
+    })
 
-    const { error } = await supabase.from('push_subscriptions').upsert(
-      {
-        user_id: user.id,
-        endpoint: json.endpoint!,
-        p256dh: json.keys!.p256dh,
-        auth: json.keys!.auth,
-      },
-      { onConflict: 'endpoint' }
-    )
-
-    if (error) {
-      return { error: error.message }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error || 'Nepodařilo se uložit push subscription.' }
     }
 
     return {}
@@ -87,11 +74,15 @@ export async function unsubscribeFromPush(): Promise<{ error?: string }> {
     const endpoint = subscription.endpoint
     await subscription.unsubscribe()
 
-    const supabase = createClient()
-    const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
+    const res = await fetch('/api/push/unsubscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    })
 
-    if (error) {
-      return { error: error.message }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error || 'Nepodařilo se smazat push subscription.' }
     }
 
     return {}

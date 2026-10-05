@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { Resend } from 'resend'
-import webpush from 'web-push'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { monthlyEquivalent } from '@/utils/detox'
+import { sendPushToUser } from '@/utils/sendPush'
 
 export const runtime = 'nodejs'
 
@@ -59,14 +59,6 @@ export async function GET(request: NextRequest) {
     errors.push(sessionsError.message)
   }
 
-  if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-    webpush.setVapidDetails(
-      process.env.VAPID_SUBJECT || 'mailto:support@killsub.app',
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
-    )
-  }
-
   for (const session of activeSessions || []) {
     const elapsedDays = Math.floor((Date.now() - new Date(session.started_at).getTime()) / (1000 * 60 * 60 * 24))
 
@@ -86,34 +78,12 @@ export async function GET(request: NextRequest) {
 
       const savedSoFar = totalMonthly * (milestone.days / 30)
 
-      if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-        const { data: devices } = await supabase
-          .from('push_subscriptions')
-          .select('id, endpoint, p256dh, auth')
-          .eq('user_id', session.user_id)
-
-        const payload = JSON.stringify({
-          title: `Detox: týden ${milestone.days / 7} za tebou`,
-          body: `Ušetřil jsi ${formatCzk(savedSoFar)}.`,
-          url: '/dashboard/detox',
-        })
-
-        for (const device of devices || []) {
-          try {
-            await webpush.sendNotification(
-              { endpoint: device.endpoint, keys: { p256dh: device.p256dh, auth: device.auth } },
-              payload
-            )
-          } catch (err) {
-            const statusCode = err instanceof webpush.WebPushError ? err.statusCode : undefined
-            if (statusCode === 404 || statusCode === 410) {
-              await supabase.from('push_subscriptions').delete().eq('id', device.id)
-            } else {
-              errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání detox push notifikace.')
-            }
-          }
-        }
-      }
+      await sendPushToUser(
+        session.user_id,
+        `❄️ Detox: týden ${milestone.days / 7} za tebou`,
+        `Ušetřil jsi ${formatCzk(savedSoFar)}.`,
+        '/dashboard/detox'
+      )
 
       await supabase
         .from('detox_sessions')
@@ -123,10 +93,17 @@ export async function GET(request: NextRequest) {
       milestoneNotificationsSent++
     }
 
-    // Session finished — flip to completed and send the wrap-up e-mail.
+    // Session finished — flip to completed and send the wrap-up notification.
     if (new Date(session.ends_at).getTime() <= Date.now()) {
       await supabase.from('detox_sessions').update({ status: 'completed' }).eq('id', session.id)
       completed++
+
+      await sendPushToUser(
+        session.user_id,
+        '🎉 Tvůj Detox skončil!',
+        `Ušetřil jsi ${formatCzk(totalMonthly)}. Podívej se na výsledky →`,
+        '/dashboard/detox'
+      )
 
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY)

@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'Killsub'
   const options = {
     body: payload.body || '',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
     data: {
       url: payload.url || '/dashboard',
       subscriptionId: payload.subscriptionId || null,
@@ -23,6 +23,14 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener('install', () => {
+  self.skipWaiting()
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim())
 })
 
 const OFFLINE_HTML = `<!DOCTYPE html>

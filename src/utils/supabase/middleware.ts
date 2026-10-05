@@ -37,6 +37,7 @@ export async function updateSession(request: NextRequest) {
                         request.nextUrl.pathname === '/try' ||
                         request.nextUrl.pathname.startsWith('/auth/') ||
                         request.nextUrl.pathname.startsWith('/api/cron/') ||
+                        request.nextUrl.pathname === '/api/push/send' ||
                         request.nextUrl.pathname.startsWith('/api/stripe/webhook') ||
                         request.nextUrl.pathname.startsWith('/api/email/inbound') ||
                         request.nextUrl.pathname.startsWith('/api/analytics') ||

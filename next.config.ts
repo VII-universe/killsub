@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/import': ['./node_modules/pdfjs-dist/**/*'],
   },
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [{ key: 'Service-Worker-Allowed', value: '/' }],
+      },
+    ]
+  },
 };
 
 export default withSentryConfig(nextConfig, {
