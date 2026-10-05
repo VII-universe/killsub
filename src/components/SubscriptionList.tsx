@@ -8,6 +8,7 @@ import { CATEGORY_COLORS, Category } from '@/utils/categories'
 import { cancelSubscription } from '@/app/actions/subscriptions'
 import { getCleanseState, recordCleanseCancellation } from '@/utils/cleanse'
 import { effectiveAmount } from '@/utils/subscriptionCost'
+import { useLanguage } from '@/context/LanguageContext'
 
 export interface Subscription {
   id: string
@@ -43,6 +44,7 @@ export default function SubscriptionList({
   onLoadDemo?: () => void
   readOnly?: boolean
 }) {
+  const { t } = useLanguage()
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterCycle, setFilterCycle] = useState<string>('all')
@@ -126,7 +128,7 @@ export default function SubscriptionList({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Hledat mezi předplatnými..."
+            placeholder={t('card.searchPlaceholder')}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.04] py-3 pl-10 pr-10 text-xs font-medium text-white placeholder-white/40 shadow-inner backdrop-blur-xl transition-all focus:border-[var(--accent-primary)] focus:bg-white/[0.07] focus:outline-none"
           />
           {search && (
@@ -151,7 +153,7 @@ export default function SubscriptionList({
                   : 'border border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.08] hover:text-white'
               }`}
             >
-              {cat === 'all' ? 'Všechny služby' : cat}
+              {cat === 'all' ? t('card.allServices') : cat}
             </button>
           ))}
         </div>
@@ -168,7 +170,7 @@ export default function SubscriptionList({
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              Vše
+              {t('card.cycleAll')}
             </button>
             <button
               onClick={() => setFilterCycle('monthly')}
@@ -178,7 +180,7 @@ export default function SubscriptionList({
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              Měsíční
+              {t('card.cycleMonthly')}
             </button>
             <button
               onClick={() => setFilterCycle('yearly')}
@@ -188,7 +190,7 @@ export default function SubscriptionList({
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              Roční
+              {t('card.cycleYearly')}
             </button>
           </div>
 
@@ -199,9 +201,9 @@ export default function SubscriptionList({
               onChange={(e) => setSortBy(e.target.value as any)}
               className="appearance-none rounded-xl border border-white/10 bg-black/40 py-1.5 pl-2.5 pr-7 text-[11px] font-bold text-white/80 backdrop-blur-md focus:outline-none cursor-pointer"
             >
-              <option value="date" className="bg-slate-900 text-white">📅 Dle data</option>
-              <option value="amount-desc" className="bg-slate-900 text-white">💰 Od nejdražších</option>
-              <option value="name" className="bg-slate-900 text-white">🔤 Dle abecedy</option>
+              <option value="date" className="bg-slate-900 text-white">{t('card.sortDate')}</option>
+              <option value="amount-desc" className="bg-slate-900 text-white">{t('card.sortAmount')}</option>
+              <option value="name" className="bg-slate-900 text-white">{t('card.sortName')}</option>
             </select>
             <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -217,7 +219,7 @@ export default function SubscriptionList({
               onChange={(e) => setShowCancelled(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
             />
-            Zobrazit zrušená ({cancelledCount})
+            {t('card.showCancelled', { count: cancelledCount })}
           </label>
         )}
       </div>
@@ -229,12 +231,12 @@ export default function SubscriptionList({
             ✨
           </div>
           <h4 className="mt-3 text-base font-bold text-white">
-            {subscriptions.length === 0 ? 'Zatím žádná předplatná' : 'Nebylo nic nalezeno'}
+            {subscriptions.length === 0 ? t('card.emptyTitleNone') : t('card.emptyTitleNoResults')}
           </h4>
           <p className="mt-1 text-xs text-white/60 max-w-xs mx-auto">
             {subscriptions.length === 0
-              ? 'Začněte přidáním svého prvního předplatného tlačítkem níže nebo využijte AI sken faktur.'
-              : 'Zkuste změnit hledaný výraz nebo vybranou kategorii.'}
+              ? t('card.emptyBodyNone')
+              : t('card.emptyBodyNoResults')}
           </p>
           {subscriptions.length === 0 && (onOpenAddModal || onLoadDemo) && (
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
@@ -243,7 +245,7 @@ export default function SubscriptionList({
                   onClick={onOpenAddModal}
                   className="rounded-xl theme-accent-btn px-4 py-2.5 text-xs font-bold text-white shadow-lg inline-flex items-center gap-2"
                 >
-                  <span>+ Přidat předplatné</span>
+                  <span>{t('card.addSubscription')}</span>
                 </button>
               )}
               {onLoadDemo && (
@@ -251,7 +253,7 @@ export default function SubscriptionList({
                   onClick={onLoadDemo}
                   className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-white/80 hover:bg-white/10 inline-flex items-center gap-2"
                 >
-                  <span>✨ Načíst ukázková data</span>
+                  <span>{t('card.loadDemo')}</span>
                 </button>
               )}
             </div>
@@ -317,21 +319,21 @@ export default function SubscriptionList({
                             {sub.category}
                           </span>
                           <span className="text-[10px] text-white/50">
-                            • {sub.billing_cycle === 'yearly' ? 'Ročně' : 'Měsíčně'}
+                            • {sub.billing_cycle === 'yearly' ? t('card.cycleYearly') : t('card.cycleMonthly')}
                           </span>
                           {isTrial && (
                             <span className="inline-block rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">
-                              Trial
+                              {t('card.trial')}
                             </span>
                           )}
                           {isCancelled && (
                             <span className="inline-block rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white/50">
-                              Zrušeno
+                              {t('card.cancelled')}
                             </span>
                           )}
                           {sub.shared && (
                             <span className="inline-block rounded-md border border-sky-500/40 bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-300">
-                              👥 Sdílené
+                              {t('card.shared')}
                             </span>
                           )}
                         </div>
@@ -343,7 +345,7 @@ export default function SubscriptionList({
                         {onEdit && (
                           <button
                             onClick={() => onEdit(sub)}
-                            title="Upravit předplatné"
+                            title={t('card.editTooltip')}
                             className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-slate-400 transition-all hover:border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/10 hover:text-white"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +355,7 @@ export default function SubscriptionList({
                         )}
                         <button
                           onClick={() => setCancelTarget(sub)}
-                          title="Zrušit předplatné"
+                          title={t('card.cancelTooltip')}
                           className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-slate-400 transition-all hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -378,7 +380,7 @@ export default function SubscriptionList({
                       <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 21s-6.716-4.35-9.428-8.28C.94 10.02 1.52 6.6 4.343 5.02 6.5 3.8 9.06 4.3 12 7.1c2.94-2.8 5.5-3.3 7.657-2.08 2.823 1.58 3.403 5 1.771 7.7C18.716 16.65 12 21 12 21z" />
                       </svg>
-                      Zdraví {sub.healthScore}
+                      {t('card.health', { score: sub.healthScore })}
                     </span>
                   </div>
 
@@ -399,24 +401,24 @@ export default function SubscriptionList({
                       </span>
                       {sub.shared && (
                         <span className="ml-1.5 text-[10px] font-bold text-white/40">
-                          (celkem {sub.amount.toLocaleString('cs-CZ')} {sub.currency})
+                          ({t('card.total')} {sub.amount.toLocaleString('cs-CZ')} {sub.currency})
                         </span>
                       )}
                     </div>
 
                     {sub.billing_cycle === 'yearly' ? (
                       <span className="text-[11px] font-mono font-bold text-white/60 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
-                        ~{(effAmount / 12).toFixed(0)} {sub.currency}/měs.
+                        ~{(effAmount / 12).toFixed(0)} {sub.currency}{t('card.perMonthShort')}
                       </span>
                     ) : (
                       <span className="text-[11px] font-mono font-bold text-white/60 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
-                        ~{(effAmount * 12).toLocaleString('cs-CZ')} {sub.currency}/rok
+                        ~{(effAmount * 12).toLocaleString('cs-CZ')} {sub.currency}{t('card.perYearShort')}
                       </span>
                     )}
                   </div>
 
                   {sub.shared && sub.shared_with && (
-                    <p className="mt-1.5 text-[10px] text-white/40">Sdílím s: {sub.shared_with}</p>
+                    <p className="mt-1.5 text-[10px] text-white/40">{t('card.sharedWith', { name: sub.shared_with })}</p>
                   )}
                 </div>
 
@@ -433,7 +435,7 @@ export default function SubscriptionList({
                     <span>
                       {sub.next_payment_date
                         ? new Date(sub.next_payment_date).toLocaleDateString('cs-CZ')
-                        : 'Bez data'}
+                        : t('card.noDate')}
                     </span>
                   </div>
 
@@ -446,12 +448,15 @@ export default function SubscriptionList({
                       }`}
                     >
                       {isOverdue
-                        ? 'Splatné'
+                        ? t('card.overdue')
                         : daysRemaining === 0
-                        ? 'Platba dnes!'
+                        ? t('card.dueToday')
                         : daysRemaining === 1
-                        ? 'Platba zítra'
-                        : `Platba za ${daysRemaining} ${(daysRemaining as number) < 5 ? 'dny' : 'dní'}`}
+                        ? t('card.dueTomorrow')
+                        : t('card.dueInDays', {
+                            n: daysRemaining as number,
+                            unit: t((daysRemaining as number) < 5 ? 'card.dueInDaysUnitFew' : 'card.dueInDaysUnitMany'),
+                          })}
                     </span>
                   )}
                 </div>

@@ -38,6 +38,7 @@ import { trackClientEvent } from '@/utils/analyticsClient'
 import { detectDuplicates } from '@/utils/duplicates'
 import { effectiveAmount } from '@/utils/subscriptionCost'
 import { useColorMode } from '@/hooks/useColorMode'
+import { useLanguage } from '@/context/LanguageContext'
 
 const DEMO_STORAGE_KEY = 'killsub-demo-mode'
 
@@ -63,6 +64,7 @@ export default function MobileDashboardView({
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
   const { theme: colorMode, toggleTheme: toggleColorMode } = useColorMode()
+  const { lang, setLang, t } = useLanguage()
 
   const openUpgrade = (message: string) => {
     trackClientEvent('upgrade_clicked', { message })
@@ -213,20 +215,29 @@ export default function MobileDashboardView({
                 )}
               </div>
               <p className="text-[10px] text-white/50 truncate max-w-[140px] font-mono">
-                {userEmail || 'Uživatel'}
+                {userEmail || t('nav.user')}
               </p>
             </div>
           </div>
 
-          {/* Right Controls: Theme Selector + Logout */}
+          {/* Right Controls: Language + Theme Selector + Logout */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLang(lang === 'cs' ? 'en' : 'cs')}
+              className="flex h-8 items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 text-[10px] font-black text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              title={t('settings.language')}
+            >
+              {lang === 'cs' ? 'CS' : 'EN'}
+            </button>
+
             <ThemeSelector />
 
             <form action={signOut}>
               <button
                 type="submit"
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/30 transition-all"
-                title="Odhlásit se"
+                title={t('nav.logout')}
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -242,7 +253,7 @@ export default function MobileDashboardView({
         {/* Database Warning */}
         {dbError && (
           <div className="rounded-2xl border border-amber-500/40 bg-amber-950/40 p-3.5 text-xs text-amber-200">
-            <p className="font-bold">Chybí tabulka subscriptions</p>
+            <p className="font-bold">{t('settings.dbMissingTitle')}</p>
             <p className="text-[11px] opacity-80 mt-0.5">{dbError.message}</p>
           </div>
         )}
@@ -250,12 +261,12 @@ export default function MobileDashboardView({
         {/* Demo mode banner */}
         {isDemoMode && subscriptions.length === 0 && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/30 p-3.5 text-xs text-indigo-200">
-            <span className="font-bold">✨ Zobrazena ukázková data</span>
+            <span className="font-bold">{t('settings.demoDataBanner')}</span>
             <button
               onClick={handleClearDemo}
               className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-white/10"
             >
-              Vymazat demo data
+              {t('settings.clearDemoData')}
             </button>
           </div>
         )}
@@ -583,7 +594,7 @@ export default function MobileDashboardView({
         {activeTab === 'settings' && (
           <div className="space-y-4">
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 space-y-4 backdrop-blur-xl">
-              <h2 className="text-base font-black text-white">Nastavení aplikace</h2>
+              <h2 className="text-base font-black text-white">{t('settings.title')}</h2>
 
               <div className="space-y-3">
                 <button
@@ -595,10 +606,10 @@ export default function MobileDashboardView({
                   <span className="text-lg">{colorMode === 'dark' ? '☀️' : '🌙'}</span>
                   <div>
                     <p className="font-medium" style={{ color: 'var(--text-main)' }}>
-                      {colorMode === 'dark' ? 'Světlý režim' : 'Tmavý režim'}
+                      {colorMode === 'dark' ? t('settings.lightMode') : t('settings.darkMode')}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      Aktuálně: {colorMode === 'dark' ? 'Tmavý' : 'Světlý'}
+                      {t('settings.currently')}: {colorMode === 'dark' ? t('settings.modeDark') : t('settings.modeLight')}
                     </p>
                   </div>
                   <div className="ml-auto">
@@ -614,15 +625,39 @@ export default function MobileDashboardView({
                   </div>
                 </button>
 
+                <div className="flex items-center justify-between rounded-2xl border px-4 py-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-main)' }}>{t('settings.language')}</span>
+                  <div className="flex rounded-xl border border-white/10 bg-black/20 p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setLang('cs')}
+                      className={`rounded-lg px-3 py-1 text-[11px] font-bold transition-all ${
+                        lang === 'cs' ? 'bg-white/15 text-white shadow-sm' : 'text-white/50 hover:text-white'
+                      }`}
+                    >
+                      CS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLang('en')}
+                      className={`rounded-lg px-3 py-1 text-[11px] font-bold transition-all ${
+                        lang === 'en' ? 'bg-white/15 text-white shadow-sm' : 'text-white/50 hover:text-white'
+                      }`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                </div>
+
                 <div>
-                  <span className="text-[11px] text-white/60 font-semibold block">Vizuální styl (Téma)</span>
+                  <span className="text-[11px] text-white/60 font-semibold block">{t('settings.visualStyle')}</span>
                   <div className="mt-1.5">
                     <ThemeSelector />
                   </div>
                 </div>
 
                 <div className="border-t border-white/10 pt-3">
-                  <span className="text-[11px] text-white/60 font-semibold block">Přihlášený uživatel</span>
+                  <span className="text-[11px] text-white/60 font-semibold block">{t('settings.loggedInAs')}</span>
                   <span className="text-xs font-mono font-bold text-white">{userEmail}</span>
                 </div>
 
@@ -632,7 +667,7 @@ export default function MobileDashboardView({
                       type="submit"
                       className="w-full rounded-2xl border border-rose-500/40 bg-rose-500/10 py-3 text-xs font-black text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all"
                     >
-                      Odhlásit se z účtu
+                      {t('settings.logoutButton')}
                     </button>
                   </form>
                 </div>
@@ -674,8 +709,8 @@ export default function MobileDashboardView({
             >
               <span className="text-lg">📥</span>
               <div>
-                <p className="font-medium text-white">Exportovat data</p>
-                <p className="text-xs text-white/50">Stáhnout předplatná jako CSV</p>
+                <p className="font-medium text-white">{t('settings.exportData')}</p>
+                <p className="text-xs text-white/50">{t('settings.exportDataDesc')}</p>
               </div>
             </button>
           </div>
@@ -742,7 +777,7 @@ export default function MobileDashboardView({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </div>
-            <span className="text-[10px]">Přehled</span>
+            <span className="text-[10px]">{t('nav.home')}</span>
           </button>
 
           {/* Subscriptions List */}
@@ -759,14 +794,14 @@ export default function MobileDashboardView({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            <span className="text-[10px]">Služby</span>
+            <span className="text-[10px]">{t('nav.services')}</span>
           </button>
 
           {/* Center Floating Plus / Action Button */}
           <button
             onClick={() => setIsFormModalOpen(true)}
             className="flex -mt-5 h-13 w-13 items-center justify-center rounded-full theme-accent-btn shadow-lg shadow-[var(--accent-primary)]/40 border-2 border-black active:scale-90 transition-transform"
-            title="Přidat předplatné"
+            title={t('nav.addSubscription')}
           >
             <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} d="M12 4v16m8-8H4" />
@@ -787,7 +822,7 @@ export default function MobileDashboardView({
                 <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
               </svg>
             </div>
-            <span className="text-[10px]">AI Sken</span>
+            <span className="text-[10px]">{t('nav.aiScan')}</span>
           </button>
 
           {/* Settings Tab */}
@@ -805,7 +840,7 @@ export default function MobileDashboardView({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <span className="text-[10px]">Témata</span>
+            <span className="text-[10px]">{t('nav.settings')}</span>
           </button>
 
           {/* Ušetřit více — separate route, not an internal tab */}

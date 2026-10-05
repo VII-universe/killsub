@@ -9,6 +9,7 @@ import { markAiUsed } from '@/utils/badges'
 import { getLogoUrl } from '@/utils/serviceLogos'
 import ServiceLogo from './ServiceLogo'
 import { createClient } from '@/utils/supabase/client'
+import { useLanguage } from '@/context/LanguageContext'
 
 const NEW_CATEGORY_VALUE = '__new_category__'
 
@@ -50,6 +51,7 @@ export default function AddSubscriptionForm({
   isPro?: boolean
   onAiLocked?: () => void
 }) {
+  const { t } = useLanguage()
   const isEditing = !!subscription
   const formRef = useRef<HTMLFormElement>(null)
   const boundUpdateAction = subscription
@@ -287,10 +289,10 @@ export default function AddSubscriptionForm({
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
-              {isEditing ? 'Upravit předplatné' : 'Přidat předplatné'}
+              {isEditing ? t('form.titleEdit') : t('form.titleAdd')}
             </h3>
             <p className="text-[11px] text-white/60">
-              {isEditing ? 'Aktualizujte parametry předplatného' : 'Zadejte parametry nebo využijte AI'}
+              {isEditing ? t('form.subtitleEdit') : t('form.subtitleAdd')}
             </p>
           </div>
         </div>
@@ -451,7 +453,7 @@ export default function AddSubscriptionForm({
       <form ref={formRef} action={formAction} className="mt-4 space-y-4">
         <div>
           <label htmlFor="name" className="block text-xs font-bold text-white/90">
-            Název služby
+            {t('form.name')}
           </label>
           <div className="mt-1.5 flex items-center gap-3">
             {name.trim() && <ServiceLogo name={name} size={44} customLogoUrl={logoUrl || null} />}
@@ -462,7 +464,7 @@ export default function AddSubscriptionForm({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="např. Netflix, Spotify, iCloud"
+              placeholder={t('form.namePlaceholder')}
               className="flex-1 min-w-0 block w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-xs font-bold text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:bg-black/60 focus:outline-none transition-all"
             />
           </div>
@@ -488,7 +490,7 @@ export default function AddSubscriptionForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="amount" className="block text-xs font-bold text-white/90">
-              Částka
+              {t('form.amount')}
             </label>
             <div className="relative mt-1.5">
               <input
@@ -520,7 +522,7 @@ export default function AddSubscriptionForm({
 
           <div>
             <label htmlFor="billing_cycle" className="block text-xs font-bold text-white/90">
-              Frekvence
+              {t('form.cycle')}
             </label>
             <select
               id="billing_cycle"
@@ -529,8 +531,8 @@ export default function AddSubscriptionForm({
               onChange={(e) => setBillingCycle(e.target.value)}
               className="select-dark mt-1.5 block w-full text-xs font-bold"
             >
-              <option value="monthly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Měsíčně</option>
-              <option value="yearly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>Ročně</option>
+              <option value="monthly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>{t('form.cycleMonthly')}</option>
+              <option value="yearly" style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>{t('form.cycleYearly')}</option>
             </select>
           </div>
         </div>
@@ -538,7 +540,7 @@ export default function AddSubscriptionForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="next_payment_date" className="block text-xs font-bold text-white/90">
-              Datum příští platby
+              {t('form.nextPaymentDate')}
             </label>
             <input
               id="next_payment_date"
@@ -552,7 +554,7 @@ export default function AddSubscriptionForm({
 
           <div>
             <label htmlFor="category" className="block text-xs font-bold text-white/90">
-              Kategorie
+              {t('form.category')}
             </label>
             <select
               id="category"
@@ -572,7 +574,7 @@ export default function AddSubscriptionForm({
                 </option>
               ))}
               <option value={NEW_CATEGORY_VALUE} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
-                + Přidat kategorii
+                {t('form.addCategory')}
               </option>
             </select>
           </div>
@@ -580,7 +582,7 @@ export default function AddSubscriptionForm({
 
         {isAddingCategory && (
           <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2.5">
-            <p className="text-[11px] font-bold text-white/70">Nová kategorie</p>
+            <p className="text-[11px] font-bold text-white/70">{t('form.newCategory')}</p>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -594,7 +596,7 @@ export default function AddSubscriptionForm({
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Název kategorie"
+                placeholder={t('form.newCategoryNamePlaceholder')}
                 className="flex-1 min-w-0 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:outline-none"
               />
             </div>
@@ -608,7 +610,7 @@ export default function AddSubscriptionForm({
                 }}
                 className="flex-1 rounded-lg border border-white/10 py-2 text-[11px] font-bold text-white/70"
               >
-                Zrušit
+                {t('form.cancel')}
               </button>
               <button
                 type="button"
@@ -616,7 +618,7 @@ export default function AddSubscriptionForm({
                 disabled={isSavingCategory}
                 className="flex-1 rounded-lg theme-accent-btn py-2 text-[11px] font-black disabled:opacity-50"
               >
-                {isSavingCategory ? 'Ukládám…' : 'Uložit kategorii'}
+                {isSavingCategory ? t('form.savingCategory') : t('form.saveCategory')}
               </button>
             </div>
           </div>
@@ -636,7 +638,7 @@ export default function AddSubscriptionForm({
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-          <span>{moreOpen ? 'Méně možností' : 'Více možností'}</span>
+          <span>{moreOpen ? t('form.lessOptions') : t('form.moreOptions')}</span>
         </button>
 
         <div
@@ -672,10 +674,10 @@ export default function AddSubscriptionForm({
                   onChange={(e) => setIsTrial(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-black/40 accent-amber-500"
                 />
-                <span className="text-xs font-bold text-white/90">Je to trial (zkušební verze)</span>
+                <span className="text-xs font-bold text-white/90">{t('form.isTrial')}</span>
               </label>
               <p className="mt-1.5 text-[10px] text-white/40">
-                Před koncem trialu tě upozorníme e-mailem, než ti začnou účtovat plnou cenu.
+                {t('form.isTrialHelper')}
               </p>
             </div>
 
@@ -689,14 +691,14 @@ export default function AddSubscriptionForm({
                   onChange={(e) => setIsShared(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-black/40 accent-sky-500"
                 />
-                <span className="text-xs font-bold text-white/90">Sdílím toto předplatné s někým</span>
+                <span className="text-xs font-bold text-white/90">{t('form.isShared')}</span>
               </label>
 
               {isShared && (
                 <div className="mt-3 space-y-3">
                   <div>
                     <label htmlFor="shared_with" className="block text-[11px] font-bold text-white/60">
-                      S kým sdílím
+                      {t('form.sharedWith')}
                     </label>
                     <input
                       id="shared_with"
@@ -704,14 +706,14 @@ export default function AddSubscriptionForm({
                       type="text"
                       value={sharedWith}
                       onChange={(e) => setSharedWith(e.target.value)}
-                      placeholder="např. bratr, přítelkyně"
+                      placeholder={t('form.sharedWithPlaceholder')}
                       className="mt-1 block w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-[11px] text-white placeholder-white/30 focus:border-sky-500 focus:bg-black/60 focus:outline-none transition-all"
                     />
                   </div>
 
                   <div>
                     <label htmlFor="my_share" className="block text-[11px] font-bold text-white/60">
-                      Moje část (Kč)
+                      {t('form.myShare')}
                     </label>
                     <input
                       id="my_share"
@@ -747,7 +749,7 @@ export default function AddSubscriptionForm({
                   onChange={(e) => setManualScore(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-black/40 accent-[var(--accent-primary)]"
                 />
-                <span className="text-xs font-bold text-white/90">Nastavit zdravotní skóre ručně</span>
+                <span className="text-xs font-bold text-white/90">{t('form.manualHealthScore')}</span>
               </label>
               {manualScore && (
                 <div className="mt-3">
@@ -767,7 +769,7 @@ export default function AddSubscriptionForm({
 
             <div>
               <label htmlFor="note" className="block text-xs font-bold text-white/90">
-                Poznámka <span className="font-normal text-white/40">(nepovinné)</span>
+                {t('form.note')} <span className="font-normal text-white/40">{t('form.optional')}</span>
               </label>
               <textarea
                 id="note"
@@ -793,14 +795,14 @@ export default function AddSubscriptionForm({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <span>Ukládám do Killsub...</span>
+              <span>{t('form.saving')}</span>
             </>
           ) : (
             <>
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
-              <span>{isEditing ? 'Uložit změny' : 'Uložit předplatné'}</span>
+              <span>{isEditing ? t('form.saveChanges') : t('form.save')}</span>
             </>
           )}
         </button>
