@@ -8,6 +8,15 @@ import { CATEGORIES, suggestCategory } from '@/utils/categories'
 import { markAiUsed } from '@/utils/badges'
 import { getLogoUrl } from '@/utils/serviceLogos'
 import ServiceLogo from './ServiceLogo'
+import { createClient } from '@/utils/supabase/client'
+
+const NEW_CATEGORY_VALUE = '__new_category__'
+
+interface CustomCategory {
+  id: string
+  name: string
+  icon: string
+}
 
 const QUICK_SUGGESTIONS = [
   { name: 'Netflix', amount: '259', currency: 'CZK', cycle: 'monthly' },
@@ -64,6 +73,12 @@ export default function AddSubscriptionForm({
   const [category, setCategory] = useState(
     subscription?.category || suggestCategory(subscription?.name || prefill?.name || '')
   )
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([])
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+  const [newCategoryIcon, setNewCategoryIcon] = useState('📁')
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [isSavingCategory, setIsSavingCategory] = useState(false)
   const [logoUrl, setLogoUrl] = useState(subscription?.logo_url || '')
   const [note, setNote] = useState(subscription?.note || '')
   const [lastUsedAt, setLastUsedAt] = useState(subscription?.last_used_at || '')
@@ -110,6 +125,9 @@ export default function AddSubscriptionForm({
         setManualScore(false)
         setScoreValue('80')
       }
+      setIsAddingCategory(false)
+      setNewCategoryName('')
+      setCategoryError(null)
       setImportText('')
       setAiSuccess(null)
       setAiError(null)
@@ -120,6 +138,82 @@ export default function AddSubscriptionForm({
       }
     }
   }, [state, today, onClose, isEditing])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadCustomCategories = async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('custom_categories')
+        .select('id, name, icon')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+
+      if (!cancelled && data) setCustomCategories(data)
+    }
+    loadCustomCategories()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleCategorySelectChange = (value: string) => {
+    if (value === NEW_CATEGORY_VALUE) {
+      setIsAddingCategory(true)
+      setCategoryError(null)
+      return
+    }
+    setCategory(value)
+  }
+
+  const handleSaveNewCategory = async () => {
+    const name = newCategoryName.trim()
+    const icon = newCategoryIcon.trim() || '📁'
+
+    if (!name) {
+      setCategoryError('Zadejte název kategorie.')
+      return
+    }
+
+    setIsSavingCategory(true)
+    setCategoryError(null)
+
+    try {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setCategoryError('Uživatel není přihlášen.')
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('custom_categories')
+        .insert({ user_id: user.id, name, icon })
+        .select('id, name, icon')
+        .single()
+
+      if (error || !data) {
+        setCategoryError(error?.message || 'Nepodařilo se uložit kategorii.')
+        return
+      }
+
+      setCustomCategories((prev) => [...prev, data])
+      setCategory(data.name)
+      setIsAddingCategory(false)
+      setNewCategoryName('')
+      setNewCategoryIcon('📁')
+    } finally {
+      setIsSavingCategory(false)
+    }
+  }
 
   const handleAnalyzeAI = async () => {
     if (!importText.trim()) {
@@ -464,7 +558,7 @@ export default function AddSubscriptionForm({
               id="category"
               name="category"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => handleCategorySelectChange(e.target.value)}
               className="select-dark mt-1.5 block w-full text-xs font-bold"
             >
               {CATEGORIES.map((cat) => (
@@ -472,9 +566,61 @@ export default function AddSubscriptionForm({
                   {cat}
                 </option>
               ))}
+              {customCategories.map((cat) => (
+                <option key={cat.id} value={cat.name} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+              <option value={NEW_CATEGORY_VALUE} style={{ backgroundColor: '#1a1d27', color: '#e8eaf0' }}>
+                + Přidat kategorii
+              </option>
             </select>
           </div>
         </div>
+
+        {isAddingCategory && (
+          <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2.5">
+            <p className="text-[11px] font-bold text-white/70">Nová kategorie</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newCategoryIcon}
+                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                maxLength={4}
+                placeholder="📁"
+                className="w-14 flex-shrink-0 rounded-lg border border-white/10 bg-black/40 px-2 py-2.5 text-center text-sm text-white focus:border-[var(--accent-primary)] focus:outline-none"
+              />
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Název kategorie"
+                className="flex-1 min-w-0 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white placeholder-white/30 focus:border-[var(--accent-primary)] focus:outline-none"
+              />
+            </div>
+            {categoryError && <p className="text-[11px] font-semibold text-rose-400">{categoryError}</p>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingCategory(false)
+                  setCategoryError(null)
+                }}
+                className="flex-1 rounded-lg border border-white/10 py-2 text-[11px] font-bold text-white/70"
+              >
+                Zrušit
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNewCategory}
+                disabled={isSavingCategory}
+                className="flex-1 rounded-lg theme-accent-btn py-2 text-[11px] font-black disabled:opacity-50"
+              >
+                {isSavingCategory ? 'Ukládám…' : 'Uložit kategorii'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Více možností toggle */}
         <button

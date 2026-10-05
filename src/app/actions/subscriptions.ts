@@ -2,7 +2,6 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isCategory } from '@/utils/categories'
 import { FREE_PLAN_SUBSCRIPTION_LIMIT } from '@/utils/plan'
 import { trackEvent } from '@/utils/analytics'
 
@@ -19,8 +18,9 @@ function parseSubscriptionForm(formData: FormData) {
   const currency = (formData.get('currency') as string) || 'CZK'
   const billingCycle = (formData.get('billing_cycle') as string) || 'monthly'
   const nextPaymentDate = formData.get('next_payment_date') as string
-  const rawCategory = (formData.get('category') as string) || 'Ostatní'
-  const category = isCategory(rawCategory) ? rawCategory : 'Ostatní'
+  // Category is free text — hardcoded categories, catalog categories, and a
+  // user's custom ones (custom_categories table) are all equally valid values.
+  const category = (formData.get('category') as string)?.trim() || 'Ostatní'
   const lastUsedAt = (formData.get('last_used_at') as string) || null
   const logoUrl = (formData.get('logo_url') as string) || null
   const note = (formData.get('note') as string)?.trim() || null
