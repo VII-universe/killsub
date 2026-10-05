@@ -38,6 +38,7 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import BankConnectButton from '@/components/BankConnectButton'
 import BankConnectModal from '@/components/BankConnectModal'
 import CalendarExportButton from '@/components/CalendarExportButton'
+import BankExpiryBanner from '@/components/BankExpiryBanner'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -56,6 +57,7 @@ export default function MobileDashboardView({
   importDomain,
   benchmarkMonthlyCzk,
   bankConnectionCount,
+  bankExpiryWarning,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
@@ -64,6 +66,7 @@ export default function MobileDashboardView({
   importDomain: string
   benchmarkMonthlyCzk?: number | null
   bankConnectionCount?: number
+  bankExpiryWarning?: { expired: boolean; daysLeft: number } | null
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -451,6 +454,8 @@ export default function MobileDashboardView({
             ))}
 
             <BudgetProgressBar subscriptions={effectiveSubscriptions} monthlyBudget={profile?.monthlyBudget ?? null} />
+
+            {bankExpiryWarning && <BankExpiryBanner warning={bankExpiryWarning} />}
 
             {/* Subscriptions List Section */}
             <div className="pt-2">

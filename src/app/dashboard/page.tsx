@@ -3,6 +3,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 import MobileDashboardView from '@/components/MobileDashboardView'
 import { Subscription } from '@/components/SubscriptionList'
+import { isBankConnectionExpiringSoon } from '@/utils/trueLayer'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -36,14 +37,26 @@ export default async function DashboardPage() {
     .eq('category', '_total')
     .maybeSingle()
 
-  // Only counting rows here — bank_connections.access_token is never
-  // selected outside the service-role routes that actually need it.
+  // Only counting rows / reading connected_at here — bank_connections.access_token
+  // is never selected outside the service-role routes that actually need it.
   const admin = createAdminClient()
-  const { count: bankConnectionCount } = await admin
+  const { data: bankConnections, count: bankConnectionCount } = await admin
     .from('bank_connections')
-    .select('id', { count: 'exact', head: true })
+    .select('connected_at', { count: 'exact' })
     .eq('user_id', user.id)
     .eq('provider', 'truelayer')
+
+  // Graceful fallback for historical rows with no connected_at: skip them
+  // entirely rather than warning about a connection we can't actually date.
+  // Surface the most urgent (fewest days left) of any expiring connections.
+  let bankExpiryWarning: { expired: boolean; daysLeft: number } | null = null
+  for (const conn of bankConnections || []) {
+    if (!conn.connected_at) continue
+    const status = isBankConnectionExpiringSoon(conn.connected_at)
+    if (status.expired && (!bankExpiryWarning || status.daysLeft < bankExpiryWarning.daysLeft)) {
+      bankExpiryWarning = status
+    }
+  }
 
   return (
     <MobileDashboardView
@@ -53,6 +66,7 @@ export default async function DashboardPage() {
       importDomain={process.env.KILLSUB_IMPORT_DOMAIN || 'killsub.app'}
       benchmarkMonthlyCzk={benchmark ? Number(benchmark.avg_monthly_czk) : null}
       bankConnectionCount={bankConnectionCount || 0}
+      bankExpiryWarning={bankExpiryWarning}
       profile={
         profile
           ? {

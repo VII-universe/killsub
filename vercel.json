@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/monthly-report",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/bank-expiry-reminder",
+      "schedule": "0 8 * * *"
     }
   ]
 }

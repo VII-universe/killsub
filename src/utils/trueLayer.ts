@@ -3,6 +3,22 @@ import crypto from 'crypto'
 const AUTH_BASE = 'https://auth.truelayer-sandbox.com'
 const API_BASE = 'https://api.truelayer-sandbox.com'
 
+// PSD2 requires re-consenting to Open Banking access every 90 days. `expired`
+// here means "inside the 10-day warning window" (80+ days old), per the
+// spec's own naming — not literally past the full 90-day cutoff. Check
+// `daysLeft <= 0` separately to tell "expiring soon" from "already expired".
+const PSD2_CONSENT_DAYS = 90
+const WARNING_WINDOW_DAYS = 10
+
+export function isBankConnectionExpiringSoon(connectedAt: string): { expired: boolean; daysLeft: number } {
+  const ageDays = (Date.now() - new Date(connectedAt).getTime()) / (1000 * 60 * 60 * 24)
+  const daysLeft = Math.ceil(PSD2_CONSENT_DAYS - ageDays)
+  return {
+    expired: ageDays >= PSD2_CONSENT_DAYS - WARNING_WINDOW_DAYS,
+    daysLeft,
+  }
+}
+
 // TrueLayer only issues a refresh_token when `offline_access` is requested —
 // the spec's bank_connections.refresh_token column would otherwise always be
 // null, so this scope is added beyond the literal "accounts transactions" ask.

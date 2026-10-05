@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token || null,
       expires_at: expiresAt,
+      connected_at: new Date().toISOString(),
     })
 
     if (error) throw new Error(error.message)
