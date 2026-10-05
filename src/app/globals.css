@@ -524,3 +524,43 @@ body {
   from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+@keyframes celebration-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebration-modal-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes celebration-circle-draw {
+  from { stroke-dashoffset: 166; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes celebration-check-draw {
+  from { stroke-dashoffset: 48; }
+  to { stroke-dashoffset: 0; }
+}
+
+.celebration-backdrop {
+  animation: celebration-backdrop-in 0.2s ease-out both;
+}
+
+.celebration-modal {
+  animation: celebration-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.celebration-check-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: celebration-circle-draw 0.5s ease-out 0.1s forwards;
+}
+
+.celebration-check-mark {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: celebration-check-draw 0.35s ease-out 0.55s forwards;
+}

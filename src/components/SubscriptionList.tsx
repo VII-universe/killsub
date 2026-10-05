@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import ServiceLogo from './ServiceLogo'
 import CancelSheet from './CancelSheet'
+import CancellationCelebration from './CancellationCelebration'
 import { computeHealthScore, getHealthTone } from '@/utils/health'
 import { CATEGORY_COLORS, Category } from '@/utils/categories'
 import { cancelSubscription } from '@/app/actions/subscriptions'
@@ -53,6 +54,7 @@ export default function SubscriptionList({
   const [showCancelled, setShowCancelled] = useState(false)
   const [cancelTarget, setCancelTarget] = useState<Subscription | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [celebrationTarget, setCelebrationTarget] = useState<Subscription | null>(null)
 
   const cancelledCount = subscriptions.filter((s) => s.status === 'cancelled').length
 
@@ -63,6 +65,9 @@ export default function SubscriptionList({
       recordCleanseCancellation(id)
     }
     setIsCancelling(false)
+    if (!result.error) {
+      setCelebrationTarget(cancelTarget)
+    }
     setCancelTarget(null)
   }
 
@@ -485,6 +490,19 @@ export default function SubscriptionList({
           subscription={cancelTarget}
           onClose={() => !isCancelling && setCancelTarget(null)}
           onConfirmCancel={handleConfirmCancel}
+        />
+      )}
+
+      {celebrationTarget && (
+        <CancellationCelebration
+          subscriptionName={celebrationTarget.name}
+          monthlyAmount={
+            celebrationTarget.billing_cycle === 'yearly'
+              ? effectiveAmount(celebrationTarget) / 12
+              : effectiveAmount(celebrationTarget)
+          }
+          currency={celebrationTarget.currency}
+          onClose={() => setCelebrationTarget(null)}
         />
       )}
     </div>
