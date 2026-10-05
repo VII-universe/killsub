@@ -32,7 +32,9 @@ export async function GET() {
     )
   }
 
-  console.log('[bank/connect] redirecting to TrueLayer auth URL:', authUrl)
+  console.log('[bank/connect] Full auth URL:', authUrl)
+  console.log('[bank/connect] Env check - CLIENT_ID present:', !!process.env.TRUELAYER_CLIENT_ID)
+  console.log('[bank/connect] Env check - REDIRECT_URI:', process.env.TRUELAYER_REDIRECT_URI)
   console.log('[bank/connect] state:', state, 'code_challenge:', codeChallenge)
 
   const response = NextResponse.redirect(authUrl)

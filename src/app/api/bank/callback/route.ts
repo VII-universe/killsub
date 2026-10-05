@@ -8,6 +8,27 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   const dashboardUrl = new URL('/dashboard', request.nextUrl.origin)
 
+  console.log('[bank/callback] Query params:', Object.fromEntries(request.nextUrl.searchParams))
+  console.log('[bank/callback] Has error param:', request.nextUrl.searchParams.get('error'))
+
+  // TrueLayer redirects back here with ?error=...&error_description=... when
+  // the auth step itself fails (bad client config, denied consent, etc.) —
+  // this was previously silently swallowed into the generic validation-failed
+  // branch below, hiding whatever TrueLayer actually said went wrong.
+  const oauthError = request.nextUrl.searchParams.get('error')
+  if (oauthError) {
+    console.error(
+      '[bank/callback] TrueLayer returned an OAuth error:',
+      oauthError,
+      request.nextUrl.searchParams.get('error_description')
+    )
+    dashboardUrl.searchParams.set('bank', 'error')
+    const response = NextResponse.redirect(dashboardUrl)
+    response.cookies.delete('tl_state')
+    response.cookies.delete('tl_code_verifier')
+    return response
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
