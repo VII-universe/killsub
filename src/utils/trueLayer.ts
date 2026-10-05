@@ -8,6 +8,12 @@ const API_BASE = 'https://api.truelayer-sandbox.com'
 // null, so this scope is added beyond the literal "accounts transactions" ask.
 const SCOPES = 'accounts transactions offline_access'
 
+// TrueLayer's sandbox auth page needs an explicit provider list — without it
+// the auth server has nothing to resolve against and rejects the request
+// outright with a generic Bad Request, which is what was actually causing
+// the error (not the redirect_uri, which was already correct).
+const PROVIDERS = 'uk-ob-all uk-oauth-all de-ob-all at-ob-all cz-ob-all'
+
 function base64url(input: Buffer): string {
   return input.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
@@ -34,6 +40,7 @@ export function buildAuthUrl(params: { state: string; codeChallenge: string }) {
   url.searchParams.set('client_id', clientId)
   url.searchParams.set('redirect_uri', redirectUri)
   url.searchParams.set('scope', SCOPES)
+  url.searchParams.set('providers', PROVIDERS)
   url.searchParams.set('state', params.state)
   url.searchParams.set('code_challenge', params.codeChallenge)
   url.searchParams.set('code_challenge_method', 'S256')

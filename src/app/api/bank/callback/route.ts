@@ -3,6 +3,8 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { exchangeCodeForToken } from '@/utils/trueLayer'
 
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   const dashboardUrl = new URL('/dashboard', request.nextUrl.origin)
 
@@ -12,6 +14,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
+    console.log('[bank/callback] no authenticated user — aborting')
     dashboardUrl.searchParams.set('bank', 'error')
     return NextResponse.redirect(dashboardUrl)
   }
@@ -21,7 +24,10 @@ export async function GET(request: NextRequest) {
   const storedState = request.cookies.get('tl_state')?.value
   const codeVerifier = request.cookies.get('tl_code_verifier')?.value
 
+  console.log('[bank/callback] code present:', !!code, 'state match:', state === storedState, 'code_verifier present:', !!codeVerifier)
+
   if (!code || !state || !storedState || state !== storedState || !codeVerifier) {
+    console.log('[bank/callback] validation failed', { hasCode: !!code, hasState: !!state, hasStoredState: !!storedState, hasCodeVerifier: !!codeVerifier })
     dashboardUrl.searchParams.set('bank', 'error')
     const response = NextResponse.redirect(dashboardUrl)
     response.cookies.delete('tl_state')
@@ -31,6 +37,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await exchangeCodeForToken(code, codeVerifier)
+    console.log('[bank/callback] token exchange ok, expires_in:', tokens.expires_in, 'has refresh_token:', !!tokens.refresh_token)
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
     const admin = createAdminClient()
@@ -46,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     dashboardUrl.searchParams.set('bank', 'connected')
   } catch (error) {
-    console.error('TrueLayer callback chyba:', error)
+    console.error('[bank/callback] chyba:', error)
     dashboardUrl.searchParams.set('bank', 'error')
   }
 
