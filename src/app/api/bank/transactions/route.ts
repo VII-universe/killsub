@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { fetchRecentTransactions, refreshAccessToken, type TrueLayerTransaction } from '@/utils/trueLayer'
+import { detectPriceChanges } from '@/utils/priceChangeDetector'
 
 export async function GET() {
   const supabase = await createClient()
@@ -65,5 +66,48 @@ export async function GET() {
     return NextResponse.json({ error: errors[0] }, { status: 500 })
   }
 
+  if (allTransactions.length > 0) {
+    await saveNewPriceChangeAlerts(admin, user.id, allTransactions)
+  }
+
   return NextResponse.json({ transactions: allTransactions })
+}
+
+async function saveNewPriceChangeAlerts(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  transactions: TrueLayerTransaction[]
+) {
+  const { data: subscriptions } = await admin
+    .from('subscriptions')
+    .select('id, name')
+    .eq('user_id', userId)
+
+  if (!subscriptions || subscriptions.length === 0) return
+
+  const changes = detectPriceChanges(transactions, subscriptions)
+  if (changes.length === 0) return
+
+  for (const change of changes) {
+    // Skip duplicates: same subscription + same new amount already flagged and not dismissed yet.
+    const { data: existing } = await admin
+      .from('price_change_alerts')
+      .select('id')
+      .eq('subscription_id', change.subscriptionId)
+      .eq('new_amount', change.newAmount)
+      .is('dismissed_at', null)
+      .maybeSingle()
+
+    if (existing) continue
+
+    await admin.from('price_change_alerts').insert({
+      user_id: userId,
+      subscription_id: change.subscriptionId,
+      old_amount: change.oldAmount,
+      new_amount: change.newAmount,
+      currency: change.currency,
+      change_percent: change.changePercent,
+      detected_at: change.detectedAt,
+    })
+  }
 }

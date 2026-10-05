@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import MobileDashboardView from '@/components/MobileDashboardView'
 import { Subscription } from '@/components/SubscriptionList'
 import { isBankConnectionExpiringSoon } from '@/utils/trueLayer'
+import type { PriceChangeAlert } from '@/components/PriceChangeAlertBanner'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -58,6 +59,25 @@ export default async function DashboardPage() {
     }
   }
 
+  const { data: rawPriceChangeAlerts } = await supabase
+    .from('price_change_alerts')
+    .select('id, subscription_id, old_amount, new_amount, currency, change_percent, subscriptions(name)')
+    .eq('user_id', user.id)
+    .is('dismissed_at', null)
+    .order('detected_at', { ascending: false })
+
+  const priceChangeAlerts: PriceChangeAlert[] = (rawPriceChangeAlerts || [])
+    .filter((a): a is typeof a & { subscriptions: { name: string } } => !!a.subscriptions)
+    .map((a) => ({
+      id: a.id,
+      subscriptionId: a.subscription_id,
+      subscriptionName: a.subscriptions.name,
+      oldAmount: Number(a.old_amount),
+      newAmount: Number(a.new_amount),
+      currency: a.currency,
+      changePercent: Number(a.change_percent),
+    }))
+
   return (
     <MobileDashboardView
       userEmail={user.email}
@@ -67,6 +87,7 @@ export default async function DashboardPage() {
       benchmarkMonthlyCzk={benchmark ? Number(benchmark.avg_monthly_czk) : null}
       bankConnectionCount={bankConnectionCount || 0}
       bankExpiryWarning={bankExpiryWarning}
+      priceChangeAlerts={priceChangeAlerts}
       profile={
         profile
           ? {

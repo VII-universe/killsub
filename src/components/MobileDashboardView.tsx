@@ -39,6 +39,7 @@ import BankConnectButton from '@/components/BankConnectButton'
 import BankConnectModal from '@/components/BankConnectModal'
 import CalendarExportButton from '@/components/CalendarExportButton'
 import BankExpiryBanner from '@/components/BankExpiryBanner'
+import PriceChangeAlertBanner, { PriceChangeAlert } from '@/components/PriceChangeAlertBanner'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { updateStreak } from '@/utils/badges'
 import { trackClientEvent } from '@/utils/analyticsClient'
@@ -58,6 +59,7 @@ export default function MobileDashboardView({
   benchmarkMonthlyCzk,
   bankConnectionCount,
   bankExpiryWarning,
+  priceChangeAlerts,
 }: {
   userEmail?: string
   subscriptions: Subscription[]
@@ -67,6 +69,7 @@ export default function MobileDashboardView({
   benchmarkMonthlyCzk?: number | null
   bankConnectionCount?: number
   bankExpiryWarning?: { expired: boolean; daysLeft: number } | null
+  priceChangeAlerts?: PriceChangeAlert[]
 }) {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -456,6 +459,10 @@ export default function MobileDashboardView({
             <BudgetProgressBar subscriptions={effectiveSubscriptions} monthlyBudget={profile?.monthlyBudget ?? null} />
 
             {bankExpiryWarning && <BankExpiryBanner warning={bankExpiryWarning} />}
+
+            {(priceChangeAlerts || []).map((alert) => (
+              <PriceChangeAlertBanner key={alert.id} alert={alert} />
+            ))}
 
             {/* Subscriptions List Section */}
             <div className="pt-2">
