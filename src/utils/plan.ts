@@ -9,4 +9,5 @@ export interface UserProfileData {
   isPublic: boolean
   importToken: string
   onboarded: boolean
+  monthlyBudget: number | null
 }

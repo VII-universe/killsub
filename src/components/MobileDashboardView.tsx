@@ -28,6 +28,8 @@ import RemindersWidget from '@/components/RemindersWidget'
 import OnboardingOverlay from '@/components/OnboardingOverlay'
 import CatalogPicker from '@/components/CatalogPicker'
 import SpendingTrendsChart from '@/components/SpendingTrendsChart'
+import BudgetProgressBar from '@/components/BudgetProgressBar'
+import BudgetSettingsPanel from '@/components/BudgetSettingsPanel'
 import HelpSheet from '@/components/HelpSheet'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import { updateStreak } from '@/utils/badges'
@@ -391,6 +393,8 @@ export default function MobileDashboardView({
               </div>
             ))}
 
+            <BudgetProgressBar subscriptions={effectiveSubscriptions} monthlyBudget={profile?.monthlyBudget ?? null} />
+
             {/* Subscriptions List Section */}
             <div className="pt-2">
               <div className="flex items-center justify-between pb-3 gap-2">
@@ -627,6 +631,8 @@ export default function MobileDashboardView({
             </div>
 
             <PlanSettingsPanel profile={profile} />
+
+            <BudgetSettingsPanel monthlyBudget={profile?.monthlyBudget ?? null} />
 
             <BadgesPanel subscriptions={subscriptions} />
 
