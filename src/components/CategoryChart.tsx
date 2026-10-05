@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { Subscription } from './SubscriptionList'
-import { CATEGORY_COLORS, isCategory } from '@/utils/categories'
+import { CATEGORY_COLORS } from '@/utils/categories'
 import { effectiveAmount } from '@/utils/subscriptionCost'
 
 export default function CategoryChart({ subscriptions }: { subscriptions: Subscription[] }) {
@@ -23,7 +23,7 @@ export default function CategoryChart({ subscriptions }: { subscriptions: Subscr
       .forEach((s) => {
         const amt = effectiveAmount(s)
         const monthly = s.billing_cycle === 'yearly' ? amt / 12 : amt
-        const cat = isCategory(s.category) ? s.category : 'Ostatní'
+        const cat = s.category?.trim() || 'Ostatní'
         byCategory[cat] = (byCategory[cat] || 0) + monthly
       })
 
