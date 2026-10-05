@@ -102,9 +102,13 @@ export default function SubscriptionList({
 
   const getDaysRemaining = (dateString: string | null) => {
     if (!dateString) return null
-    const target = new Date(dateString).getTime()
+    // Parse as a local calendar date (not UTC midnight) so it lines up with
+    // the local "now" below — otherwise timezones ahead of UTC compute an
+    // extra day for dates due today.
+    const [year, month, day] = dateString.split('-').map(Number)
+    const target = new Date(year, month - 1, day).getTime()
     const now = new Date().setHours(0, 0, 0, 0)
-    return Math.ceil((target - now) / (1000 * 60 * 60 * 24))
+    return Math.round((target - now) / (1000 * 60 * 60 * 24))
   }
 
   return (
@@ -257,8 +261,10 @@ export default function SubscriptionList({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {filteredSubs.map((sub) => {
             const daysRemaining = getDaysRemaining(sub.next_payment_date)
-            const isUrgent = daysRemaining !== null && daysRemaining <= 3 && daysRemaining >= 0
             const isOverdue = daysRemaining !== null && daysRemaining < 0
+            const isCritical = daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 1
+            const isUrgent = daysRemaining !== null && daysRemaining >= 2 && daysRemaining <= 7
+            const hasDueBadge = isOverdue || isCritical || isUrgent
             const healthTone = getHealthTone(sub.healthScore)
             const isLowHealth = healthTone === 'low'
             const effAmount = effectiveAmount(sub)
@@ -415,8 +421,12 @@ export default function SubscriptionList({
                 </div>
 
                 {/* Bottom Footer: Next Payment + Due Badge */}
-                <div className="mt-3.5 flex items-center justify-between border-t border-white/[0.06] pt-2.5 text-[11px]">
-                  <div className="flex items-center gap-1 text-white/60 font-medium">
+                <div className="mt-3.5 flex items-center justify-between border-t border-white/[0.06] pt-2.5">
+                  <div
+                    className={`flex items-center gap-1 text-white/60 font-medium ${
+                      !isCancelled && hasDueBadge ? 'text-[11px]' : 'text-[13px]'
+                    }`}
+                  >
                     <svg className="h-3.5 w-3.5 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -427,23 +437,21 @@ export default function SubscriptionList({
                     </span>
                   </div>
 
-                  {daysRemaining !== null && !isCancelled && (
+                  {!isCancelled && hasDueBadge && (
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black font-mono shadow-sm ${
-                        isOverdue
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                          : isUrgent
-                          ? 'bg-amber-500/25 text-amber-200 border border-amber-500/50 animate-pulse'
-                          : 'bg-white/10 text-white/90 border border-white/10'
+                        isOverdue || isCritical
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse'
+                          : 'bg-amber-500/25 text-amber-200 border border-amber-500/50'
                       }`}
                     >
                       {isOverdue
                         ? 'Splatné'
                         : daysRemaining === 0
-                        ? 'Dnes'
+                        ? 'Platba dnes!'
                         : daysRemaining === 1
-                        ? 'Zítra'
-                        : `Za ${daysRemaining} d.`}
+                        ? 'Platba zítra'
+                        : `Platba za ${daysRemaining} ${(daysRemaining as number) < 5 ? 'dny' : 'dní'}`}
                     </span>
                   )}
                 </div>
