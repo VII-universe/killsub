@@ -72,8 +72,17 @@ export async function signUp(prevState: AuthState | null, formData: FormData): P
 export async function signInWithGoogle(formData: FormData): Promise<void> {
   const ref = (formData.get('ref') as string) || ''
   const supabase = await createClient()
+
+  // Same issue as the callback route: request origin/host headers can
+  // resolve to the deployment's internal *.vercel.app hostname instead of
+  // killsub.app. That matters a lot more here than there — this URL is sent
+  // to Supabase as `redirectTo`, and Supabase only honors it if it's in the
+  // project's Redirect URLs allowlist (which only lists the real domain).
+  // An unlisted redirectTo makes Supabase silently fall back to its default
+  // Site URL after Google auth completes, which looks exactly like "click
+  // Google sign-in, get bounced back to the homepage, never logged in."
   const headersList = await headers()
-  const origin = headersList.get('origin') || `https://${headersList.get('host')}`
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || headersList.get('origin') || `https://${headersList.get('host')}`
 
   const callbackUrl = new URL('/auth/callback', origin)
   callbackUrl.searchParams.set('next', '/dashboard')
