@@ -9,6 +9,7 @@ export type AnalyticsEvent =
   | 'upgrade_completed'
   | 'export_downloaded'
   | 'guest_subscription_added'
+  | 'subscription_churned'
 
 // Analytics must never break the primary flow it's attached to — every call
 // site fires this without awaiting/propagating failures.

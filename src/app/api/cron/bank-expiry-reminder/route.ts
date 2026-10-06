@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { isBankConnectionExpiringSoon } from '@/utils/trueLayer'
 import { sendPushToUser } from '@/utils/sendPush'
+import { logCronRun } from '@/utils/cronLog'
 
 export const runtime = 'nodejs'
 
@@ -106,6 +107,13 @@ export async function GET(request: NextRequest) {
         .eq('id', conn.id)
     }
   }
+
+  await logCronRun(
+    'bank-expiry-reminder',
+    errors.length > 0 ? 'error' : 'success',
+    `sent=${sent} pushSent=${pushSent} skipped=${skipped}` + (errors.length > 0 ? ` errors=${errors.join('; ')}` : ''),
+    sent + pushSent
+  )
 
   return NextResponse.json({ sent, pushSent, skipped, errors })
 }

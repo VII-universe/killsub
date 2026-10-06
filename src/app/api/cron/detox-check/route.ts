@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { monthlyEquivalent } from '@/utils/detox'
 import { sendPushToUser } from '@/utils/sendPush'
+import { logCronRun } from '@/utils/cronLog'
 
 export const runtime = 'nodejs'
 
@@ -125,6 +126,14 @@ export async function GET(request: NextRequest) {
       }
     }
   }
+
+  await logCronRun(
+    'detox-check',
+    errors.length > 0 ? 'error' : 'success',
+    `completed=${completed} milestoneNotificationsSent=${milestoneNotificationsSent} emailsSent=${emailsSent}` +
+      (errors.length > 0 ? ` errors=${errors.join('; ')}` : ''),
+    completed
+  )
 
   return NextResponse.json({ completed, milestoneNotificationsSent, emailsSent, errors })
 }

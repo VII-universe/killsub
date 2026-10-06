@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { sendMonthlyReportEmail, type ReportSubscription } from '@/utils/monthlyReport'
+import { logCronRun } from '@/utils/cronLog'
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -61,6 +62,13 @@ export async function GET(request: NextRequest) {
       errors.push(err instanceof Error ? err.message : 'Neznámá chyba při odesílání měsíčního přehledu.')
     }
   }
+
+  await logCronRun(
+    'monthly-report',
+    errors.length > 0 ? 'error' : 'success',
+    `sent=${sent} skipped=${skipped}` + (errors.length > 0 ? ` errors=${errors.join('; ')}` : ''),
+    sent
+  )
 
   return NextResponse.json({ sent, skipped, errors })
 }

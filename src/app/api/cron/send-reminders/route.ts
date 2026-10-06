@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Resend } from 'resend'
 import webpush from 'web-push'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { logCronRun } from '@/utils/cronLog'
 
 function formatDate(date: Date) {
   return date.toISOString().split('T')[0]
@@ -404,6 +405,14 @@ export async function GET(request: NextRequest) {
       }
     }
   }
+
+  await logCronRun(
+    'send-reminders',
+    errors.length > 0 ? 'error' : 'success',
+    `sent=${sent} skipped=${skipped} trialSent=${trialSent} pushSent=${pushSent} remindersSent=${remindersSent}` +
+      (errors.length > 0 ? ` errors=${errors.join('; ')}` : ''),
+    sent + trialSent + pushSent + remindersSent
+  )
 
   return NextResponse.json({ sent, skipped, trialSent, pushSent, pushSkipped, remindersSent, errors })
 }

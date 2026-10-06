@@ -133,10 +133,19 @@ export async function POST(request: NextRequest) {
 
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription
-      await admin
+      const { data: churnedProfile } = await admin
         .from('user_profiles')
         .update({ plan: 'free', stripe_subscription_id: null, plan_expires_at: null })
         .eq('stripe_subscription_id', subscription.id)
+        .select('user_id')
+        .maybeSingle()
+
+      // Tracked for the admin panel's "Churn tento měsíc" metric — only
+      // events from this point forward are countable, there's no historical
+      // Pro→free transition log to backfill from.
+      if (churnedProfile) {
+        trackEvent(admin, churnedProfile.user_id, 'subscription_churned', { subscriptionId: subscription.id })
+      }
       break
     }
 
