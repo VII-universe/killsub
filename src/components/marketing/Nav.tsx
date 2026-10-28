@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import type { Content } from './content'
+import NavChrome from './NavChrome'
 
 export default function Nav({ c, lang }: { c: Content; lang: 'cs' | 'en' }) {
   const home = lang === 'en' ? '/en' : '/'
   return (
     <nav className="mk-nav" aria-label={lang === 'en' ? 'Main' : 'Hlavní'}>
+      <NavChrome />
       <Link href={home} className="mk-nav-logo" aria-label="Killsub">
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <circle cx="9" cy="9" r="7.5" fill="none" stroke="currentColor" strokeWidth="1.6" />

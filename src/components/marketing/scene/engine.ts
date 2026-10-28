@@ -2,9 +2,12 @@ import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { CardData } from '../content'
 import { buildAtlas, tileOffset, BACK_TILE, ATLAS_COLS, ATLAS_ROWS } from './atlas'
-import { loadRapier, type RigidBody } from './physics'
+import { loadRapier, type Rapier, type RigidBody, type World } from './physics'
 
 export type PerfSample = { fps: number; min: number; frameMs: number; physicsMs: number; text: string }
+
+/** Where the pile should sit on screen, in NDC (-1..1), measured from the DOM so text keeps its own space. */
+export type PileTarget = { x: number; y: number }
 
 export type HeroSceneOptions = {
   cards: CardData[]
@@ -13,11 +16,12 @@ export type HeroSceneOptions = {
   onLand: (price: number, cardIndex: number) => void
   onFirstFrame?: () => void
   onPerf?: (s: PerfSample) => void
+  getPileTarget?: () => PileTarget | null
   seed?: number
   debug?: boolean
 }
 
-export type HeroSceneHandle = { dispose: () => void }
+export type HeroSceneHandle = { dispose: () => void; relayout: () => void }
 
 // Card = 1.6 × 1.0 × 0.035 units (payment-card ratio). World gravity 9.81 so a drop from ~7 units takes ~1.2 s.
 const CARD_W = 1.6
@@ -33,6 +37,13 @@ type Slot = {
   state: 'free' | 'falling' | 'resting' | 'draining'
   drainT: number
   drainFrom: THREE.Matrix4
+  // Pose used by the simple (pre-Rapier) integrator and as the handoff source.
+  pos: THREE.Vector3
+  quat: THREE.Quaternion
+  vel: THREE.Vector3
+  angVel: THREE.Vector3
+  restQuat: THREE.Quaternion
+  restY: number
 }
 
 function mulberry32(a: number) {
@@ -90,17 +101,17 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   const isMobile = window.innerWidth < 900 || window.matchMedia('(hover: none) and (pointer: coarse)').matches
   const lowPower = isMobile || (navigator.hardwareConcurrency || 8) <= 4
   const MAX_CARDS = lowPower ? 40 : 60
+  const PILE_MAX = lowPower ? 14 : 18
+  const SPAWN_EVERY = 0.9
   // Review-only overrides: ?shadow=2048|1536|1024|vsm|pcf|off  ?dpr=1.5 (default: PCF soft 2048 desktop / 1024 mobile)
   const q = new URLSearchParams(window.location.search)
   const shadowOpt = q.get('shadow')
   const shadowSize = shadowOpt === '2048' ? 2048 : shadowOpt === '1024' ? 1024 : shadowOpt === '1536' ? 1536 : lowPower ? 1024 : 2048
-  const shadowType = shadowOpt === 'vsm' ? THREE.VSMShadowMap : THREE.PCFSoftShadowMap
+  const shadowType = shadowOpt === 'vsm' ? THREE.VSMShadowMap : THREE.PCFShadowMap
   const shadowsOn = shadowOpt !== 'off'
   const dprCap = q.get('dpr') ? Number(q.get('dpr')) : lowPower ? 1.75 : 2
-  const PILE_MAX = lowPower ? 14 : 18
-  const SPAWN_EVERY = 0.9
 
-  const [R, atlas] = await Promise.all([loadRapier(), buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640)])
+  const atlas = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640)
 
   // ---------- renderer ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false })
@@ -196,13 +207,13 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   for (let i = 0; i < MAX_CARDS; i++) cards.setMatrixAt(i, hidden)
   cards.instanceMatrix.needsUpdate = true
 
-  // ---------- physics ----------
-  const world = new R.World({ x: 0, y: -G, z: 0 })
-  world.timestep = FIXED_DT
-  world.createCollider(R.ColliderDesc.cuboid(30, 0.5, 30).setTranslation(0, -0.5, 0).setFriction(0.8))
-
-  const slots: Slot[] = Array.from({ length: MAX_CARDS }, () => ({ body: null, card: 0, state: 'free', drainT: 0, drainFrom: new THREE.Matrix4() }))
-  let pileX = 1.3, pileZ = 0.1
+  // ---------- state ----------
+  const slots: Slot[] = Array.from({ length: MAX_CARDS }, () => ({
+    body: null, card: 0, state: 'free', drainT: 0, drainFrom: new THREE.Matrix4(),
+    pos: new THREE.Vector3(), quat: new THREE.Quaternion(), vel: new THREE.Vector3(), angVel: new THREE.Vector3(),
+    restQuat: new THREE.Quaternion(), restY: 0,
+  }))
+  let pileX = 2.45, pileZ = 0.4
   let nextCard = 0
   const order = opts.cards.map((_, i) => i)
   for (let i = order.length - 1; i > 0; i--) { const j = (rand() * (i + 1)) | 0; [order[i], order[j]] = [order[j], order[i]] }
@@ -213,6 +224,32 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   const tmpM = new THREE.Matrix4()
   const tmpV = new THREE.Vector3()
   const one = new THREE.Vector3(1, 1, 1)
+
+  // Physics: null until Rapier has loaded; the simple integrator runs meanwhile.
+  let R: Rapier | null = null
+  let world: World | null = null
+  let pointerBody: RigidBody | null = null
+
+  function activeCount(filter?: Slot['state']) {
+    let n = 0
+    for (const s of slots) if (filter ? s.state === filter : s.state !== 'free') n++
+    return n
+  }
+
+  function makeBody(slot: Slot, ccd: boolean) {
+    if (!R || !world) return
+    const desc = R.RigidBodyDesc.dynamic()
+      .setTranslation(slot.pos.x, slot.pos.y, slot.pos.z)
+      .setRotation({ x: slot.quat.x, y: slot.quat.y, z: slot.quat.z, w: slot.quat.w })
+      .setLinvel(slot.vel.x, slot.vel.y, slot.vel.z)
+      .setAngvel({ x: slot.angVel.x, y: slot.angVel.y, z: slot.angVel.z })
+      .setLinearDamping(0.08)
+      .setAngularDamping(0.9)
+      .setCcdEnabled(ccd)
+    const body = world.createRigidBody(desc)
+    world.createCollider(R.ColliderDesc.cuboid(CARD_W / 2, CARD_H / 2, CARD_T / 2).setFriction(0.85).setRestitution(0.08).setDensity(1.2), body)
+    slot.body = body
+  }
 
   function spawn(height = 7.2) {
     const idx = slots.findIndex((s) => s.state === 'free')
@@ -225,52 +262,88 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     tiles[idx * 2] = tx; tiles[idx * 2 + 1] = ty
     ;(geo.getAttribute('aTile') as THREE.InstancedBufferAttribute).needsUpdate = true
 
+    // Mostly readable: yaw within ±35° of facing the camera, one in seven lands upside-down.
+    const yaw = opts.debug ? 0 : (rand() - 0.5) * 1.2 + (rand() < 0.14 ? Math.PI : 0)
     if (opts.debug) tmpE.set(0, 0, 0)
-    else {
-      // Mostly readable: yaw within ±35° of facing the camera, one in seven lands upside-down.
-      const yaw = (rand() - 0.5) * 1.2 + (rand() < 0.14 ? Math.PI : 0)
-      tmpE.set((rand() - 0.5) * 0.9, yaw, (rand() - 0.5) * 0.5)
-    }
-    tmpQ.setFromEuler(tmpE).multiply(tilt)
-    const x = pileX + (opts.debug ? 0 : (rand() - 0.5) * 1.7)
-    const z = pileZ + (opts.debug ? 0 : (rand() - 0.5) * 0.9)
-    const bodyDesc = R.RigidBodyDesc.dynamic()
-      .setTranslation(x, height, z)
-      .setRotation({ x: tmpQ.x, y: tmpQ.y, z: tmpQ.z, w: tmpQ.w })
-      .setLinvel(0, -0.6, 0)
-      .setAngvel(opts.debug ? { x: 0, y: 0, z: 0 } : { x: (rand() - 0.5) * 2.5, y: (rand() - 0.5) * 2, z: (rand() - 0.5) * 2.5 })
-      .setLinearDamping(0.08)
-      .setAngularDamping(0.9)
-      .setCcdEnabled(true)
-    const body = world.createRigidBody(bodyDesc)
-    world.createCollider(R.ColliderDesc.cuboid(CARD_W / 2, CARD_H / 2, CARD_T / 2).setFriction(0.85).setRestitution(0.08).setDensity(1.2), body)
-    slot.body = body
+    else tmpE.set((rand() - 0.5) * 0.9, yaw, (rand() - 0.5) * 0.5)
+    slot.quat.setFromEuler(tmpE).multiply(tilt)
+    slot.restQuat.setFromEuler(tmpE.set(0, yaw, 0)).multiply(tilt)
+    slot.pos.set(pileX + (opts.debug ? 0 : (rand() - 0.5) * 1.1), height, pileZ + (opts.debug ? 0 : (rand() - 0.5) * 0.7))
+    slot.vel.set(0, -0.6, 0)
+    slot.angVel.set((rand() - 0.5) * 2.5, (rand() - 0.5) * 2, (rand() - 0.5) * 2.5)
+    if (opts.debug) slot.angVel.set(0, 0, 0)
+    slot.restY = CARD_T / 2 + activeCount('resting') * CARD_T
+    if (R) makeBody(slot, true)
     return slot
   }
 
   function removeBody(slot: Slot) {
-    if (slot.body) { world.removeRigidBody(slot.body); slot.body = null }
+    if (slot.body && world) { world.removeRigidBody(slot.body); slot.body = null }
+  }
+
+  function readPose(slot: Slot) {
+    if (slot.body) {
+      const t = slot.body.translation(), r = slot.body.rotation()
+      slot.pos.set(t.x, t.y, t.z)
+      slot.quat.set(r.x, r.y, r.z, r.w)
+    }
   }
 
   function startDrain() {
     // Lowest resting card sinks into the drain; the pile above settles down onto it.
     let best: Slot | null = null, bestY = Infinity
     for (const s of slots) {
-      if (s.state !== 'resting' || !s.body) continue
-      const y = s.body.translation().y
-      if (y < bestY) { bestY = y; best = s }
+      if (s.state !== 'resting') continue
+      readPose(s)
+      if (s.pos.y < bestY) { bestY = s.pos.y; best = s }
     }
-    if (!best || !best.body) return
-    const t = best.body.translation(), r = best.body.rotation()
-    best.drainFrom.compose(tmpV.set(t.x, t.y, t.z), tmpQ.set(r.x, r.y, r.z, r.w), one)
+    if (!best) return
+    best.drainFrom.compose(best.pos, best.quat, one)
     removeBody(best)
     best.state = 'draining'
     best.drainT = 0
   }
 
+  // Simple integrator: gravity, tumble, settle flat on an estimated stack height. Runs until Rapier is ready.
+  function simpleStep(dt: number) {
+    for (const s of slots) {
+      if (s.state !== 'falling') continue
+      s.vel.y -= G * dt
+      s.pos.addScaledVector(s.vel, dt)
+      const len = s.angVel.length()
+      if (len > 1e-4) {
+        tmpQ.setFromAxisAngle(tmpV.copy(s.angVel).divideScalar(len), len * dt)
+        s.quat.premultiply(tmpQ)
+      }
+      const h = s.pos.y - s.restY
+      if (h < 1.2) s.quat.slerp(s.restQuat, Math.min(1, dt * 6 * (1.3 - h)))
+      if (h <= 0) {
+        s.pos.y = s.restY
+        s.vel.set(0, 0, 0)
+        s.angVel.set(0, 0, 0)
+        s.quat.copy(s.restQuat)
+        s.state = 'resting'
+        opts.onLand(opts.cards[s.card].price, s.card)
+      }
+    }
+  }
+
+  async function adoptRapier() {
+    const Rr = await loadRapier()
+    if (disposed) return
+    R = Rr
+    world = new R.World({ x: 0, y: -G, z: 0 })
+    world.timestep = FIXED_DT
+    world.createCollider(R.ColliderDesc.cuboid(30, 0.5, 30).setTranslation(0, -0.5, 0).setFriction(0.8))
+    pointerBody = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -10, 0))
+    world.createCollider(R.ColliderDesc.ball(0.34), pointerBody)
+    // Hand over every card at its current pose; resting ones get a hair of clearance so they settle, not explode.
+    const resting = slots.filter((s) => s.state === 'resting').sort((a, b) => a.pos.y - b.pos.y)
+    resting.forEach((s, i) => { s.pos.y = CARD_T / 2 + i * (CARD_T + 0.004); s.vel.set(0, 0, 0); s.angVel.set(0, 0, 0) })
+    for (const s of slots) if (s.state === 'falling' || s.state === 'resting') makeBody(s, s.state === 'falling')
+  }
+
   // ---------- pointer ----------
-  const pointerBody = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -10, 0))
-  world.createCollider(R.ColliderDesc.ball(0.34), pointerBody)
   const raycaster = new THREE.Raycaster()
   const ndc = new THREE.Vector2()
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.3)
@@ -282,10 +355,10 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     raycaster.setFromCamera(ndc, camera)
     if (raycaster.ray.intersectPlane(plane, hit)) {
       pointerActive = true
-      pointerBody.setNextKinematicTranslation({ x: hit.x, y: 0.3, z: hit.z })
+      pointerBody?.setNextKinematicTranslation({ x: hit.x, y: 0.3, z: hit.z })
     }
   }
-  const onLeave = () => { pointerActive = false; pointerBody.setNextKinematicTranslation({ x: 0, y: -10, z: 0 }) }
+  const onLeave = () => { pointerActive = false; pointerBody?.setNextKinematicTranslation({ x: 0, y: -10, z: 0 }) }
   const onDown = (e: PointerEvent) => {
     onMove(e)
     raycaster.setFromCamera(ndc, camera)
@@ -306,32 +379,48 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   canvas.addEventListener('pointerdown', onDown)
 
   // ---------- layout ----------
+  const pilePoint = new THREE.Vector3()
   function layout() {
     const w = canvas.clientWidth || window.innerWidth
     const h = canvas.clientHeight || window.innerHeight
     renderer.setSize(w, h, false)
     camera.aspect = w / h
     const portrait = camera.aspect < 0.9
+    let target = opts.getPileTarget?.() ?? null
     if (portrait) {
       camera.fov = 38
-      camera.position.set(0.15, 5.8, 8.2)
-      camera.lookAt(0.1, 1.55, 0)
       pileX = 0.15; pileZ = 0.6
-      floor.position.set(0.15, 0, 0.6)
-      key.target.position.set(0.15, 0, 0.6)
+      camera.position.set(pileX, 5.8, pileZ + 7.8)
+      target ??= { x: 0, y: -0.45 }
     } else {
       camera.fov = 32
-      camera.position.set(0.6, 4.3, 8.6)
-      camera.lookAt(1.0, 1.35, 0)
       pileX = 2.45; pileZ = 0.4
-      floor.position.set(2.45, 0, 0.4)
-      key.target.position.set(2.45, 0, 0.4)
+      camera.position.set(pileX - 0.5, 4.3, pileZ + 8.4)
+      target ??= { x: 0.5, y: -0.25 }
     }
+    floor.position.set(pileX, 0, pileZ)
+    key.target.position.set(pileX, 0, pileZ)
     key.position.set(pileX + 2.2, 8, pileZ + 3.2)
     camera.updateProjectionMatrix()
+
+    // Aim the camera so the pile's centre lands on the DOM-derived target: shift the look-at point until it does.
+    pilePoint.set(pileX, 0.35, pileZ)
+    const dist = camera.position.distanceTo(pilePoint)
+    const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
+    const halfW = halfH * camera.aspect
+    let lx = pileX, ly = 0.6
+    for (let i = 0; i < 10; i++) {
+      camera.lookAt(lx, ly, pileZ)
+      camera.updateMatrixWorld()
+      tmpV.copy(pilePoint).project(camera)
+      const ex = target.x - tmpV.x, ey = target.y - tmpV.y
+      if (Math.abs(ex) < 0.002 && Math.abs(ey) < 0.002) break
+      lx -= ex * halfW
+      ly -= ey * halfH
+    }
   }
   layout()
-  const ro = new ResizeObserver(layout)
+  const ro = new ResizeObserver(() => layout())
   ro.observe(canvas)
 
   // ---------- loop ----------
@@ -341,7 +430,17 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   let spawnClock = 0.2
   let firstFrame = false
   let disposed = false
-  const perf = { frames: 0, t0: performance.now(), worst: 0, physMs: 0, minFps: 999 }
+  const startedAt = performance.now()
+  const perf = { frames: 0, t0: performance.now(), worst: 0, physMs: 0, renderMs: 0, minFps: 999 }
+  // Adaptive quality: after a 3 s warm-up, step down (DPR → shadows → pile size) whenever a 2 s window averages under 40/30/24 fps.
+  const adapt = { t0: performance.now(), frames: 0, level: 0, note: '' }
+  let pileMax = PILE_MAX
+  function degrade() {
+    adapt.level++
+    if (adapt.level === 1) { renderer.setPixelRatio(1); layout(); adapt.note = 'dpr 1' }
+    else if (adapt.level === 2) { renderer.shadowMap.enabled = false; mat.needsUpdate = true; floorMat.needsUpdate = true; farMat.needsUpdate = true; adapt.note = 'dpr 1, no shadows' }
+    else if (adapt.level === 3) { pileMax = Math.min(pileMax, 8); adapt.note = 'dpr 1, no shadows, pile 8' }
+  }
 
   function syncInstances(dt: number) {
     let restingCount = 0
@@ -351,7 +450,7 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
       if (s.state === 'draining') {
         s.drainT += dt / 0.9
         const k = Math.min(1, s.drainT)
-        const e = k * k * k // expo-ish in
+        const e = k * k * k
         tmpM.copy(s.drainFrom)
         tmpV.setFromMatrixPosition(tmpM)
         tmpV.y -= e * 1.6
@@ -360,17 +459,16 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
         if (k >= 1) { s.state = 'free'; cards.setMatrixAt(i, hidden) }
         continue
       }
-      const b = s.body!
-      const t = b.translation(), r = b.rotation()
-      tmpM.compose(tmpV.set(t.x, t.y, t.z), tmpQ.set(r.x, r.y, r.z, r.w), one)
+      readPose(s)
+      tmpM.compose(s.pos, s.quat, one)
       cards.setMatrixAt(i, tmpM)
-      if (s.state === 'falling') {
-        const vy = b.linvel().y
-        if (t.y < 2.6 && vy > -1.2) { s.state = 'resting'; opts.onLand(opts.cards[s.card].price, s.card) }
+      if (s.body && s.state === 'falling') {
+        const vy = s.body.linvel().y
+        if (s.pos.y < 2.6 && vy > -1.2) { s.state = 'resting'; opts.onLand(opts.cards[s.card].price, s.card) }
       }
       if (s.state === 'resting') {
         restingCount++
-        if (t.y < -2 || Math.abs(t.x - pileX) > 6 || Math.abs(t.z - pileZ) > 6) { removeBody(s); s.state = 'free'; cards.setMatrixAt(i, hidden) }
+        if (s.pos.y < -2 || Math.abs(s.pos.x - pileX) > 6 || Math.abs(s.pos.z - pileZ) > 6) { removeBody(s); s.state = 'free'; cards.setMatrixAt(i, hidden) }
       }
     }
     cards.instanceMatrix.needsUpdate = true
@@ -382,15 +480,15 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     raf = requestAnimationFrame(frame)
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
-    acc += dt
     const p0 = performance.now()
-    let steps = 0
-    while (acc >= FIXED_DT && steps < 3) {
-      world.step()
-      acc -= FIXED_DT
-      steps++
+    if (world) {
+      acc += dt
+      let steps = 0
+      while (acc >= FIXED_DT && steps < 3) { world.step(); acc -= FIXED_DT; steps++ }
+      if (steps === 3) acc = 0
+    } else {
+      simpleStep(dt)
     }
-    if (steps === 3) acc = 0
     const physMs = performance.now() - p0
 
     spawnClock -= dt
@@ -398,40 +496,61 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     if (spawnClock <= 0) {
       spawnClock = SPAWN_EVERY + (rand() - 0.5) * 0.3
       spawn()
-      if (resting >= PILE_MAX) startDrain()
+      if (world && resting >= pileMax) startDrain()
     }
-    if (!pointerActive) pointerBody.setNextKinematicTranslation({ x: 0, y: -10, z: 0 })
+    if (!pointerActive) pointerBody?.setNextKinematicTranslation({ x: 0, y: -10, z: 0 })
 
+    const r0 = performance.now()
     renderer.render(scene, camera)
-    if (!firstFrame) { firstFrame = true; opts.onFirstFrame?.() }
+    const renderMs = performance.now() - r0
+    if (!firstFrame) {
+      firstFrame = true
+      opts.onFirstFrame?.()
+      // Text and the first card are on screen; now fetch the physics engine and let it take over.
+      adoptRapier().catch((err) => console.error('[hero] rapier failed, staying on the simple integrator', err))
+    }
+
+    adapt.frames++
+    if (now - adapt.t0 >= 2000) {
+      const fps = (adapt.frames * 1000) / (now - adapt.t0)
+      const started = now - startedAt > 3000
+      if (started && adapt.level < 3 && fps < [40, 30, 24][adapt.level]) degrade()
+      adapt.t0 = now; adapt.frames = 0
+    }
 
     if (opts.onPerf) {
       perf.frames++
       perf.physMs += physMs
+      perf.renderMs += renderMs
       perf.worst = Math.max(perf.worst, dt * 1000)
       const el = now - perf.t0
       if (el >= 1000) {
         const fps = (perf.frames * 1000) / el
         perf.minFps = Math.min(perf.minFps, fps)
-        const text = `fps ${fps.toFixed(0)} (min ${perf.minFps.toFixed(0)})\nframe max ${perf.worst.toFixed(1)} ms\nphysics ${(perf.physMs / perf.frames).toFixed(2)} ms/frame\ncards ${slots.filter((s) => s.state !== 'free').length} · dpr ${renderer.getPixelRatio().toFixed(2)} · ${lowPower ? 'low' : 'high'} · shadow ${shadowsOn ? shadowSize + (shadowType === THREE.VSMShadowMap ? ' vsm' : ' pcf') : 'off'}\n${renderer.info.render.triangles} tris · ${renderer.info.render.calls} calls`
+        const text = `fps ${fps.toFixed(0)} (min ${perf.minFps.toFixed(0)})\nframe max ${perf.worst.toFixed(1)} ms\nphysics ${(perf.physMs / perf.frames).toFixed(2)} ms · render ${(perf.renderMs / perf.frames).toFixed(2)} ms (${world ? 'rapier' : 'simple'})\ncards ${activeCount()} · dpr ${renderer.getPixelRatio().toFixed(2)} · ${lowPower ? 'low' : 'high'} · shadow ${shadowsOn ? shadowSize + (shadowType === THREE.VSMShadowMap ? ' vsm' : ' pcf') : 'off'}\n${renderer.info.render.triangles} tris · ${renderer.info.render.calls} calls${adapt.note ? `\nadapted: ${adapt.note}` : ''}`
         opts.onPerf({ fps, min: perf.minFps, frameMs: perf.worst, physicsMs: perf.physMs / perf.frames, text })
-        perf.frames = 0; perf.physMs = 0; perf.worst = 0; perf.t0 = now
+        perf.frames = 0; perf.physMs = 0; perf.renderMs = 0; perf.worst = 0; perf.t0 = now
       }
     }
   }
 
   if (opts.reducedMotion) {
-    // Static pile: simulate offline, render once, count once.
-    for (let i = 0; i < PILE_MAX; i++) spawn(1.5 + i * 0.9)
-    for (let i = 0; i < 900; i++) world.step()
+    // Static pile, no physics download: cards stacked flat with a little scatter, counted once.
     let sum = 0
-    for (const s of slots) if (s.state !== 'free') { s.state = 'resting'; sum += opts.cards[s.card].price }
+    for (let i = 0; i < PILE_MAX; i++) {
+      const s = spawn(0)
+      if (!s) break
+      s.pos.set(pileX + (rand() - 0.5) * 0.9, CARD_T / 2 + i * CARD_T, pileZ + (rand() - 0.5) * 0.5)
+      s.quat.copy(s.restQuat)
+      s.state = 'resting'
+      sum += opts.cards[s.card].price
+    }
     syncInstances(0)
     renderer.render(scene, camera)
     opts.onLand(sum, -1)
     opts.onFirstFrame?.()
-    const reRender = () => { layout(); renderer.render(scene, camera) }
-    ro.disconnect(); new ResizeObserver(reRender).observe(canvas)
+    ro.disconnect()
+    new ResizeObserver(() => { layout(); renderer.render(scene, camera) }).observe(canvas)
   } else {
     spawn(6.5)
     raf = requestAnimationFrame(frame)
@@ -441,6 +560,7 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   document.addEventListener('visibilitychange', onVisibility)
 
   return {
+    relayout: () => { layout(); if (opts.reducedMotion) renderer.render(scene, camera) },
     dispose() {
       disposed = true
       cancelAnimationFrame(raf)
@@ -449,7 +569,7 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
       canvas.removeEventListener('pointerleave', onLeave)
       canvas.removeEventListener('pointerdown', onDown)
       document.removeEventListener('visibilitychange', onVisibility)
-      world.free()
+      world?.free()
       geo.dispose(); mat.dispose(); atlas.dispose(); floorMat.map?.dispose(); floorMat.dispose(); farMat.dispose(); floor.geometry.dispose(); far.geometry.dispose()
       scene.environment?.dispose()
       renderer.dispose()

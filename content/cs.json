@@ -99,5 +99,42 @@
       "cycle": "měsíčně",
       "day": 23
     }
-  ]
+  ],
+  "kill": {
+    "eyebrow": "Co umí Killsub",
+    "headline": "Žádné surprise platby.\nNikdy víc.",
+    "sub": "Tři předplatná, která podle poradce nepoužíváš. Zabij je.",
+    "instruction": "Klikni na kartu. Nebo ji vyber a stiskni Enter.",
+    "savedLabel": "ušetřeno měsíčně",
+    "done": "Hotovo. Tři karty, {value} Kč měsíčně zpátky.",
+    "replay": "Zkusit znovu",
+    "cards": [
+      {
+        "name": "HBO Max",
+        "price": 199,
+        "cycle": "měsíčně",
+        "day": 14,
+        "reason": "naposledy otevřeno před 94 dny"
+      },
+      {
+        "name": "Duolingo",
+        "price": 199,
+        "cycle": "měsíčně",
+        "day": 28,
+        "reason": "série přerušena před 3 měsíci"
+      },
+      {
+        "name": "iCloud+",
+        "price": 79,
+        "cycle": "měsíčně",
+        "day": 25,
+        "reason": "využito 4 % z 200 GB"
+      }
+    ],
+    "a11y": {
+      "kill": "Zrušit {name}, {price} Kč měsíčně. {reason}.",
+      "killed": "{name} zrušeno. Ušetřeno {price} Kč měsíčně.",
+      "scene": "Tři visící karty předplatných. Kliknutím kartu rozbiješ a částka se přičte k ušetřeno."
+    }
+  }
 }

@@ -1,5 +1,5 @@
 import type { Viewport } from 'next'
-import { Geist, Geist_Mono, Bricolage_Grotesque } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import '@/components/marketing/marketing.css'
 
 // Marketing-only fonts: latin-ext so Czech diacritics (ě š č ř ž ů) render in
@@ -7,12 +7,6 @@ import '@/components/marketing/marketing.css'
 // plain latin subset only.
 const sans = Geist({ variable: '--font-mk-sans', subsets: ['latin', 'latin-ext'], display: 'swap' })
 const mono = Geist_Mono({ variable: '--font-mk-mono', subsets: ['latin', 'latin-ext'], display: 'swap' })
-const displayB = Bricolage_Grotesque({
-  variable: '--font-mk-display-b',
-  subsets: ['latin', 'latin-ext'],
-  display: 'swap',
-  axes: ['opsz', 'wdth'],
-})
 
 // Overrides the root layout's non-scalable viewport (WCAG 1.4.4) and its pink theme colour.
 export const viewport: Viewport = {
@@ -24,7 +18,7 @@ export const viewport: Viewport = {
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`mk ${sans.variable} ${mono.variable} ${displayB.variable}`}>
+    <div className={`mk ${sans.variable} ${mono.variable}`}>
       <style>{`body{background:#0A0A0C!important;color:#ECE9E2}`}</style>
       {children}
     </div>

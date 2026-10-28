@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getContent, SITE_URL } from '@/components/marketing/content'
 import Nav from '@/components/marketing/Nav'
 import Hero from '@/components/marketing/Hero'
+import KillSection from '@/components/marketing/KillSection'
 
 const c = getContent('cs')
 
@@ -17,6 +18,7 @@ export default function Home() {
     <main lang="cs">
       <Nav c={c} lang="cs" />
       <Hero c={c} lang="cs" />
+      <KillSection c={c} lang="cs" />
     </main>
   )
 }

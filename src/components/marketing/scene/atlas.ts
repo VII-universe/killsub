@@ -44,10 +44,11 @@ export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: nu
 
   const sans = fontFamily('--font-mk-sans', 'system-ui')
   const mono = fontFamily('--font-mk-mono', 'ui-monospace')
+  // Safari can leave FontFaceSet.load() pending; never let fonts block the scene for more than 1.5 s.
   try {
-    await Promise.all([
-      document.fonts.load(`600 40px ${sans}`),
-      document.fonts.load(`500 40px ${mono}`),
+    await Promise.race([
+      Promise.all([document.fonts.load(`600 40px ${sans}`), document.fonts.load(`500 40px ${mono}`)]),
+      new Promise((r) => setTimeout(r, 1500)),
     ])
   } catch { /* fallback fonts are fine */ }
 

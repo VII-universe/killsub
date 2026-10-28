@@ -2,8 +2,8 @@
 import type RAPIER_NS from '@dimforge/rapier3d-compat'
 
 export type Rapier = typeof RAPIER_NS
-export type World = RAPIER_NS.World
 export type RigidBody = RAPIER_NS.RigidBody
+export type World = RAPIER_NS.World
 
 let rapierPromise: Promise<Rapier> | null = null
 

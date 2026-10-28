@@ -99,5 +99,42 @@
       "cycle": "monthly",
       "day": 23
     }
-  ]
+  ],
+  "kill": {
+    "eyebrow": "What Killsub does",
+    "headline": "No surprise charges.\nNot anymore.",
+    "sub": "Three subscriptions the advisor says you don't use. Kill them.",
+    "instruction": "Click a card. Or focus it and press Enter.",
+    "savedLabel": "saved per month",
+    "done": "Done. Three cards, {value} Kč a month back.",
+    "replay": "Try again",
+    "cards": [
+      {
+        "name": "HBO Max",
+        "price": 199,
+        "cycle": "monthly",
+        "day": 14,
+        "reason": "last opened 94 days ago"
+      },
+      {
+        "name": "Duolingo",
+        "price": 199,
+        "cycle": "monthly",
+        "day": 28,
+        "reason": "streak broken 3 months ago"
+      },
+      {
+        "name": "iCloud+",
+        "price": 79,
+        "cycle": "monthly",
+        "day": 25,
+        "reason": "4% of 200 GB used"
+      }
+    ],
+    "a11y": {
+      "kill": "Cancel {name}, {price} Kč a month. {reason}.",
+      "killed": "{name} cancelled. {price} Kč a month saved.",
+      "scene": "Three hanging subscription cards. Click one to shatter it. Its price is added to the saved total."
+    }
+  }
 }
