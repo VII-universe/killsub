@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import styles from './landing.module.css'
-import Taxameter from './components/Taxameter'
-import ScrollReveal from './components/ScrollReveal'
+import Taxameter from '@/app/components/Taxameter'
+import ScrollReveal from '@/app/components/ScrollReveal'
 
 export const metadata: Metadata = {
   title: 'Killsub — Přestaň platit za předplatná, která nepoužíváš',

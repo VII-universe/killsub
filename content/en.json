@@ -1,0 +1,103 @@
+{
+  "$comment": "Landing copy (EN). Written natively, not translated. Every claim is either a verified feature in code or sample data.",
+  "meta": {
+    "title": "Killsub — Stop paying for subscriptions you don't use",
+    "description": "Killsub tracks your subscriptions. It warns you 7 days and 1 day before a charge. It tells you what to cancel. Free, no card."
+  },
+  "nav": {
+    "login": "Log in",
+    "start": "Start free",
+    "lang": "CS",
+    "langHref": "/",
+    "sound": "Sound"
+  },
+  "hero": {
+    "eyebrow": "The drain · live",
+    "counterLabel": "gone while you watched",
+    "currency": "Kč",
+    "headline": "You pay for subscriptions you don't use.",
+    "sub": "Killsub tracks them, warns before the charge, says what to kill.",
+    "ctaPrimary": "Start free",
+    "ctaSecondary": "Try without an account",
+    "note": "Sample subscriptions · prices in Kč per month",
+    "hint": "You can nudge the cards",
+    "a11y": {
+      "scene": "Animation: cards labelled with subscription names fall onto a pile. A counter adds up their monthly prices.",
+      "counter": "Sum of monthly prices of the cards that have landed: {value} Kč"
+    }
+  },
+  "cards": [
+    {
+      "name": "Netflix",
+      "price": 329,
+      "cycle": "monthly",
+      "day": 6
+    },
+    {
+      "name": "Spotify",
+      "price": 159,
+      "cycle": "monthly",
+      "day": 12
+    },
+    {
+      "name": "Adobe CC",
+      "price": 1290,
+      "cycle": "monthly",
+      "day": 20
+    },
+    {
+      "name": "Cursor Pro",
+      "price": 800,
+      "cycle": "monthly",
+      "day": 2
+    },
+    {
+      "name": "ChatGPT Plus",
+      "price": 500,
+      "cycle": "monthly",
+      "day": 9
+    },
+    {
+      "name": "iCloud+",
+      "price": 79,
+      "cycle": "monthly",
+      "day": 25
+    },
+    {
+      "name": "HBO Max",
+      "price": 199,
+      "cycle": "monthly",
+      "day": 14
+    },
+    {
+      "name": "Disney+",
+      "price": 239,
+      "cycle": "monthly",
+      "day": 3
+    },
+    {
+      "name": "YouTube Premium",
+      "price": 189,
+      "cycle": "monthly",
+      "day": 17
+    },
+    {
+      "name": "Duolingo",
+      "price": 199,
+      "cycle": "monthly",
+      "day": 28
+    },
+    {
+      "name": "Canva Pro",
+      "price": 299,
+      "cycle": "monthly",
+      "day": 11
+    },
+    {
+      "name": "Microsoft 365",
+      "price": 169,
+      "cycle": "monthly",
+      "day": 23
+    }
+  ]
+}
