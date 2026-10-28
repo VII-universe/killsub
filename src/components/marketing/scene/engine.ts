@@ -90,6 +90,13 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   const isMobile = window.innerWidth < 900 || window.matchMedia('(hover: none) and (pointer: coarse)').matches
   const lowPower = isMobile || (navigator.hardwareConcurrency || 8) <= 4
   const MAX_CARDS = lowPower ? 40 : 60
+  // Review-only overrides: ?shadow=2048|1024|pcf|off  ?dpr=1.5
+  const q = new URLSearchParams(window.location.search)
+  const shadowOpt = q.get('shadow')
+  const shadowSize = shadowOpt === '2048' ? 2048 : shadowOpt === '1024' ? 1024 : lowPower ? 1024 : 1536
+  const shadowType = shadowOpt === 'pcf' ? THREE.PCFSoftShadowMap : THREE.VSMShadowMap
+  const shadowsOn = shadowOpt !== 'off'
+  const dprCap = q.get('dpr') ? Number(q.get('dpr')) : lowPower ? 1.75 : 2
   const PILE_MAX = lowPower ? 14 : 18
   const SPAWN_EVERY = 0.9
 
@@ -97,12 +104,12 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
 
   // ---------- renderer ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowPower ? 1.75 : 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap))
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.toneMappingExposure = 1.0
-  renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.VSMShadowMap
+  renderer.shadowMap.enabled = shadowsOn
+  renderer.shadowMap.type = shadowType
   renderer.setClearColor(0x0a0a0c, 1)
 
   const scene = new THREE.Scene()
@@ -118,15 +125,15 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   const key = new THREE.DirectionalLight(0xfff4e6, 1.8)
   key.position.set(2.5, 8, 3.5)
   key.castShadow = true
-  key.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048)
+  key.shadow.mapSize.set(shadowSize, shadowSize)
   key.shadow.camera.near = 1
   key.shadow.camera.far = 20
   key.shadow.camera.left = key.shadow.camera.bottom = -5
   key.shadow.camera.right = key.shadow.camera.top = 5
   key.shadow.bias = -0.0004
   key.shadow.normalBias = 0.02
-  key.shadow.radius = 4
-  key.shadow.blurSamples = 10
+  key.shadow.radius = 3
+  key.shadow.blurSamples = 6
   scene.add(key, key.target)
   const rim = new THREE.DirectionalLight(0xc9d6ff, 1.1)
   rim.position.set(-4, 3, -6)
@@ -406,7 +413,7 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
       if (el >= 1000) {
         const fps = (perf.frames * 1000) / el
         perf.minFps = Math.min(perf.minFps, fps)
-        const text = `fps ${fps.toFixed(0)} (min ${perf.minFps.toFixed(0)})\nframe max ${perf.worst.toFixed(1)} ms\nphysics ${(perf.physMs / perf.frames).toFixed(2)} ms/frame\ncards ${slots.filter((s) => s.state !== 'free').length} · dpr ${renderer.getPixelRatio().toFixed(2)} · ${lowPower ? 'low' : 'high'}\n${renderer.info.render.triangles} tris · ${renderer.info.render.calls} calls`
+        const text = `fps ${fps.toFixed(0)} (min ${perf.minFps.toFixed(0)})\nframe max ${perf.worst.toFixed(1)} ms\nphysics ${(perf.physMs / perf.frames).toFixed(2)} ms/frame\ncards ${slots.filter((s) => s.state !== 'free').length} · dpr ${renderer.getPixelRatio().toFixed(2)} · ${lowPower ? 'low' : 'high'} · shadow ${shadowsOn ? shadowSize + (shadowType === THREE.VSMShadowMap ? ' vsm' : ' pcf') : 'off'}\n${renderer.info.render.triangles} tris · ${renderer.info.render.calls} calls`
         opts.onPerf({ fps, min: perf.minFps, frameMs: perf.worst, physicsMs: perf.physMs / perf.frames, text })
         perf.frames = 0; perf.physMs = 0; perf.worst = 0; perf.t0 = now
       }
