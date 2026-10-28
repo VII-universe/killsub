@@ -125,7 +125,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
   floor.receiveShadow = true
   scene.add(floor)
   const farMat = new THREE.MeshStandardMaterial({ color: 0x0b0b0e, roughness: 0.96, metalness: 0 })
-  const far = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), farMat)
+  const far = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600), farMat)
   far.rotation.x = -Math.PI / 2
   far.position.y = -0.002
   far.receiveShadow = true
@@ -538,6 +538,9 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
       lerpCam(camWrapped, camDrain, tDrain, camT)
     }
     applyCam(camT)
+    // No ground in the column and Wrapped phases: the cards float in the dark, nothing may cut through the view.
+    const groundOn = tColumn === 0 || tDrain > 0
+    floor.visible = groundOn; far.visible = groundOn; bar.visible = tColumn < 1
     floor.position.set(tDrain > 0 ? DRAIN.x : pileX, 0, tDrain > 0 ? DRAIN.z : pileZ)
     key.target.position.copy(floor.position); key.position.set(floor.position.x + 2.2, 8, floor.position.z + 3.2)
 
@@ -599,6 +602,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
       if (spawnClock <= 0 && scroll.hero < 0.3) { spawnClock = SPAWN_EVERY + (rand() - 0.5) * 0.3; spawn(); if (world && resting >= pileMax) startDrain() }
       if (!pointerActive) pointerBody?.setNextKinematicTranslation({ x: 0, y: -10, z: 0 })
       applyCam(camHero)
+      floor.visible = true; far.visible = true; bar.visible = true
       floor.position.set(pileX, 0, pileZ)
       if (lastBgHex !== '#0a0a0c') { lastBgHex = '#0a0a0c'; renderer.setClearColor(bgHero, 1); (scene.fog as THREE.Fog).color.copy(bgHero); opts.onBackground?.('#0a0a0c') }
     } else {
