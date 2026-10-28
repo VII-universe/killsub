@@ -1,10 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Content, Lang } from './content'
 import SplitFlap from './SplitFlap'
-import HeroScene from './HeroScene'
 
 function MagneticLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
   const ref = useRef<HTMLAnchorElement>(null)
@@ -26,14 +25,17 @@ function MagneticLink({ href, className, children }: { href: string; className: 
 
 export default function Hero({ c, lang }: { c: Content; lang: Lang }) {
   const [total, setTotal] = useState(0)
-  const onLand = useCallback((price: number) => setTotal((t) => t + price), [])
+  useEffect(() => {
+    const on = (e: Event) => setTotal((t) => t + Number((e as CustomEvent).detail || 0))
+    window.addEventListener('ks:land', on)
+    return () => window.removeEventListener('ks:land', on)
+  }, [])
   const locale = lang === 'en' ? 'en-GB' : 'cs-CZ'
   const lines = c.hero.headline.split('\n')
   const counterLabel = c.hero.a11y.counter.replace('{value}', Math.round(total).toLocaleString(locale))
 
   return (
     <section className="mk-hero" aria-labelledby="mk-hero-h">
-      <HeroScene cards={c.cards} onLand={onLand} lang={lang} sceneLabel={c.hero.a11y.scene} />
       <div className="mk-hero-grid">
         <div className="mk-hero-copy">
           <p className="mk-eyebrow mono upper mk-fade" style={{ ['--delay' as string]: '200ms' }}><span className="dot" aria-hidden="true" />{c.hero.eyebrow}</p>

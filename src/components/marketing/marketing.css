@@ -402,3 +402,82 @@
 .mk-caps-list .mk-cap-title { font-size: clamp(20px, 1.8vw, 26px); font-weight: 500; letter-spacing: -0.02em; }
 .mk-caps-list .mk-cap-body { color: var(--mk-ink2); max-width: 56ch; }
 @media (max-width: 720px) { .mk-caps-list li { grid-template-columns: 40px 1fr; } .mk-caps-list .mk-cap-body { grid-column: 2; } }
+
+/* Legal drafts */
+.mk-legal { max-width: 720px; margin: 0 auto; padding: 140px var(--mk-gutter) 120px; }
+.mk-legal-draft { display: inline-block; padding: 6px 10px; border: 1px solid var(--mk-kill); color: var(--mk-kill); border-radius: 6px; margin-bottom: 24px; }
+.mk-legal-updated { color: var(--mk-ink3); margin: 12px 0 40px; }
+.mk-legal section { margin-top: 36px; }
+.mk-legal section p { color: var(--mk-ink2); margin: 10px 0 0; }
+.mk-legal > p:last-child { margin-top: 64px; }
+
+/* ======================= Motion layer ======================= */
+.ln { display: block; overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; perspective: 600px; }
+.ln-in { display: block; will-change: transform; }
+.mk-line { perspective: 600px; }
+/* Only the hero animates with CSS on load; every other headline waits for its scroll reveal. */
+.mk-line-in { animation: none; transform: translateY(110%); }
+.mk-hero .mk-line-in { animation: mk-rise var(--mk-d3) var(--mk-ease-out) forwards; }
+.ch { display: inline; }
+[data-tilt] { transform-style: preserve-3d; position: relative; }
+[data-tilt]::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity var(--mk-d1) var(--mk-ease-out);
+  background: radial-gradient(240px circle at var(--gx, 50%) var(--gy, 50%), rgba(236,233,226,0.10), transparent 60%);
+  box-shadow: inset 0 0 0 1px rgba(236,233,226,0.18);
+}
+[data-tilt][data-hover="true"]::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .mk-line-in { transform: none; animation: none; } }
+.mk-app-frame-score { min-height: 104px; }
+.mk-caps-list li[data-tilt] { border-radius: 12px; padding-left: 12px; padding-right: 12px; margin: 0 -12px; }
+
+/* ======================= Journey: one fixed scene behind the page ======================= */
+.mk { --mk-bg-live: #0A0A0C; }
+.mk-journey { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.mk-journey canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity var(--mk-d3) var(--mk-ease-out); }
+.mk-journey[data-ready="true"] canvas { opacity: 1; }
+.mk-journey[data-hero="true"] canvas { pointer-events: auto; }
+.mk-journey-fallback { position: absolute; inset: 0; }
+.mk-journey-pushes { position: absolute; inset: 0; overflow: hidden; }
+.mk-push-float { position: absolute; left: 0; top: 0; opacity: 0; will-change: transform, opacity; }
+.mk-push-float::after { content: ""; position: absolute; top: 100%; left: 50%; width: 1px; height: 22px; background: var(--mk-ink2); }
+.mk main { position: relative; z-index: 1; }
+.mk-hero { background: transparent; }
+.mk-hero-scene { display: none; }
+.mk-hero-grid { pointer-events: none; }
+.mk-kill { background: transparent; }
+.mk-closing { background: transparent; }
+.mk-footer { position: relative; z-index: 1; }
+
+/* Timeline: tall section, sticky stage; the 3D bar rides underneath. */
+.mk-timeline { height: 260vh; padding: 0; }
+.mk-timeline-sticky { position: sticky; top: 0; height: 100vh; padding: 110px var(--mk-gutter) 36px; box-sizing: border-box; display: flex; flex-direction: column; }
+.mk-timeline-head { max-width: 760px; margin: 0 auto; text-align: center; }
+.mk-timeline-sticky .mk-legend { margin-top: 26px; justify-content: center; }
+@media (max-width: 900px) { .mk-timeline-head { text-align: left; margin: 0; } .mk-timeline-sticky .mk-legend { justify-content: flex-start; } }
+
+/* Overview: the left column is a 3D placeholder. */
+.mk-column-stack { min-height: 520px; }
+@media (max-width: 900px) { .mk-column-stack { min-height: 60vh; } }
+
+/* Wrapped: the 3D card flips into the slot; the DOM card is a crisp caption underneath and for no-WebGL. */
+.mk-wrapped-slot { position: relative; aspect-ratio: 1.6; width: min(100%, 560px); justify-self: center; }
+.mk-wrapped-slot .mk-wrapped-card { position: absolute; inset: 0; aspect-ratio: auto; width: 100%; opacity: 0.0001; }
+.mk-journey-off .mk-wrapped-slot .mk-wrapped-card { opacity: 1; }
+.mk-closing-drain { height: 240px; }
+.chs { display: inline; }
+.mk-eyebrow .chs { display: inline; }
+.mk-column-stack { width: 100%; min-height: 560px; }
+.mk-closing { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+.mk-closing-drain { height: 300px; margin-bottom: 24px; }
+@media (max-width: 900px) { .mk-closing-drain { height: 220px; } }
+
+/* Custom cursor: ring by default, × over killable cards */
+.mk-cursor { position: fixed; left: 0; top: 0; z-index: 100; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 1.5px solid var(--mk-ink); pointer-events: none; opacity: 0; transition: width var(--mk-d1) var(--mk-ease-out), height var(--mk-d1) var(--mk-ease-out), margin var(--mk-d1) var(--mk-ease-out), opacity var(--mk-d1) var(--mk-ease-out), border-color var(--mk-d1) var(--mk-ease-out); mix-blend-mode: difference; }
+.mk-cursor[data-on="true"] { opacity: 1; }
+.mk-cursor[data-mode="link"] { width: 36px; height: 36px; margin: -18px 0 0 -18px; border-color: rgba(236,233,226,0.5); }
+.mk-cursor[data-mode="kill"] { width: 40px; height: 40px; margin: -20px 0 0 -20px; border-color: var(--mk-kill); mix-blend-mode: normal; }
+.mk-cursor-x { position: absolute; inset: 0; opacity: 0; transition: opacity var(--mk-d1) var(--mk-ease-out); }
+.mk-cursor-x::before, .mk-cursor-x::after { content: ""; position: absolute; left: 50%; top: 50%; width: 40%; height: 1.5px; background: var(--mk-kill); transform: translate(-50%, -50%) rotate(45deg); }
+.mk-cursor-x::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.mk-cursor[data-mode="kill"] .mk-cursor-x { opacity: 1; }
+body[data-cursor="kill"] .mk-journey canvas, body[data-cursor="kill"] .mk-kill-stage canvas { cursor: none; }

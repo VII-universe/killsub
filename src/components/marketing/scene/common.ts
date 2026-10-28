@@ -74,7 +74,8 @@ export function cardMaterial(atlas: THREE.Texture, mode: CardMaterialMode) {
       .replace('#include <map_fragment>', `
         float face = step(0.92, abs(vObjN.z));
         vec2 tile = vObjN.z > 0.0 ? vTile : uBackTile;
-        vec2 tuv = clamp(vCardUv, 0.002, 0.998) * uTileScale + tile;
+        vec2 cuv = vObjN.z > 0.0 ? vCardUv : vec2(1.0 - vCardUv.x, vCardUv.y);
+        vec2 tuv = clamp(cuv, 0.002, 0.998) * uTileScale + tile;
         vec4 texel = texture2D(map, tuv);
         diffuseColor.rgb = mix(diffuseColor.rgb * 1.25, texel.rgb, face);
         diffuseColor.a *= uFade;

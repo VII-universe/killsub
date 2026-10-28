@@ -144,25 +144,25 @@
         "value": "7 · 3 · 1",
         "unit": "dní předem",
         "label": "Upozornění před každou platbou. A ještě v den platby.",
-        "source": "zdroj: kód notifikací, api/cron/send-reminders"
+        "source": "z kódu notifikací"
       },
       {
         "value": "6",
         "unit": "otázek",
         "label": "Nejvíc, co se tě poradce zeptá, než řekne, co zrušit.",
-        "source": "zdroj: SavingsView, kroky kvízu"
+        "source": "z kroků poradce"
       },
       {
         "value": "5",
         "unit": "předplatných",
         "label": "Tolik hlídá Killsub zdarma. Bez karty.",
-        "source": "zdroj: plan.ts, FREE_PLAN_SUBSCRIPTION_LIMIT"
+        "source": "z nastavení plánů"
       },
       {
         "value": "149",
         "unit": "Kč / měsíc",
         "label": "Pro. Neomezeně předplatných, e-mailové připomínky, exporty.",
-        "source": "zdroj: plan.ts, PRO_PRICE_MONTHLY_CZK"
+        "source": "z ceníku v aplikaci"
       }
     ]
   },
@@ -209,7 +209,7 @@
         "n": "03",
         "title": "Zjisti, co zrušit",
         "body": "Odpověz na pár otázek. Poradce porovná zvyky s cenami.",
-        "ui": "Skóre portfolia z aplikace, ukázková data"
+        "ui": "Skóre portfolia z aplikace · ukázka"
       }
     ],
     "quiz": {
@@ -313,10 +313,19 @@
       {
         "label": "Zkusit bez registrace",
         "href": "/try"
+      },
+      {
+        "label": "Soukromí (návrh)",
+        "href": "/privacy"
+      },
+      {
+        "label": "Podmínky (návrh)",
+        "href": "/terms"
       }
     ],
     "lang": "English",
     "langHref": "/en",
-    "copyright": "© 2026 Killsub"
+    "copyright": "© 2026 Killsub",
+    "operator": "Provozovatel: doplní Jakub"
   }
 }

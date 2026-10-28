@@ -98,11 +98,11 @@ export default function KillSection({ c, lang }: { c: Content; lang: Lang }) {
     <section className="mk-kill" aria-labelledby="mk-kill-h">
       <div className="mk-kill-grid">
         <div className="mk-kill-copy">
-          <p className="mk-eyebrow mono upper">{k.eyebrow}</p>
-          <h2 id="mk-kill-h" className="mk-h2">
+          <p className="mk-eyebrow mono upper" data-reveal="type">{k.eyebrow}</p>
+          <h2 id="mk-kill-h" className="mk-h2" data-reveal="lines">
             {k.headline.split('\n').map((l, i) => <span className="mk-line" key={i}><span className="mk-line-in" style={{ ['--i' as string]: i }}>{l}</span></span>)}
           </h2>
-          <p className="mk-sub">{k.sub}</p>
+          <p className="mk-sub" data-reveal="lines">{k.sub}</p>
           <p className="mk-saved" aria-hidden="true">
             <SplitFlap value={saved} locale={locale} label="" />
             <span className="mk-cur">Kč</span>
@@ -142,10 +142,10 @@ export default function KillSection({ c, lang }: { c: Content; lang: Lang }) {
         </div>
       </div>
       <div className="mk-caps">
-        <p className="mk-eyebrow mono upper">{c.capabilities.eyebrow}</p>
-        <ul className="mk-caps-list">
+        <p className="mk-eyebrow mono upper" data-reveal="type">{c.capabilities.eyebrow}</p>
+        <ul className="mk-caps-list" data-reveal="block" data-group data-from="x">
           {c.capabilities.rows.map((r, i) => (
-            <li key={r.title}>
+            <li key={r.title} data-tilt="3">
               <span className="mono mk-cap-n" style={{ color: 'var(--mk-ink3)' }}>0{i + 1}</span>
               <span className="mk-cap-title">{r.title}</span>
               <span className="mk-cap-body">{r.body}</span>

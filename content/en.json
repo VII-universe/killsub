@@ -144,25 +144,25 @@
         "value": "7 · 3 · 1",
         "unit": "days ahead",
         "label": "A warning before every charge. And again on the day.",
-        "source": "source: notification code, api/cron/send-reminders"
+        "source": "from the notification code"
       },
       {
         "value": "6",
         "unit": "questions",
         "label": "The most the advisor asks before it says what to cancel.",
-        "source": "source: SavingsView quiz steps"
+        "source": "from the advisor steps"
       },
       {
         "value": "5",
         "unit": "subscriptions",
         "label": "That many are tracked for free. No card.",
-        "source": "source: plan.ts, FREE_PLAN_SUBSCRIPTION_LIMIT"
+        "source": "from the plan settings"
       },
       {
         "value": "149",
         "unit": "Kč / month",
         "label": "Pro. Unlimited subscriptions, e-mail reminders, exports.",
-        "source": "source: plan.ts, PRO_PRICE_MONTHLY_CZK"
+        "source": "from the in-app price list"
       }
     ]
   },
@@ -209,7 +209,7 @@
         "n": "03",
         "title": "See what to cancel",
         "body": "Answer a few questions. The advisor matches habits to prices.",
-        "ui": "Portfolio score from the app, sample data"
+        "ui": "Portfolio score from the app · sample"
       }
     ],
     "quiz": {
@@ -313,10 +313,19 @@
       {
         "label": "Try without an account",
         "href": "/try"
+      },
+      {
+        "label": "Privacy (draft)",
+        "href": "/privacy"
+      },
+      {
+        "label": "Terms (draft)",
+        "href": "/terms"
       }
     ],
     "lang": "Česky",
     "langHref": "/",
-    "copyright": "© 2026 Killsub"
+    "copyright": "© 2026 Killsub",
+    "operator": "Operator: to be added by Jakub"
   }
 }

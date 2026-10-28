@@ -4,6 +4,9 @@ import type { CardData } from '../content'
 export const ATLAS_COLS = 4
 export const ATLAS_ROWS = 4
 export const BACK_TILE = 15 // last tile = card back
+export const WRAPPED_TILE = 12 // Wrapped face used by the flipped card
+
+export type WrappedFace = { year: string; total: string; totalLabel: string; top: string; topLabel: string; cat: string; catLabel: string; saved: string; savedLabel: string }
 
 function fontFamily(varName: string, fallback: string) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
@@ -35,7 +38,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /** Draws every card face (and one back) into a texture atlas. Text is user-style names only — no brand marks. */
-export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: number): Promise<THREE.CanvasTexture> {
+export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: number, wrapped?: WrappedFace): Promise<THREE.CanvasTexture> {
   const tileH = Math.round(tileW / 1.6)
   const canvas = document.createElement('canvas')
   canvas.width = tileW * ATLAS_COLS
@@ -112,6 +115,35 @@ export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: nu
     ctx.fillStyle = 'rgba(236,233,226,0.14)'
     ctx.fillRect(x + pad, y + tileH * 0.56, tileW - pad * 2, Math.max(1, tileH * 0.004))
   })
+
+  // Wrapped face: the year on one card (shown when the journey card flips).
+  if (wrapped) {
+    const x = (WRAPPED_TILE % ATLAS_COLS) * tileW
+    const y = Math.floor(WRAPPED_TILE / ATLAS_COLS) * tileH
+    drawBase(x, y)
+    const g2 = ctx.createLinearGradient(x, y, x + tileW, y + tileH)
+    g2.addColorStop(0, 'rgba(61,220,132,0.10)'); g2.addColorStop(0.6, 'rgba(61,220,132,0)')
+    ctx.fillStyle = g2; ctx.fillRect(x, y, tileW, tileH)
+    ctx.fillStyle = bone2; ctx.textBaseline = 'top'
+    ctx.font = `500 ${Math.round(tileH * 0.055)}px ${mono}`
+    ctx.fillText(`KILLSUB WRAPPED · ${wrapped.year}`, x + pad, y + pad * 0.9)
+    ctx.fillStyle = bone
+    ctx.font = `600 ${Math.round(tileH * 0.2)}px ${sans}`
+    ctx.fillText(wrapped.total, x + pad, y + tileH * 0.22)
+    ctx.fillStyle = bone2
+    ctx.font = `500 ${Math.round(tileH * 0.055)}px ${mono}`
+    ctx.fillText(wrapped.totalLabel.toUpperCase(), x + pad, y + tileH * 0.46)
+    ctx.fillStyle = 'rgba(236,233,226,0.14)'; ctx.fillRect(x + pad, y + tileH * 0.56, tileW - pad * 2, Math.max(1, tileH * 0.004))
+    const facts: [string, string, string][] = [[wrapped.topLabel, wrapped.top, bone], [wrapped.catLabel, wrapped.cat, bone], [wrapped.savedLabel, wrapped.saved, '#3DDC84'], ['', '', bone]]
+    facts.slice(0, 3).forEach(([l, v, col], i) => {
+      const fx = x + pad + i * ((tileW - pad * 2) / 3)
+      ctx.fillStyle = bone3; ctx.font = `500 ${Math.round(tileH * 0.045)}px ${mono}`
+      ctx.fillText(l.toUpperCase(), fx, y + tileH * 0.63)
+      ctx.fillStyle = col; ctx.font = `600 ${Math.round(tileH * 0.085)}px ${sans}`
+      ctx.fillText(v, fx, y + tileH * 0.72)
+    })
+    killMark(x + tileW - pad - tileH * 0.06, y + pad + tileH * 0.06, tileH * 0.055, bone3)
+  }
 
   // Card back: magnetic stripe + wordmark, no text noise.
   {
