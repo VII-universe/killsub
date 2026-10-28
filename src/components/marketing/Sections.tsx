@@ -1,7 +1,10 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Content, Lang } from './content'
-import { ScoreFrame, CalendarFrame } from './AppFrame'
+import dynamic from 'next/dynamic'
+const ScoreFrame = dynamic(() => import('./AppFrame').then((m) => m.ScoreFrame), { loading: () => <div className="mk-app-frame mk-app-frame-score" /> })
+const CalendarFrame = dynamic(() => import('./AppFrame').then((m) => m.CalendarFrame), { loading: () => <div className="mk-app-frame" style={{ minHeight: 420 }} /> })
+const GuestFrame = dynamic(() => import('./AppFrame').then((m) => m.GuestFrame), { loading: () => <div className="mk-app-frame-clip" style={{ minHeight: 520 }} /> })
+import ClosingCta from './ClosingCta'
 import FlapNumber from './FlapNumber'
 
 function Lines({ text }: { text: string }) {
@@ -75,8 +78,9 @@ export function HowItWorks({ c, lang }: { c: Content; lang: Lang }) {
             <p>{h.steps[0].body}</p>
             <p className="mk-step-ui mono">{h.steps[0].ui}</p>
           </div>
-          <div className="mk-step-ui-box mk-phone" data-tilt>
-            <Image src="/marketing/try-390.png" alt={lang === 'en' ? 'The add-subscription form at /try' : 'Formulář pro přidání předplatného na /try'} width={390} height={580} sizes="(max-width: 900px) 70vw, 300px" loading="eager" />
+          <div className="mk-step-ui-box mk-phone">
+            <GuestFrame />
+            <p className="mk-sr-only">{lang === 'en' ? 'The add-subscription form from /try.' : 'Formulář pro přidání předplatného z /try.'}</p>
           </div>
         </li>
         <li className="mk-step" data-reveal="block">
@@ -196,7 +200,7 @@ export function Closing({ c, lang }: { c: Content; lang: Lang }) {
       <h2 id="mk-closing-h" className="mk-h1 mk-closing-h" data-reveal="lines"><Lines text={x.headline} /></h2>
       <p className="mk-sub" data-reveal="lines">{x.sub}</p>
       <div className="mk-ctas">
-        <Link href="/register" className="mk-btn mk-btn-primary">{x.cta}</Link>
+        <ClosingCta label={x.cta} />
         <Link href="/try" className="mk-btn mk-btn-ghost">{x.ctaSecondary} <span className="arr" aria-hidden="true">→</span></Link>
       </div>
       <p className="mk-fine mono" data-reveal="type">{x.fine}</p>

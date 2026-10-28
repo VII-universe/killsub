@@ -414,8 +414,9 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
   }
   function poseBar(ci: number, s: Slot, out: Pose) {
     const d = barSlots[ci]
-    out.p.set(BAR_ORIGIN.x + d * DAY_GAP, CARD_H / 2 + 0.08, BAR_ORIGIN.z - 0.35)
-    out.q.copy(upright).multiply(lean); out.s = 1
+    const sc0 = portraitMode ? 0.72 : 1
+    out.p.set(BAR_ORIGIN.x + d * DAY_GAP, (CARD_H / 2) * sc0 + 0.08, BAR_ORIGIN.z - 0.35)
+    out.q.copy(upright).multiply(lean); out.s = sc0
     void s
   }
   const COLUMN = new THREE.Vector3(200, 0, 0)
@@ -430,10 +431,15 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     out.q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI * flip); out.s = ci === 0 ? 1 : 0.0001
   }
   const DRAIN = new THREE.Vector3(300, 0, 0)
+  let dropT = -1
+  const onDrop = () => { if (dropT < 0) dropT = 0 }
+  window.addEventListener('ks:drop', onDrop)
   function poseClosing(ci: number, out: Pose, t: number) {
     if (ci === 0) {
-      out.p.set(DRAIN.x, 1.15 + Math.sin(t * 1.1) * 0.05, DRAIN.z)
-      out.q.setFromEuler(new THREE.Euler(-0.95, Math.sin(t * 0.7) * 0.18, Math.sin(t * 0.5) * 0.04)); out.s = 1
+      // Hangs over the drain; on ks:drop it accelerates down through the floor (0.7 s).
+      const k = Math.min(1, dropT / 0.7), e = k * k * k
+      out.p.set(DRAIN.x, 1.15 + Math.sin(t * 1.1) * 0.05 * (1 - k) - e * 3.2, DRAIN.z)
+      out.q.setFromEuler(new THREE.Euler(-0.95 - e * 0.6, Math.sin(t * 0.7) * 0.18 * (1 - k), Math.sin(t * 0.5) * 0.04)); out.s = 1
     }
     else { out.p.set(DRAIN.x, -5, DRAIN.z); out.q.copy(flat); out.s = 0.0001 }
   }
@@ -576,6 +582,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     raf = requestAnimationFrame(frame)
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now; time += dt
+    if (dropT >= 0) dropT += dt
     const p0 = performance.now()
     if (!journeyOn) {
       if (world) { acc += dt; let steps = 0; while (acc >= FIXED_DT && steps < 3) { world.step(); acc -= FIXED_DT; steps++ } if (steps === 3) acc = 0 }
@@ -635,7 +642,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     syncHero(0); cards.instanceMatrix.needsUpdate = true; applyCam(camHero); renderer.render(scene, camera)
     opts.onLand(sum, -1); opts.onFirstFrame?.()
   } else {
-    spawn(6.5)
+    spawn(5.2)
     raf = requestAnimationFrame(frame)
   }
   const onVisibility = () => { last = performance.now(); acc = 0 }
@@ -649,6 +656,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
       cancelAnimationFrame(raf); ro.disconnect()
       canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerleave', onLeave); canvas.removeEventListener('pointerdown', onDown)
       document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('ks:drop', onDrop)
       world?.free()
       geo.dispose(); mat.dispose(); atlas.dispose(); floorMat.map?.dispose(); floorMat.dispose(); farMat.dispose(); floor.geometry.dispose(); far.geometry.dispose()
       bar.traverse((o) => { const m = o as THREE.Mesh; if (m.geometry) m.geometry.dispose(); const mm = m.material as THREE.Material | undefined; if (mm) { const mp = (mm as THREE.MeshBasicMaterial).map; mp?.dispose(); mm.dispose() } })

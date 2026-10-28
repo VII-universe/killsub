@@ -120,11 +120,11 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
         raf = requestAnimationFrame(measure)
       }).catch((err) => { console.error('[journey] scene failed', err); window.clearTimeout(watchdog); setFallback(String(err?.message || err)) })
     }
-    const hasIdle = typeof window.requestIdleCallback === 'function'
-    const id = hasIdle ? window.requestIdleCallback(start, { timeout: 600 }) : window.setTimeout(start, 50)
+    // The text is server-rendered and painted already; fetch the scene right away so the first card lands within ~3 s on 4G.
+    const id = window.setTimeout(start, 0)
     return () => {
       cancelled = true
-      if (hasIdle) window.cancelIdleCallback(id); else window.clearTimeout(id)
+      window.clearTimeout(id)
       window.clearTimeout(watchdog); cancelAnimationFrame(raf); handle?.dispose()
     }
   }, [cards, lang, wrapped])

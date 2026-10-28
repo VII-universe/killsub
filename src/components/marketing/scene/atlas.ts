@@ -47,12 +47,15 @@ export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: nu
 
   const sans = fontFamily('--font-mk-sans', 'system-ui')
   const mono = fontFamily('--font-mk-mono', 'ui-monospace')
-  // Safari can leave FontFaceSet.load() pending; never let fonts block the scene for more than 1.5 s.
+  // Fonts are usually already in by now (the page text uses them); otherwise wait at most 700 ms. Safari can leave load() pending.
   try {
-    await Promise.race([
-      Promise.all([document.fonts.load(`600 40px ${sans}`), document.fonts.load(`500 40px ${mono}`)]),
-      new Promise((r) => setTimeout(r, 1500)),
-    ])
+    const ready = document.fonts.check(`600 40px ${sans}`) && document.fonts.check(`500 40px ${mono}`)
+    if (!ready) {
+      await Promise.race([
+        Promise.all([document.fonts.load(`600 40px ${sans}`), document.fonts.load(`500 40px ${mono}`)]),
+        new Promise((r) => setTimeout(r, 700)),
+      ])
+    }
   } catch { /* fallback fonts are fine */ }
 
   const grain = noisePattern(ctx)

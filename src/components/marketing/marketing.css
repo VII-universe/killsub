@@ -95,7 +95,7 @@
 }
 .mk-line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
 .mk-line-in { display: block; transform: translateY(110%); animation: mk-rise var(--mk-d3) var(--mk-ease-out) forwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
-@keyframes mk-rise { to { transform: translateY(0); } }
+@keyframes mk-rise { 0% { opacity: 1; } to { transform: translateY(0); opacity: 1; } }
 .mk-sub { margin: 22px 0 0; max-width: 46ch; font-size: clamp(17px, 1.35vw, 20px); color: var(--mk-ink2); }
 .mk-ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 34px; }
 .mk-btn {
@@ -417,7 +417,7 @@
 .mk-line { perspective: 600px; }
 /* Only the hero animates with CSS on load; every other headline waits for its scroll reveal. */
 .mk-line-in { animation: none; transform: translateY(110%); }
-.mk-hero .mk-line-in { animation: mk-rise var(--mk-d3) var(--mk-ease-out) forwards; }
+.mk-hero .mk-line-in { opacity: 0; animation: mk-rise var(--mk-d3) var(--mk-ease-out) forwards; }
 .ch { display: inline; }
 [data-tilt] { transform-style: preserve-3d; position: relative; }
 [data-tilt]::after {
@@ -481,3 +481,12 @@
 .mk-cursor-x::after { transform: translate(-50%, -50%) rotate(-45deg); }
 .mk-cursor[data-mode="kill"] .mk-cursor-x { opacity: 1; }
 body[data-cursor="kill"] .mk-journey canvas, body[data-cursor="kill"] .mk-kill-stage canvas { cursor: none; }
+
+/* Live app frames */
+.mk-app-frame-guest { --bg-app: transparent; --bg-card: rgba(236,233,226,0.05); --bg-surface: #121216; --border-subtle: rgba(236,233,226,0.14); --border-strong: rgba(236,233,226,0.3); --accent-gradient: linear-gradient(135deg, #ECE9E2, #d6d2c8); --glow-color: rgba(0,0,0,0); --text-faint: rgba(236,233,226,0.4); --pill-bg: rgba(236,233,226,0.08); pointer-events: none; }
+.mk-app-frame-clip { overflow: hidden; max-height: 560px; border-radius: 28px; box-shadow: inset 0 0 0 1px rgba(236,233,226,0.12), 0 40px 80px -40px #000; background: #0F0F13; }
+.mk-app-frame-guest .min-h-screen { min-height: 0 !important; padding: 8px 18px 18px !important; }
+.mk-app-frame-guest h1 { font-family: var(--mk-font-sans); font-weight: 500 !important; letter-spacing: -0.02em; font-size: 20px !important; }
+.mk-app-frame-guest .theme-accent-btn, .mk-app-frame-guest button[type="submit"] { color: var(--mk-bg) !important; }
+.mk-phone { width: 300px; border-radius: 28px; overflow: visible; box-shadow: none; }
+@media (max-width: 900px) { .mk-phone { width: min(100%, 320px); } }

@@ -12,9 +12,8 @@ export const D1 = 0.5
 export const D2 = 0.8
 export const D3 = 1.2
 
-export function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+export { prefersReducedMotion } from './reveal-lite'
+import { prefersReducedMotion } from './reveal-lite'
 
 /** Wraps the element's text into `.ln > .ln-in` lines measured at the current width. Plain-text elements only. */
 export function splitLines(el: HTMLElement) {

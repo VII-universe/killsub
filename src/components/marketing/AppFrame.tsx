@@ -3,6 +3,7 @@
 import PortfolioScoreCard from '@/components/PortfolioScoreCard'
 import CashflowCalendar from '@/components/CashflowCalendar'
 import { DEMO_SUBSCRIPTIONS } from '@/utils/demoData'
+import GuestDemo from '@/components/GuestDemo'
 
 /** Real app widgets rendered with the app's own sample data, inside the landing's palette. No network, no auth. */
 import { useEffect, useRef, useState } from 'react'
@@ -34,6 +35,15 @@ export function CalendarFrame() {
   return (
     <div className="mk-app-frame" data-assemble="calendar" data-tilt="4">
       <CashflowCalendar subscriptions={DEMO_SUBSCRIPTIONS} />
+    </div>
+  )
+}
+
+/** The real /try form (GuestDemo) rendered read-only in the landing palette. No network: pointer events are off. */
+export function GuestFrame() {
+  return (
+    <div className="mk-app-frame mk-app-frame-guest" data-tilt aria-hidden="true">
+      <div className="mk-app-frame-clip"><GuestDemo /></div>
     </div>
   )
 }
