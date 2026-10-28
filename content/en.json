@@ -136,5 +136,187 @@
       "killed": "{name} cancelled. {price} Kč a month saved.",
       "scene": "Three hanging subscription cards. Click one to shatter it. Its price is added to the saved total."
     }
+  },
+  "stats": {
+    "eyebrow": "Facts, not adjectives",
+    "items": [
+      {
+        "value": "7 · 3 · 1",
+        "unit": "days ahead",
+        "label": "A warning before every charge. And again on the day.",
+        "source": "source: notification code, api/cron/send-reminders"
+      },
+      {
+        "value": "6",
+        "unit": "questions",
+        "label": "The most the advisor asks before it says what to cancel.",
+        "source": "source: SavingsView quiz steps"
+      },
+      {
+        "value": "5",
+        "unit": "subscriptions",
+        "label": "That many are tracked for free. No card.",
+        "source": "source: plan.ts, FREE_PLAN_SUBSCRIPTION_LIMIT"
+      },
+      {
+        "value": "149",
+        "unit": "Kč / month",
+        "label": "Pro. Unlimited subscriptions, e-mail reminders, exports.",
+        "source": "source: plan.ts, PRO_PRICE_MONTHLY_CZK"
+      }
+    ]
+  },
+  "timeline": {
+    "eyebrow": "The month, day by day",
+    "headline": "Seven days ahead.\nNot after the charge.",
+    "sub": "Killsub writes before your bank does. This is the real notification text.",
+    "monthLabel": "November",
+    "push": {
+      "app": "Killsub",
+      "when": "now",
+      "title": "⏰ Netflix renews in a week",
+      "body": "On 12 Nov you'll be charged 329 Kč. Keep it?"
+    },
+    "pushDay": {
+      "app": "Killsub",
+      "when": "8:00",
+      "title": "⚠️ Netflix renews tomorrow",
+      "body": "329 Kč · 12 Nov. Tap to manage the subscription."
+    },
+    "legend": [
+      "reminder 7 days ahead",
+      "reminder 1 day ahead",
+      "charge day"
+    ]
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "headline": "Three minutes.\nFull picture.",
+    "steps": [
+      {
+        "n": "01",
+        "title": "Add what you pay for",
+        "body": "Name, price, date. Or upload a CSV statement or a receipt.",
+        "ui": "The app's form, no sign-up, at /try"
+      },
+      {
+        "n": "02",
+        "title": "Get told in time",
+        "body": "7, 3 and 1 day before the charge. Push to phone and browser.",
+        "ui": "Real notification text"
+      },
+      {
+        "n": "03",
+        "title": "See what to cancel",
+        "body": "Answer a few questions. The advisor matches habits to prices.",
+        "ui": "Portfolio score from the app, sample data"
+      }
+    ],
+    "quiz": {
+      "question": "How often do you stream?",
+      "options": [
+        "Every day or almost",
+        "A few times a week",
+        "A few days a month",
+        "Hardly ever"
+      ],
+      "step": "Question 1 of 6"
+    }
+  },
+  "capabilities": {
+    "eyebrow": "Four things Killsub does",
+    "rows": [
+      {
+        "title": "Reminders",
+        "body": "7, 3 and 1 day before the charge, and on the day. Push and e-mail."
+      },
+      {
+        "title": "Advisor",
+        "body": "Up to 6 questions. Then what to cancel, downgrade or merge."
+      },
+      {
+        "title": "Import",
+        "body": "A CSV bank statement or a receipt. Killsub fills in the rest."
+      },
+      {
+        "title": "Wrapped",
+        "body": "Your year on one card. How much, on what, what you saved."
+      }
+    ]
+  },
+  "overview": {
+    "eyebrow": "Overview",
+    "headline": "Everything in one place.",
+    "sub": "How much, when and on what. The payment calendar is the app's own, with sample data.",
+    "columnLabel": "12 subscriptions · 4,451 Kč a month"
+  },
+  "wrapped": {
+    "eyebrow": "Killsub Wrapped",
+    "headline": "Your year\non one card.",
+    "sub": "At the end of the year you get a card to share. This one uses sample data.",
+    "card": {
+      "year": "2026",
+      "total": "53,412 Kč",
+      "totalLabel": "on subscriptions",
+      "top": "Adobe CC",
+      "topLabel": "most expensive",
+      "cat": "AI tools",
+      "catLabel": "biggest category",
+      "saved": "5,724 Kč",
+      "savedLabel": "cancelled and saved",
+      "months": "12 / 12",
+      "monthsLabel": "active months"
+    }
+  },
+  "security": {
+    "eyebrow": "Data",
+    "headline": "You enter only what you want.",
+    "facts": [
+      {
+        "title": "No bank connection",
+        "body": "Killsub never sees your account. Add subscriptions by hand or from a statement."
+      },
+      {
+        "title": "Sign in with e-mail or Google",
+        "body": "Killsub asks for no other password."
+      },
+      {
+        "title": "Data in the EU",
+        "body": "The database runs in Frankfurt."
+      },
+      {
+        "title": "Export any time",
+        "body": "Download every subscription as CSV in one click."
+      }
+    ]
+  },
+  "closing": {
+    "eyebrow": "The last card",
+    "headline": "How much is draining?",
+    "sub": "You'll know in three minutes. Free, no card, up to five subscriptions.",
+    "cta": "See what's draining",
+    "ctaSecondary": "Try without an account",
+    "fine": "Free · no card · 5 subscriptions on Free"
+  },
+  "footer": {
+    "brand": "Killsub",
+    "tagline": "Subscriptions under control.",
+    "links": [
+      {
+        "label": "Log in",
+        "href": "/login"
+      },
+      {
+        "label": "Start free",
+        "href": "/register"
+      },
+      {
+        "label": "Try without an account",
+        "href": "/try"
+      }
+    ],
+    "lang": "Česky",
+    "langHref": "/",
+    "copyright": "© 2026 Killsub"
   }
 }

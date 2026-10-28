@@ -3,6 +3,7 @@ import { getContent, SITE_URL } from '@/components/marketing/content'
 import Nav from '@/components/marketing/Nav'
 import Hero from '@/components/marketing/Hero'
 import KillSection from '@/components/marketing/KillSection'
+import { Stats, Timeline, HowItWorks, Overview, Wrapped, Security, Closing, Footer } from '@/components/marketing/Sections'
 
 const c = getContent('cs')
 
@@ -18,7 +19,15 @@ export default function Home() {
     <main lang="cs">
       <Nav c={c} lang="cs" />
       <Hero c={c} lang="cs" />
+      <Stats c={c} />
+      <Timeline c={c} lang="cs" />
+      <HowItWorks c={c} lang="cs" />
       <KillSection c={c} lang="cs" />
+      <Overview c={c} lang="cs" />
+      <Wrapped c={c} />
+      <Security c={c} />
+      <Closing c={c} lang="cs" />
+      <Footer c={c} lang="cs" />
     </main>
   )
 }

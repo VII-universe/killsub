@@ -82,7 +82,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
   const stringGeo = new THREE.BufferGeometry()
   const stringPos = new Float32Array(opts.cards.length * 6)
   stringGeo.setAttribute('position', new THREE.BufferAttribute(stringPos, 3))
-  const strings = new THREE.LineSegments(stringGeo, new THREE.LineBasicMaterial({ color: 0xece9e2, transparent: true, opacity: 0.28 }))
+  const strings = new THREE.LineSegments(stringGeo, new THREE.LineBasicMaterial({ color: 0xece9e2, transparent: true, opacity: 0.6 }))
   strings.frustumCulled = false
   scene.add(strings)
 
@@ -191,6 +191,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
       return
     }
     c.mesh.visible = false
+    slowUntil = performance.now() + 40
     const origin = c.mesh.position.clone()
     const rot = c.mesh.quaternion.clone()
     // Burst outward from the pointer/centre, a little forward (toward the viewer) and up.
@@ -209,15 +210,16 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
       const dir = new THREE.Vector3(f.centroid[0] - hit.x, f.centroid[1] - hit.y, 0)
       const dist = Math.max(0.15, dir.length())
       dir.normalize()
-      const speed = 2.2 + 1.6 / (dist * 3 + 0.4) + rand() * 0.8
-      const vel = new THREE.Vector3(dir.x * speed, dir.y * speed * 0.8 + 1.4 + rand() * 1.2, 1.6 + rand() * 1.4).applyQuaternion(rot)
+      // Lateral burst stays small so shards never cross the neighbouring card; most energy goes toward the viewer and down.
+      const speed = 0.9 + 0.7 / (dist * 3 + 0.4) + rand() * 0.4
+      const vel = new THREE.Vector3(dir.x * speed, dir.y * speed * 0.5 - 0.8 - rand() * 1.2, 2.6 + rand() * 1.6).applyQuaternion(rot)
       const desc = R!.RigidBodyDesc.dynamic()
         .setTranslation(pos.x, pos.y, pos.z)
         .setRotation({ x: rot.x, y: rot.y, z: rot.z, w: rot.w })
         .setLinvel(vel.x, vel.y, vel.z)
         .setAngvel({ x: (rand() - 0.5) * 14, y: (rand() - 0.5) * 14, z: (rand() - 0.5) * 10 })
-        .setLinearDamping(0.15)
-        .setAngularDamping(0.6)
+        .setLinearDamping(0.35)
+        .setAngularDamping(0.8)
         .setCcdEnabled(true)
       const body = world!.createRigidBody(desc)
       const hull = R!.ColliderDesc.convexHull(f.points)
@@ -259,6 +261,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
   let acc = 0
   let firstFrame = false
   let t = 0
+  let slowUntil = 0 // physics runs at 1/4 speed until this timestamp (the 40 ms beat at the break)
   const rects: Array<{ x: number; y: number; w: number; h: number } | null> = cards.map(() => null)
 
   function frame(now: number) {
@@ -269,7 +272,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
     t += dt
 
     if (world) {
-      acc += dt
+      acc += now < slowUntil ? dt * 0.25 : dt
       let steps = 0
       while (acc >= 1 / 60 && steps < 3) { world.step(); acc -= 1 / 60; steps++ }
       if (steps === 3) acc = 0
@@ -300,7 +303,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
           s.mesh.position.set(p.x, p.y, p.z)
           s.mesh.quaternion.set(r.x, r.y, r.z, r.w)
         }
-        if (s.state === 'flying' && (s.t > 1.5 || (s.body?.isSleeping() && s.t > 0.6))) { s.state = 'fading'; s.t = 0 }
+        if (s.state === 'flying' && (s.t > 1.05 || (s.body?.isSleeping() && s.t > 0.5))) { s.state = 'fading'; s.t = 0 }
         if (s.state === 'fading') {
           const k = Math.min(1, s.t / 0.45)
           s.mesh.scale.setScalar(1 - k * k)

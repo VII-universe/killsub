@@ -214,6 +214,7 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     restQuat: new THREE.Quaternion(), restY: 0,
   }))
   let pileX = 2.45, pileZ = 0.4
+  let portraitMode = false
   let nextCard = 0
   const order = opts.cards.map((_, i) => i)
   for (let i = order.length - 1; i > 0; i--) { const j = (rand() * (i + 1)) | 0; [order[i], order[j]] = [order[j], order[i]] }
@@ -268,8 +269,14 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     else tmpE.set((rand() - 0.5) * 0.9, yaw, (rand() - 0.5) * 0.5)
     slot.quat.setFromEuler(tmpE).multiply(tilt)
     slot.restQuat.setFromEuler(tmpE.set(0, yaw, 0)).multiply(tilt)
-    slot.pos.set(pileX + (opts.debug ? 0 : (rand() - 0.5) * 1.1), height, pileZ + (opts.debug ? 0 : (rand() - 0.5) * 0.7))
-    slot.vel.set(0, -0.6, 0)
+    if (portraitMode && !opts.debug) {
+      // Mobile: spawn in the top-right corner above the pile and arc in, so the fall never crosses the copy.
+      slot.pos.set(pileX + 2.2 + (rand() - 0.5) * 0.4, height, pileZ - 1.4 + (rand() - 0.5) * 0.5)
+      slot.vel.set(-1.9 + (rand() - 0.5) * 0.4, -0.4, 1.3 + (rand() - 0.5) * 0.3)
+    } else {
+      slot.pos.set(pileX + (opts.debug ? 0 : (rand() - 0.5) * 1.1), height, pileZ + (opts.debug ? 0 : (rand() - 0.5) * 0.7))
+      slot.vel.set(0, -0.6, 0)
+    }
     slot.angVel.set((rand() - 0.5) * 2.5, (rand() - 0.5) * 2, (rand() - 0.5) * 2.5)
     if (opts.debug) slot.angVel.set(0, 0, 0)
     slot.restY = CARD_T / 2 + activeCount('resting') * CARD_T
@@ -386,11 +393,12 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
     renderer.setSize(w, h, false)
     camera.aspect = w / h
     const portrait = camera.aspect < 0.9
+    portraitMode = portrait
     let target = opts.getPileTarget?.() ?? null
     if (portrait) {
       camera.fov = 38
       pileX = 0.15; pileZ = 0.6
-      camera.position.set(pileX, 5.8, pileZ + 7.8)
+      camera.position.set(pileX, 6.4, pileZ + 9.0)
       target ??= { x: 0, y: -0.45 }
     } else {
       camera.fov = 32

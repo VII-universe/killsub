@@ -136,5 +136,187 @@
       "killed": "{name} zrušeno. Ušetřeno {price} Kč měsíčně.",
       "scene": "Tři visící karty předplatných. Kliknutím kartu rozbiješ a částka se přičte k ušetřeno."
     }
+  },
+  "stats": {
+    "eyebrow": "Fakta, ne přívlastky",
+    "items": [
+      {
+        "value": "7 · 3 · 1",
+        "unit": "dní předem",
+        "label": "Upozornění před každou platbou. A ještě v den platby.",
+        "source": "zdroj: kód notifikací, api/cron/send-reminders"
+      },
+      {
+        "value": "6",
+        "unit": "otázek",
+        "label": "Nejvíc, co se tě poradce zeptá, než řekne, co zrušit.",
+        "source": "zdroj: SavingsView, kroky kvízu"
+      },
+      {
+        "value": "5",
+        "unit": "předplatných",
+        "label": "Tolik hlídá Killsub zdarma. Bez karty.",
+        "source": "zdroj: plan.ts, FREE_PLAN_SUBSCRIPTION_LIMIT"
+      },
+      {
+        "value": "149",
+        "unit": "Kč / měsíc",
+        "label": "Pro. Neomezeně předplatných, e-mailové připomínky, exporty.",
+        "source": "zdroj: plan.ts, PRO_PRICE_MONTHLY_CZK"
+      }
+    ]
+  },
+  "timeline": {
+    "eyebrow": "Časová osa měsíce",
+    "headline": "Sedm dní předem.\nNe až po stržení.",
+    "sub": "Killsub ti napíše dřív, než banka. Tohle je skutečný text notifikace.",
+    "monthLabel": "listopad",
+    "push": {
+      "app": "Killsub",
+      "when": "teď",
+      "title": "⏰ Netflix se obnovuje za týden",
+      "body": "Dne 12. 11. ti strhnou 329 Kč. Chceš pokračovat?"
+    },
+    "pushDay": {
+      "app": "Killsub",
+      "when": "8:00",
+      "title": "⚠️ Netflix se obnovuje zítra",
+      "body": "329 Kč · 12. 11. Klikni pro správu předplatného."
+    },
+    "legend": [
+      "upozornění 7 dní předem",
+      "upozornění 1 den předem",
+      "den platby"
+    ]
+  },
+  "how": {
+    "eyebrow": "Jak to funguje",
+    "headline": "Tři minuty.\nPlný přehled.",
+    "steps": [
+      {
+        "n": "01",
+        "title": "Přidej, co platíš",
+        "body": "Název, cena, datum. Nebo nahraj CSV výpis či účtenku.",
+        "ui": "Formulář z aplikace, bez registrace na /try"
+      },
+      {
+        "n": "02",
+        "title": "Dostaň zprávu včas",
+        "body": "7, 3 a 1 den před platbou. Push na mobil i do prohlížeče.",
+        "ui": "Skutečný text notifikace"
+      },
+      {
+        "n": "03",
+        "title": "Zjisti, co zrušit",
+        "body": "Odpověz na pár otázek. Poradce porovná zvyky s cenami.",
+        "ui": "Skóre portfolia z aplikace, ukázková data"
+      }
+    ],
+    "quiz": {
+      "question": "Jak často sleduješ streaming?",
+      "options": [
+        "Každý den nebo skoro",
+        "Několikrát týdně",
+        "Pár dní v měsíci",
+        "Skoro vůbec"
+      ],
+      "step": "Otázka 1 z 6"
+    }
+  },
+  "capabilities": {
+    "eyebrow": "Čtyři věci, které Killsub dělá",
+    "rows": [
+      {
+        "title": "Upozornění",
+        "body": "7, 3 a 1 den před platbou a v den platby. Push i e-mail."
+      },
+      {
+        "title": "Poradce",
+        "body": "Až 6 otázek. Pak co zrušit, zlevnit nebo sloučit."
+      },
+      {
+        "title": "Import",
+        "body": "CSV výpis z banky nebo účtenka. Zbytek doplní Killsub."
+      },
+      {
+        "title": "Wrapped",
+        "body": "Rok v jedné kartě. Kolik, za co, kde jsi ušetřil."
+      }
+    ]
+  },
+  "overview": {
+    "eyebrow": "Přehled",
+    "headline": "Vše na jednom místě.",
+    "sub": "Kolik, kdy a za co. Kalendář plateb je z aplikace, data jsou ukázková.",
+    "columnLabel": "12 předplatných · 4 451 Kč měsíčně"
+  },
+  "wrapped": {
+    "eyebrow": "Killsub Wrapped",
+    "headline": "Tvůj rok\nv jedné kartě.",
+    "sub": "Na konci roku dostaneš kartu ke sdílení. Tahle je z ukázkových dat.",
+    "card": {
+      "year": "2026",
+      "total": "53 412 Kč",
+      "totalLabel": "za předplatná",
+      "top": "Adobe CC",
+      "topLabel": "nejdražší",
+      "cat": "AI nástroje",
+      "catLabel": "největší kategorie",
+      "saved": "5 724 Kč",
+      "savedLabel": "zrušeno a ušetřeno",
+      "months": "12 / 12",
+      "monthsLabel": "aktivních měsíců"
+    }
+  },
+  "security": {
+    "eyebrow": "Data",
+    "headline": "Zadáváš jen to, co chceš.",
+    "facts": [
+      {
+        "title": "Žádné připojení k bance",
+        "body": "Killsub nevidí účet. Předplatná zadáš ručně nebo z výpisu."
+      },
+      {
+        "title": "Přihlášení e-mailem nebo přes Google",
+        "body": "Heslo k ničemu jinému Killsub nechce."
+      },
+      {
+        "title": "Data v EU",
+        "body": "Databáze běží ve Frankfurtu."
+      },
+      {
+        "title": "Export kdykoli",
+        "body": "Všechna předplatná stáhneš jako CSV jedním kliknutím."
+      }
+    ]
+  },
+  "closing": {
+    "eyebrow": "Poslední karta",
+    "headline": "Kolik ti odtéká?",
+    "sub": "Do tří minut to víš. Zdarma, bez karty, do pěti předplatných.",
+    "cta": "Zjistit, kolik odtéká",
+    "ctaSecondary": "Zkusit bez registrace",
+    "fine": "Zdarma · bez karty · 5 předplatných ve Free"
+  },
+  "footer": {
+    "brand": "Killsub",
+    "tagline": "Předplatná pod kontrolou.",
+    "links": [
+      {
+        "label": "Přihlásit se",
+        "href": "/login"
+      },
+      {
+        "label": "Začít zdarma",
+        "href": "/register"
+      },
+      {
+        "label": "Zkusit bez registrace",
+        "href": "/try"
+      }
+    ],
+    "lang": "English",
+    "langHref": "/en",
+    "copyright": "© 2026 Killsub"
   }
 }

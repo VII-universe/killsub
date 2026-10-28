@@ -141,6 +141,18 @@ export default function KillSection({ c, lang }: { c: Content; lang: Lang }) {
           ))}
         </div>
       </div>
+      <div className="mk-caps">
+        <p className="mk-eyebrow mono upper">{c.capabilities.eyebrow}</p>
+        <ul className="mk-caps-list">
+          {c.capabilities.rows.map((r, i) => (
+            <li key={r.title}>
+              <span className="mono mk-cap-n" style={{ color: 'var(--mk-ink3)' }}>0{i + 1}</span>
+              <span className="mk-cap-title">{r.title}</span>
+              <span className="mk-cap-body">{r.body}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
       <p className="mk-sr-live" aria-live="polite" role="status">{live}</p>
     </section>
   )
