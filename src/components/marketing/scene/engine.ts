@@ -90,11 +90,11 @@ export async function createHeroScene(canvas: HTMLCanvasElement, opts: HeroScene
   const isMobile = window.innerWidth < 900 || window.matchMedia('(hover: none) and (pointer: coarse)').matches
   const lowPower = isMobile || (navigator.hardwareConcurrency || 8) <= 4
   const MAX_CARDS = lowPower ? 40 : 60
-  // Review-only overrides: ?shadow=2048|1024|pcf|off  ?dpr=1.5
+  // Review-only overrides: ?shadow=2048|1536|1024|vsm|pcf|off  ?dpr=1.5 (default: PCF soft 2048 desktop / 1024 mobile)
   const q = new URLSearchParams(window.location.search)
   const shadowOpt = q.get('shadow')
-  const shadowSize = shadowOpt === '2048' ? 2048 : shadowOpt === '1024' ? 1024 : lowPower ? 1024 : 1536
-  const shadowType = shadowOpt === 'pcf' ? THREE.PCFSoftShadowMap : THREE.VSMShadowMap
+  const shadowSize = shadowOpt === '2048' ? 2048 : shadowOpt === '1024' ? 1024 : shadowOpt === '1536' ? 1536 : lowPower ? 1024 : 2048
+  const shadowType = shadowOpt === 'vsm' ? THREE.VSMShadowMap : THREE.PCFSoftShadowMap
   const shadowsOn = shadowOpt !== 'off'
   const dprCap = q.get('dpr') ? Number(q.get('dpr')) : lowPower ? 1.75 : 2
   const PILE_MAX = lowPower ? 14 : 18
