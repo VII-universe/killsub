@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Content, Lang } from './content'
 import SplitFlap from './SplitFlap'
 import type { KillSceneHandle } from './scene/kill'
+import { playCrunch, playDing } from './sound'
 
 type Pop = { id: number; x: number; y: number; text: string }
 
@@ -46,6 +47,7 @@ export default function KillSection({ c, lang }: { c: Content; lang: Lang }) {
           onFirstFrame: () => setReady(true),
           onKilled: (i, at) => {
             const card = k.cards[i]
+            playCrunch(); window.setTimeout(playDing, 260)
             setSaved((s) => s + card.price)
             const id = Date.now() + i
             setPops((p) => [...p, { id, x: at.x, y: at.y, text: `+${fmt(card.price)} Kč` }])

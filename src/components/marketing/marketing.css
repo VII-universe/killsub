@@ -490,3 +490,23 @@ body[data-cursor="kill"] .mk-journey canvas, body[data-cursor="kill"] .mk-kill-s
 .mk-app-frame-guest .theme-accent-btn, .mk-app-frame-guest button[type="submit"] { color: var(--mk-bg) !important; }
 .mk-phone { width: 300px; border-radius: 28px; overflow: visible; box-shadow: none; }
 @media (max-width: 900px) { .mk-phone { width: min(100%, 320px); } }
+
+/* ---- Preloader: one card drops, then the page is there. ≤ 1 s, no percentages, first visit per session only. ---- */
+.mk-pre { display: none; }
+html[data-pre="1"] .mk-pre { display: block; position: fixed; inset: 0; z-index: 90; background: var(--mk-bg); pointer-events: none; animation: mk-pre-out 0.3s var(--mk-ease-inout) 0.7s forwards; }
+html[data-pre="1"] .mk-pre-card { position: absolute; left: 50%; top: 50%; width: 180px; aspect-ratio: 1.6; margin: -56px 0 0 -90px; border-radius: 6% / 9.6%; background: linear-gradient(135deg, #24242b, #1C1C22 55%, #17171c); box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 30px 50px -24px #000; transform: translateY(-70vh) rotate(-8deg); animation: mk-pre-drop 0.62s cubic-bezier(0.55, 0, 0.9, 0.6) 0.05s forwards; }
+@keyframes mk-pre-drop { 90% { transform: translateY(6px) rotate(2deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes mk-pre-out { to { opacity: 0; visibility: hidden; } }
+/* Hero copy waits for the preloader to clear. */
+html[data-pre="1"] .mk-hero .mk-line-in { animation-delay: calc(var(--i, 0) * 90ms + 820ms); }
+html[data-pre="1"] .mk-hero .mk-fade { animation-delay: calc(var(--delay, 400ms) + 700ms); }
+
+/* Sound toggle: three bars, animated when on */
+.mk-sound { display: inline-flex; align-items: center; height: 24px; padding: 0 4px; background: none; border: 0; cursor: pointer; }
+.mk-sound-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.mk-sound-bars i { display: block; width: 2px; height: 4px; background: currentColor; opacity: 0.5; border-radius: 1px; }
+.mk-sound[aria-pressed="true"] .mk-sound-bars i { opacity: 1; animation: mk-bar 0.9s ease-in-out infinite; }
+.mk-sound[aria-pressed="true"] .mk-sound-bars i:nth-child(2) { animation-delay: 0.15s; }
+.mk-sound[aria-pressed="true"] .mk-sound-bars i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes mk-bar { 50% { height: 12px; } }
+@media (prefers-reduced-motion: reduce) { .mk-sound[aria-pressed="true"] .mk-sound-bars i { animation: none; height: 10px; } }

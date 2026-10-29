@@ -38,7 +38,14 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /** Draws every card face (and one back) into a texture atlas. Text is user-style names only — no brand marks. */
-export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: number, wrapped?: WrappedFace): Promise<THREE.CanvasTexture> {
+export function atlasFontsReady(): boolean {
+  try {
+    const sans = fontFamily('--font-mk-sans', 'system-ui'), mono = fontFamily('--font-mk-mono', 'ui-monospace')
+    return document.fonts.check(`600 40px ${sans}`) && document.fonts.check(`500 40px ${mono}`)
+  } catch { return true }
+}
+
+export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: number, wrapped?: WrappedFace, waitForFonts = true): Promise<THREE.CanvasTexture> {
   const tileH = Math.round(tileW / 1.6)
   const canvas = document.createElement('canvas')
   canvas.width = tileW * ATLAS_COLS
@@ -49,7 +56,7 @@ export async function buildAtlas(cards: CardData[], lang: 'cs' | 'en', tileW: nu
   const mono = fontFamily('--font-mk-mono', 'ui-monospace')
   // Fonts are usually already in by now (the page text uses them); otherwise wait at most 700 ms. Safari can leave load() pending.
   try {
-    const ready = document.fonts.check(`600 40px ${sans}`) && document.fonts.check(`500 40px ${mono}`)
+    const ready = !waitForFonts || (document.fonts.check(`600 40px ${sans}`) && document.fonts.check(`500 40px ${mono}`))
     if (!ready) {
       await Promise.race([
         Promise.all([document.fonts.load(`600 40px ${sans}`), document.fonts.load(`500 40px ${mono}`)]),

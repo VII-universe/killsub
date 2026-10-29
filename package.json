@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "node scripts/check-content.mjs && next build",
+    "dev": "node scripts/build-scene.mjs && next dev",
+    "build": "node scripts/check-content.mjs && node scripts/build-scene.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "build:mobile": "next build && npx cap sync",
-    "check:content": "node scripts/check-content.mjs"
+    "check:content": "node scripts/check-content.mjs",
+    "build:scene": "node scripts/build-scene.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -48,6 +49,7 @@
     "@types/react-dom": "^19",
     "@types/three": "0.186.0",
     "@types/web-push": "^3.6.4",
+    "esbuild": "0.25.9",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",

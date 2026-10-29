@@ -7,7 +7,9 @@ function Cell({ ch }: { ch: string }) {
   const first = useRef(true)
   useEffect(() => {
     if (first.current) { first.current = false; return }
-    setState((s) => (s.cur === ch ? s : { cur: ch, prev: s.cur, key: s.key + 1, phase: 'top' }))
+    // No flap under reduced motion: the digit just changes.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setState((s) => (s.cur === ch ? s : { cur: ch, prev: s.cur, key: s.key + 1, phase: reduced ? 'idle' : 'top' }))
   }, [ch])
   const { cur, prev, key, phase } = state
   const animating = phase !== 'idle'

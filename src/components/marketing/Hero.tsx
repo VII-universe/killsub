@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { Content, Lang } from './content'
 import SplitFlap from './SplitFlap'
+import { playKlap } from './sound'
 
 function MagneticLink({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
   const ref = useRef<HTMLAnchorElement>(null)
@@ -26,7 +27,9 @@ function MagneticLink({ href, className, children }: { href: string; className: 
 export default function Hero({ c, lang }: { c: Content; lang: Lang }) {
   const [total, setTotal] = useState(0)
   useEffect(() => {
-    const on = (e: Event) => setTotal((t) => t + Number((e as CustomEvent).detail || 0))
+    const already = (window as Window & { __ksScene?: { landed: number } }).__ksScene?.landed || 0
+    if (already) window.setTimeout(() => setTotal(already), 0)
+    const on = (e: Event) => { setTotal((t) => t + Number((e as CustomEvent).detail || 0)); playKlap() }
     window.addEventListener('ks:land', on)
     return () => window.removeEventListener('ks:land', on)
   }, [])

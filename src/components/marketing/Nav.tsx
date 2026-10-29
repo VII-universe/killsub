@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Content } from './content'
 import NavChrome from './NavChrome'
+import SoundToggle from './SoundToggle'
 
 export default function Nav({ c, lang }: { c: Content; lang: 'cs' | 'en' }) {
   const home = lang === 'en' ? '/en' : '/'
@@ -15,6 +16,7 @@ export default function Nav({ c, lang }: { c: Content; lang: 'cs' | 'en' }) {
         Killsub
       </Link>
       <div className="mk-nav-links">
+        <SoundToggle label={c.nav.sound} />
         <Link href={c.nav.langHref} className="mk-nav-link mono" hrefLang={lang === 'en' ? 'cs' : 'en'} lang={lang === 'en' ? 'cs' : 'en'}>{c.nav.lang}</Link>
         <Link href="/login" className="mk-nav-link hide-mobile">{c.nav.login}</Link>
         <Link href="/register" className="mk-nav-cta">{c.nav.start}</Link>

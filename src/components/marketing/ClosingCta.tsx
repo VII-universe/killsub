@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
+import { playKlap } from './sound'
 
 /** "Zjistit, kolik odtéká": the last card drops into the drain, then the registration opens. */
 export default function ClosingCta({ label }: { label: string }) {
@@ -15,6 +16,7 @@ export default function ClosingCta({ label }: { label: string }) {
     setBusy(true)
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     window.dispatchEvent(new CustomEvent('ks:drop'))
+    window.setTimeout(() => playKlap(0.25), 560)
     router.prefetch('/register')
     window.setTimeout(() => router.push('/register'), reduced ? 0 : 780)
   }

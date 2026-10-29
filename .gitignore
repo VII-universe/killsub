@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated hero scene bundle (scripts/build-scene.mjs)
+/public/scene

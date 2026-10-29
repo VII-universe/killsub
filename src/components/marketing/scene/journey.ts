@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import type { CardData } from '../content'
-import { buildAtlas, tileOffset, BACK_TILE, WRAPPED_TILE, ATLAS_COLS, ATLAS_ROWS, type WrappedFace } from './atlas'
+import { buildAtlas, atlasFontsReady, tileOffset, BACK_TILE, WRAPPED_TILE, ATLAS_COLS, ATLAS_ROWS, type WrappedFace } from './atlas'
 import { CARD_W, CARD_H, CARD_T, G, cardGeometry, floorTexture, mulberry32 } from './common'
 import { loadRapier, type Rapier, type RigidBody, type World } from './physics'
 
@@ -40,7 +40,7 @@ export type JourneyOptions = {
   debug?: boolean
 }
 
-export type JourneyHandle = { dispose: () => void; relayout: () => void; setScroll: (s: ScrollState) => void }
+export type JourneyHandle = { dispose: () => void; relayout: () => void; setScroll: (s: ScrollState) => void; setCallbacks: (c: Partial<Pick<JourneyOptions, 'onTimeline' | 'onPerf' | 'onBackground' | 'onLand' | 'getPileTarget'>>) => void }
 
 const FIXED_DT = 1 / 60
 const DAYS = 30
@@ -83,7 +83,9 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
   const shadowsOn = shadowOpt !== 'off'
   const dprCap = q.get('dpr') ? Number(q.get('dpr')) : lowPower ? 1.75 : 2
 
-  const atlas = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640, opts.wrapped)
+  // First atlas never waits for web fonts (the first card must fall within ~3 s on slow 4G); if they were not in yet, it is redrawn and swapped once they load.
+  const fontsWereReady = atlasFontsReady()
+  let atlas = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640, opts.wrapped, false)
 
   // ---------- renderer ----------
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false })
@@ -190,6 +192,14 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
         vec4 texel = texture2D(map, tuv);
         diffuseColor.rgb = mix(diffuseColor.rgb * 1.25, texel.rgb, face);
       `)
+  }
+  if (!fontsWereReady) {
+    document.fonts.ready.then(async () => {
+      if (disposed) return
+      const fresh = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640, opts.wrapped, true)
+      if (disposed) { fresh.dispose(); return }
+      const old = atlas; atlas = fresh; mat.map = fresh; mat.needsUpdate = true; old.dispose()
+    }).catch(() => {})
   }
   const cards = new THREE.InstancedMesh(geo, mat, MAX_CARDS)
   cards.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
@@ -646,13 +656,14 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     syncHero(0); cards.instanceMatrix.needsUpdate = true; applyCam(camHero); renderer.render(scene, camera)
     opts.onLand(sum, -1); opts.onFirstFrame?.()
   } else {
-    spawn(5.2)
+    spawn(4.3)
     raf = requestAnimationFrame(frame)
   }
   const onVisibility = () => { last = performance.now(); acc = 0 }
   document.addEventListener('visibilitychange', onVisibility)
 
   return {
+    setCallbacks(c) { Object.assign(opts, c) },
     setScroll(s) { scroll = s; if (opts.reducedMotion) { if (s.hero > 0.5 && !journeyOn) enterJourney(); if (s.hero < 0.42 && journeyOn) leaveJourney(); if (journeyOn) syncJourney(); else { syncHero(0); applyCam(camHero) } cards.instanceMatrix.needsUpdate = true; renderer.render(scene, camera) } },
     relayout: () => { layout(); if (opts.reducedMotion) renderer.render(scene, camera) },
     dispose() {

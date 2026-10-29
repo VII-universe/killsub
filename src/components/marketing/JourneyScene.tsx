@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import type { CardData, Lang, Content } from './content'
 import type { JourneyHandle, PerfSample, PileTarget, ScrollState } from './scene/journey'
 import HeroFallback from './HeroFallback'
+import { measurePileTarget } from './scene/measure'
+
+declare global { interface Window { __ksScene?: { handle: JourneyHandle | null; landed: number; ready: boolean; failed: string | null; promise: Promise<JourneyHandle | null> | null } } }
 
 type Props = { cards: CardData[]; lang: Lang; sceneLabel: string; timeline: Content['timeline']; wrapped: Content['wrapped']['card'] }
 
@@ -14,26 +17,6 @@ function ndcOf(el: Element | null, canvas: HTMLCanvasElement, dx = 0, dy = 0): P
   const c = canvas.getBoundingClientRect(), r = el.getBoundingClientRect()
   if (c.width === 0 || c.height === 0) return null
   const cx = r.left + r.width / 2 + dx, cy = r.top + r.height / 2 + dy
-  return { x: ((cx - c.left) / c.width) * 2 - 1, y: -((cy - c.top) / c.height) * 2 + 1 }
-}
-
-/** Pile centre in NDC, from where the hero copy actually is. */
-function measurePileTarget(canvas: HTMLCanvasElement): PileTarget | null {
-  const hero = document.querySelector('.mk-hero')
-  const copy = hero?.querySelector<HTMLElement>('.mk-hero-copy'), ctas = hero?.querySelector<HTMLElement>('.mk-ctas'), note = hero?.querySelector<HTMLElement>('.mk-hero-note')
-  if (!copy || !ctas) return null
-  const c = canvas.getBoundingClientRect()
-  if (c.width === 0 || c.height === 0) return null
-  const r = copy.getBoundingClientRect()
-  const portrait = c.width / c.height < 0.9
-  let cx: number, cy: number
-  if (portrait) {
-    const top = ctas.getBoundingClientRect().bottom + 12, bottom = (note?.getBoundingClientRect().top ?? c.bottom) - 8
-    cx = c.left + c.width / 2; cy = (top + bottom) / 2 + (bottom - top) * 0.05
-  } else {
-    const left = r.right + 32
-    cx = (left + c.right) / 2 - (c.right - left) * 0.04; cy = c.top + c.height * 0.64
-  }
   return { x: ((cx - c.left) / c.width) * 2 - 1, y: -((cy - c.top) / c.height) * 2 + 1 }
 }
 
@@ -89,30 +72,48 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
       if (isHero !== lastHero) { lastHero = isHero; setHeroMode(isHero) }
     }
 
+    const callbacks = {
+      onLand: (p: number) => land(p),
+      onPerf: q.get('perf') === '1' ? setPerf : undefined,
+      getPileTarget: () => measurePileTarget(canvas),
+      onBackground: (hex: string) => { document.documentElement.style.setProperty('--mk-bg-live', hex) },
+      onTimeline: ({ positions }: { positions: Record<number, { x: number; y: number; falling: number }> }) => {
+        const keys = Object.keys(positions).map(Number)
+        if (keys.length !== visiblePushes.length || keys.some((k, i) => k !== visiblePushes[i])) { visiblePushes = keys; setPushes(keys) }
+        for (const k of keys) {
+          const el = pushRefs.current[k]
+          if (!el) continue
+          const p = positions[k]
+          const caught = 1 - p.falling
+          el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -100%) translateY(${-24 - caught * 10}px)`
+          el.style.opacity = String(Math.min(1, caught * 1.5))
+        }
+      },
+    }
+    // Preferred path: the standalone boot script (public/scene/boot.js) already started the scene on this canvas.
+    const shared = window.__ksScene
+    if (shared && (shared.promise || shared.failed)) {
+      if (shared.failed) { window.setTimeout(() => setFallback(shared.failed!), 0); return }
+      shared.promise!.then((h) => {
+        if (cancelled || !h) { if (!h && !cancelled) setFallback(shared.failed || 'boot failed'); return }
+        handle = h
+        gotFrame = shared.ready; if (gotFrame) { window.clearTimeout(watchdog); setReady(true) }
+        h.setCallbacks({ ...callbacks, onLand: (p) => { shared.landed += p; land(p) } })
+        h.relayout()
+        raf = requestAnimationFrame(measure)
+      })
+      return () => { cancelled = true; window.clearTimeout(watchdog); cancelAnimationFrame(raf); handle?.setCallbacks({ onTimeline: undefined, onPerf: undefined }) }
+    }
+
     const start = () => {
       import('./scene/journey').then(async ({ createJourney }) => {
         if (cancelled) return
         handle = await createJourney(canvas, {
           cards, lang, reducedMotion: reduced,
-          onLand: (p) => land(p),
+          ...callbacks,
           onFirstFrame: () => { gotFrame = true; window.clearTimeout(watchdog); setReady(true) },
-          onPerf: q.get('perf') === '1' ? setPerf : undefined,
-          getPileTarget: () => measurePileTarget(canvas),
-          onBackground: (hex) => { document.documentElement.style.setProperty('--mk-bg-live', hex) },
           wrapped,
           noAdapt: q.get('noadapt') === '1',
-          onTimeline: ({ positions }) => {
-            const keys = Object.keys(positions).map(Number)
-            if (keys.length !== visiblePushes.length || keys.some((k, i) => k !== visiblePushes[i])) { visiblePushes = keys; setPushes(keys) }
-            for (const k of keys) {
-              const el = pushRefs.current[k]
-              if (!el) continue
-              const p = positions[k]
-              const caught = 1 - p.falling
-              el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -100%) translateY(${-24 - caught * 10}px)`
-              el.style.opacity = String(Math.min(1, caught * 1.5))
-            }
-          },
           seed: q.get('seed') ? Number(q.get('seed')) : undefined,
           debug: q.get('debug') === '1',
         })
@@ -132,6 +133,7 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
   const locale = lang === 'en' ? 'en-GB' : 'cs-CZ'
   return (
     <div className="mk-journey" data-ready={ready && !fallback} data-hero={heroMode}>
+      <script id="ks-scene-config" type="application/json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ cards, lang, wrapped }).replace(/</g, '\\u003c') }} />
       <canvas ref={canvasRef} role="img" aria-label={sceneLabel} hidden={!!fallback} />
       {fallback && <div className="mk-journey-fallback"><HeroFallback cards={cards} lang={lang} onLand={(p) => window.dispatchEvent(new CustomEvent('ks:land', { detail: p }))} reason={fallback} showReason={perfOn} /></div>}
       <div className="mk-journey-pushes" aria-hidden="true">
