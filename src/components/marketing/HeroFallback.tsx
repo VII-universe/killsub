@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CardData, Lang } from './content'
 
 const COUNT = 9
@@ -9,7 +9,8 @@ const COUNT = 9
 export default function HeroFallback({ cards, lang, onLand, reason, showReason }: { cards: CardData[]; lang: Lang; onLand: (price: number) => void; reason: string; showReason?: boolean }) {
   const onLandRef = useRef(onLand)
   useEffect(() => { onLandRef.current = onLand }, [onLand])
-  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => { const id = window.setTimeout(() => setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches), 0); return () => window.clearTimeout(id) }, [])
 
   const pile = useMemo(() => {
     const seed = { v: 7 }
@@ -23,9 +24,11 @@ export default function HeroFallback({ cards, lang, onLand, reason, showReason }
     }))
   }, [cards])
 
+  // The DOM cards feed the counter only while the WebGL scene has not produced a frame; once it has, it owns the count.
   useEffect(() => {
-    if (reduced) { onLandRef.current(pile.reduce((a, p) => a + p.card.price, 0)); return }
-    const timers = pile.map((p, i) => window.setTimeout(() => onLandRef.current(p.card.price), (p.delay + 1.15) * 1000 + i))
+    const sceneReady = () => !!(window as Window & { __ksScene?: { ready: boolean } }).__ksScene?.ready || document.querySelector('.mk-journey')?.getAttribute('data-ready') === 'true'
+    if (reduced) { if (!sceneReady()) onLandRef.current(pile.reduce((a, p) => a + p.card.price, 0)); return }
+    const timers = pile.map((p, i) => window.setTimeout(() => { if (!sceneReady()) onLandRef.current(p.card.price) }, (p.delay + 1.15) * 1000 + i))
     return () => timers.forEach(clearTimeout)
   }, [pile, reduced])
 

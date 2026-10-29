@@ -1,28 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -72,7 +51,7 @@ export default function RootLayout({
     <html
       lang="cs"
       data-theme="neon"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />

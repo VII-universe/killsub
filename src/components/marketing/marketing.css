@@ -510,3 +510,8 @@ html[data-pre="1"] .mk-hero .mk-fade { animation-delay: calc(var(--delay, 400ms)
 .mk-sound[aria-pressed="true"] .mk-sound-bars i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes mk-bar { 50% { height: 12px; } }
 @media (prefers-reduced-motion: reduce) { .mk-sound[aria-pressed="true"] .mk-sound-bars i { animation: none; height: 10px; } }
+
+/* DOM fallback is always in the HTML: visible from first paint, fades once the WebGL scene has a frame (unless forced). */
+.mk-journey-fallback { position: absolute; inset: 0; transition: opacity var(--mk-d2) var(--mk-ease-out); }
+.mk-journey[data-ready="true"]:not([data-forced="true"]) .mk-journey-fallback { opacity: 0; pointer-events: none; }
+.mk-journey[data-ready="true"]:not([data-forced="true"]) .mk-fcard { animation-play-state: paused; }

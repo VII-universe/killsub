@@ -1,4 +1,4 @@
-import vercelConfig from '../../../../vercel.json'
+import vercelConfig from '../../../../../vercel.json'
 import { getLatestCronLogs } from '@/utils/adminData'
 import RunCronButton from '@/components/RunCronButton'
 

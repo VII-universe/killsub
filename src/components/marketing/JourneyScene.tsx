@@ -47,8 +47,9 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
     if (q.get('perf') === '1') window.setTimeout(() => setPerfOn(true), 0)
     if (q.get('fallback') === '1') { window.setTimeout(() => setFallback('forced by ?fallback=1'), 0); return }
     let handle: JourneyHandle | null = null
-    let cancelled = false, gotFrame = false, raf = 0, lastHero = true
-    const watchdog = window.setTimeout(() => { if (!gotFrame && !cancelled) { console.warn('[journey] no frame in 8 s, using fallback'); setFallback('timeout'); handle?.dispose(); handle = null } }, 8000)
+    let cancelled = false, raf = 0, lastHero = true
+    // The DOM fallback is in the server HTML and animates from first paint; it stays until the scene's first frame, so the hero never looks dead.
+    const watchdog = 0
     canvas.addEventListener('webglcontextlost', () => { if (!cancelled) setFallback('context lost') }, { once: true })
     const land = (price: number) => window.dispatchEvent(new CustomEvent('ks:land', { detail: price }))
 
@@ -97,12 +98,12 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
       shared.promise!.then((h) => {
         if (cancelled || !h) { if (!h && !cancelled) setFallback(shared.failed || 'boot failed'); return }
         handle = h
-        gotFrame = shared.ready; if (gotFrame) { window.clearTimeout(watchdog); setReady(true) }
+        if (shared.ready) setReady(true); else { const t = window.setInterval(() => { if (shared.ready) { setReady(true); window.clearInterval(t) } }, 100); window.setTimeout(() => window.clearInterval(t), 20000) }
         h.setCallbacks({ ...callbacks, onLand: (p) => { shared.landed += p; land(p) } })
         h.relayout()
         raf = requestAnimationFrame(measure)
       })
-      return () => { cancelled = true; window.clearTimeout(watchdog); cancelAnimationFrame(raf); handle?.setCallbacks({ onTimeline: undefined, onPerf: undefined }) }
+      return () => { cancelled = true; cancelAnimationFrame(raf); handle?.setCallbacks({ onTimeline: undefined, onPerf: undefined }) }
     }
 
     const start = () => {
@@ -111,7 +112,7 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
         handle = await createJourney(canvas, {
           cards, lang, reducedMotion: reduced,
           ...callbacks,
-          onFirstFrame: () => { gotFrame = true; window.clearTimeout(watchdog); setReady(true) },
+          onFirstFrame: () => { setReady(true) },
           wrapped,
           noAdapt: q.get('noadapt') === '1',
           seed: q.get('seed') ? Number(q.get('seed')) : undefined,
@@ -119,23 +120,23 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
         })
         if (cancelled) { handle.dispose(); return }
         raf = requestAnimationFrame(measure)
-      }).catch((err) => { console.error('[journey] scene failed', err); window.clearTimeout(watchdog); setFallback(String(err?.message || err)) })
+      }).catch((err) => { console.error('[journey] scene failed', err); setFallback(String(err?.message || err)) })
     }
     // The text is server-rendered and painted already; fetch the scene right away so the first card lands within ~3 s on 4G.
     const id = window.setTimeout(start, 0)
     return () => {
       cancelled = true
       window.clearTimeout(id)
-      window.clearTimeout(watchdog); cancelAnimationFrame(raf); handle?.dispose()
+      void watchdog; cancelAnimationFrame(raf); handle?.dispose()
     }
   }, [cards, lang, wrapped])
 
   const locale = lang === 'en' ? 'en-GB' : 'cs-CZ'
   return (
-    <div className="mk-journey" data-ready={ready && !fallback} data-hero={heroMode}>
+    <div className="mk-journey" data-ready={ready && !fallback} data-forced={!!fallback} data-hero={heroMode}>
       <script id="ks-scene-config" type="application/json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ cards, lang, wrapped }).replace(/</g, '\\u003c') }} />
       <canvas ref={canvasRef} role="img" aria-label={sceneLabel} hidden={!!fallback} />
-      {fallback && <div className="mk-journey-fallback"><HeroFallback cards={cards} lang={lang} onLand={(p) => window.dispatchEvent(new CustomEvent('ks:land', { detail: p }))} reason={fallback} showReason={perfOn} /></div>}
+      <div className="mk-journey-fallback"><HeroFallback cards={cards} lang={lang} onLand={(p) => window.dispatchEvent(new CustomEvent('ks:land', { detail: p }))} reason={fallback || ''} showReason={perfOn && !!fallback} /></div>
       <div className="mk-journey-pushes" aria-hidden="true">
         {pushes.map((ci) => {
           const card = cards[ci]
