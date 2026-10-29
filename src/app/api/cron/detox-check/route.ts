@@ -34,8 +34,12 @@ function renderDetoxCompleteEmail(savedAmount: number, dashboardUrl: string) {
 }
 
 export async function GET(request: NextRequest) {
+  // Fail closed: without CRON_SECRET the endpoint is not callable at all.
+  if (!process.env.CRON_SECRET) {
+    return NextResponse.json({ error: 'Cron není nakonfigurovaný.' }, { status: 500 })
+  }
   const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Neautorizováno' }, { status: 401 })
   }
 
