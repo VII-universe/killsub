@@ -25,7 +25,7 @@ function boot() {
   let cfg: Config
   try { cfg = JSON.parse(cfgEl.textContent || '{}') } catch { return }
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-  shared.promise = createJourney(canvas, {
+  const start = () => createJourney(canvas, {
     cards: cfg.cards, lang: cfg.lang, wrapped: cfg.wrapped, reducedMotion: reduced,
     onLand: (p) => { shared.landed += p; window.dispatchEvent(new CustomEvent('ks:land', { detail: p })) },
     onFirstFrame: () => { shared.ready = true; holder.dataset.ready = 'true' },
@@ -33,7 +33,21 @@ function boot() {
     seed: q.get('seed') ? Number(q.get('seed')) : undefined,
     debug: q.get('debug') === '1',
     noAdapt: q.get('noadapt') === '1',
-  }).then((h) => { shared.handle = h; return h }).catch((e) => { shared.failed = String(e?.message || e); console.error('[scene boot]', e); return null })
+  })
+  // Mobile: the WebGL context and shader compile are the most expensive work on the page, so they wait for the load
+  // event and idle time; the CSS fallback cards fall meanwhile. Desktop starts immediately.
+  const mobile = matchMedia('(hover: none) and (pointer: coarse)').matches || innerWidth < 900
+  const whenReady = mobile
+    ? new Promise<void>((resolve) => {
+        const idle = () => {
+          const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+          if (ric) ric(() => resolve(), { timeout: 1500 }); else setTimeout(resolve, 200)
+        }
+        if (document.readyState === 'complete') idle(); else addEventListener('load', idle, { once: true })
+      })
+    : Promise.resolve()
+  // The promise exists synchronously, so React adopts this scene instead of starting its own.
+  shared.promise = whenReady.then(start).then((h) => { shared.handle = h; return h }).catch((e) => { shared.failed = String(e?.message || e); console.error('[scene boot]', e); return null })
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true })
