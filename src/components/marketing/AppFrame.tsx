@@ -46,7 +46,9 @@ function cardsAsSubscriptions(cards: CardData[]): Subscription[] {
 export function CalendarFrame({ cards }: { cards: CardData[] }) {
   return (
     <div className="mk-app-frame" data-assemble="calendar" data-tilt="4">
-      <CashflowCalendar subscriptions={cardsAsSubscriptions(cards)} />
+      {/* Illustration of the app's calendar: not operable here, so it stays out of the tab order. */}
+      <div inert aria-hidden="true"><CashflowCalendar subscriptions={cardsAsSubscriptions(cards)} /></div>
+      <p className="mk-sr-only">{`Kalendář plateb z aplikace: ${cards.length} ukázkových předplatných, ${cards.reduce((a, c) => a + c.price, 0)} Kč měsíčně.`}</p>
     </div>
   )
 }
@@ -54,7 +56,7 @@ export function CalendarFrame({ cards }: { cards: CardData[] }) {
 /** The real /try form (GuestDemo) rendered read-only in the landing palette. No network: pointer events are off. */
 export function GuestFrame() {
   return (
-    <div className="mk-app-frame mk-app-frame-guest" data-tilt aria-hidden="true">
+    <div className="mk-app-frame mk-app-frame-guest" data-tilt aria-hidden="true" inert>
       <div className="mk-app-frame-clip"><GuestDemo /></div>
     </div>
   )

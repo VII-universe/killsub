@@ -19,7 +19,6 @@ import { prefersReducedMotion } from './reveal-lite'
 export function splitLines(el: HTMLElement) {
   if (el.dataset.split === '1') return Array.from(el.querySelectorAll<HTMLElement>('.ln-in'))
   const text = el.textContent ?? ''
-  el.setAttribute('aria-label', text)
   el.textContent = ''
   const words = text.split(/\s+/).filter(Boolean)
   const spans = words.map((w) => { const s = document.createElement('span'); s.textContent = w; s.style.display = 'inline-block'; el.append(s, document.createTextNode(' ')); return s })
@@ -35,6 +34,7 @@ export function splitLines(el: HTMLElement) {
     const i = document.createElement('span'); i.className = 'ln-in'; i.textContent = ln.map((s) => s.textContent).join(' ')
     o.append(i); el.append(o); inners.push(i)
   }
+  const sr = document.createElement('span'); sr.className = 'mk-sr-only'; sr.textContent = text; el.append(sr)
   el.dataset.split = '1'
   return inners
 }
@@ -43,7 +43,6 @@ export function splitLines(el: HTMLElement) {
 export function splitChars(el: HTMLElement) {
   if (el.dataset.split === '1') return Array.from(el.querySelectorAll<HTMLElement>('.ch'))
   const text = el.textContent ?? ''
-  el.setAttribute('aria-label', text)
   el.textContent = ''
   const wrap = document.createElement('span'); wrap.className = 'chs'; wrap.setAttribute('aria-hidden', 'true')
   const out: HTMLElement[] = []
@@ -51,7 +50,8 @@ export function splitChars(el: HTMLElement) {
     const s = document.createElement('span'); s.className = 'ch'; s.textContent = ch
     wrap.append(s); out.push(s)
   }
-  el.append(wrap)
+  const sr = document.createElement('span'); sr.className = 'mk-sr-only'; sr.textContent = text
+  el.append(wrap, sr)
   el.dataset.split = '1'
   return out
 }

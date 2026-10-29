@@ -1,10 +1,14 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { getContent, SITE_URL } from '@/components/marketing/content'
 import Nav from '@/components/marketing/Nav'
 import Hero from '@/components/marketing/Hero'
 import JourneyScene from '@/components/marketing/JourneyScene'
 import KillSection from '@/components/marketing/KillSection'
 import { Stats, Timeline, HowItWorks, Overview, Wrapped, Security, Closing, Footer } from '@/components/marketing/Sections'
+
+// Page-level viewport: overrides the root layout's non-scalable one (WCAG 1.4.4).
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 5, userScalable: true, viewportFit: 'cover', themeColor: '#0A0A0C' }
+
 
 const c = getContent('en')
 

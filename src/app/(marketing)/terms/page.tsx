@@ -1,5 +1,9 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Legal from '@/components/marketing/Legal'
+
+// Page-level viewport: overrides the root layout's non-scalable one (WCAG 1.4.4).
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 5, userScalable: true, viewportFit: 'cover', themeColor: '#0A0A0C' }
+
 
 export const metadata: Metadata = { title: 'Killsub — Podmínky (návrh)', robots: { index: false, follow: false } }
 

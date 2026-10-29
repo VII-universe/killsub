@@ -10,7 +10,9 @@ type Shared = { handle: JourneyHandle | null; landed: number; ready: boolean; fa
 const w = window as Window & { __ksScene?: Shared }
 const shared: Shared = (w.__ksScene ||= { handle: null, landed: 0, ready: false, failed: null, promise: null })
 
-function supportsWebGL2() { try { return !!document.createElement('canvas').getContext('webgl2') } catch { return false } }
+// Constant-time check: creating a throwaway WebGL2 context costs a second GPU context (seconds on slow phones).
+// If the real renderer then fails, createJourney rejects and the DOM fallback stays.
+function supportsWebGL2() { return typeof window !== 'undefined' && 'WebGL2RenderingContext' in window }
 
 function boot() {
   if (shared.promise) return

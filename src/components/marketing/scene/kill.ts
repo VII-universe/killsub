@@ -36,6 +36,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance', stencil: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.debug.checkShaderErrors = false
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.PCFShadowMap
@@ -317,6 +318,7 @@ export async function createKillScene(canvas: HTMLCanvasElement, opts: KillScene
     renderer.render(scene, camera)
     if (!firstFrame) { firstFrame = true; opts.onFirstFrame?.() }
   }
+  try { await renderer.compileAsync(scene, camera) } catch { /* lazy compile */ }
   raf = requestAnimationFrame(frame)
   const onVisibility = () => { last = performance.now(); acc = 0 }
   document.addEventListener('visibilitychange', onVisibility)

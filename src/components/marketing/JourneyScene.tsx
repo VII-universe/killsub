@@ -10,7 +10,9 @@ declare global { interface Window { __ksScene?: { handle: JourneyHandle | null; 
 
 type Props = { cards: CardData[]; lang: Lang; sceneLabel: string; timeline: Content['timeline']; wrapped: Content['wrapped']['card'] }
 
-function supportsWebGL2() { try { return !!document.createElement('canvas').getContext('webgl2') } catch { return false } }
+// Constant-time check: creating a throwaway WebGL2 context costs a second GPU context (seconds on slow phones).
+// If the real renderer then fails, createJourney rejects and the DOM fallback stays.
+function supportsWebGL2() { return typeof window !== 'undefined' && 'WebGL2RenderingContext' in window }
 
 function ndcOf(el: Element | null, canvas: HTMLCanvasElement, dx = 0, dy = 0): PileTarget | null {
   if (!el) return null

@@ -88,9 +88,15 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
   let atlas = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640, opts.wrapped, false)
 
   // ---------- renderer ----------
+  {
+    const dpr0 = Math.min(window.devicePixelRatio || 1, dprCap)
+    canvas.width = Math.floor((canvas.clientWidth || window.innerWidth) * dpr0)
+    canvas.height = Math.floor((canvas.clientHeight || window.innerHeight) * dpr0)
+  }
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap))
   renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.debug.checkShaderErrors = false
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.shadowMap.enabled = shadowsOn
   renderer.shadowMap.type = shadowType
@@ -198,7 +204,7 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
       if (disposed) return
       const fresh = await buildAtlas(opts.cards, opts.lang, lowPower ? 448 : 640, opts.wrapped, true)
       if (disposed) { fresh.dispose(); return }
-      const old = atlas; atlas = fresh; mat.map = fresh; mat.needsUpdate = true; old.dispose()
+      const old = atlas; atlas = fresh; mat.map = fresh; old.dispose()
     }).catch(() => {})
   }
   const cards = new THREE.InstancedMesh(geo, mat, MAX_CARDS)
@@ -358,9 +364,11 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     }
     cam.look.set(lx, ly, point.z)
   }
+  let sizedW = 0, sizedH = 0, sizedDpr = 0
   function layout() {
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight
-    renderer.setSize(w, h, false)
+    const dprNow = renderer.getPixelRatio()
+    if (w !== sizedW || h !== sizedH || dprNow !== sizedDpr) { renderer.setSize(w, h, false); sizedW = w; sizedH = h; sizedDpr = dprNow }
     camera.aspect = w / h
     portraitMode = camera.aspect < 0.9
     let target = opts.getPileTarget?.() ?? null
@@ -472,11 +480,12 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
   const perf = { frames: 0, t0: performance.now(), worst: 0, physMs: 0, renderMs: 0, minFps: 999 }
   const adapt = { t0: performance.now(), frames: 0, level: 0, note: '', bad: 0 }
   let pileMax = PILE_MAX
+  let shadowFrozen = false
   function degrade() {
     if (opts.noAdapt) return
     adapt.level++
     if (adapt.level === 1) { renderer.setPixelRatio(1); layout(); adapt.note = 'dpr 1' }
-    else if (adapt.level === 2) { renderer.shadowMap.enabled = false; mat.needsUpdate = true; floorMat.needsUpdate = true; farMat.needsUpdate = true; adapt.note = 'dpr 1, no shadows' }
+    else if (adapt.level === 2) { renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true; shadowFrozen = true; adapt.note = 'dpr 1, shadow frozen' }
     else if (adapt.level === 3) { pileMax = Math.min(pileMax, 8); adapt.note = 'dpr 1, no shadows, pile 8' }
   }
 
@@ -621,10 +630,17 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
     }
     cards.instanceMatrix.needsUpdate = true
 
+    if (shadowFrozen && (Math.floor(now / 250) !== Math.floor((now - dt * 1000) / 250))) renderer.shadowMap.needsUpdate = true
     const r0 = performance.now()
     renderer.render(scene, camera)
     const renderMs = performance.now() - r0
-    if (!firstFrame) { firstFrame = true; opts.onFirstFrame?.(); adoptRapier().catch((err) => console.error('[journey] rapier failed', err)) }
+    if (!firstFrame) {
+      firstFrame = true; opts.onFirstFrame?.()
+      // The simple integrator carries the cards meanwhile; Rapier's wasm compile is a long task, so it waits for idle time.
+      const go = () => adoptRapier().catch((err) => console.error('[journey] rapier failed', err))
+      const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+      window.setTimeout(() => (ric ? ric(go, { timeout: 4000 }) : go()), 1500)
+    }
 
     adapt.frames++
     if (now - adapt.t0 >= 2000) {
@@ -646,6 +662,10 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
       }
     }
   }
+
+  // Compile every shader program in parallel before the first frame instead of stalling the main thread.
+  try { await renderer.compileAsync(scene, camera) } catch { /* falls back to lazy compile on first render */ }
+  if (disposed) return { setCallbacks() {}, setScroll() {}, relayout() {}, dispose() {} }
 
   if (opts.reducedMotion) {
     let sum = 0
