@@ -57,7 +57,6 @@ export default function Hero({ c, lang }: { c: Content; lang: Lang }) {
         </div>
       </div>
       <p className="mk-hero-note mono mk-fade" style={{ ['--delay' as string]: '900ms' }}>{c.hero.note}</p>
-      <p className="mk-hero-hint mono mk-fade" style={{ ['--delay' as string]: '1400ms' }}>{c.hero.hint}</p>
     </section>
   )
 }

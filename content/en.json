@@ -20,7 +20,6 @@
     "ctaPrimary": "Start free",
     "ctaSecondary": "Try without an account",
     "note": "Sample subscriptions · prices in Kč per month",
-    "hint": "You can nudge the cards",
     "a11y": {
       "scene": "Animation: cards labelled with subscription names fall onto a pile. A counter adds up their monthly prices.",
       "counter": "Sum of monthly prices of the cards that have landed: {value} Kč"
@@ -273,8 +272,8 @@
     "headline": "You enter only what you want.",
     "facts": [
       {
-        "title": "No bank connection",
-        "body": "Killsub never sees your account. Add subscriptions by hand or from a statement."
+        "title": "Bank? By hand or from a statement, for now.",
+        "body": "Add subscriptions by hand, from a CSV statement or a receipt. A bank connection is in the works."
       },
       {
         "title": "Sign in with e-mail or Google",

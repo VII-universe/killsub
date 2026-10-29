@@ -20,7 +20,6 @@
     "ctaPrimary": "Začít zdarma",
     "ctaSecondary": "Zkusit bez registrace",
     "note": "Ukázková předplatná · ceny v Kč za měsíc",
-    "hint": "Do karet můžeš strčit",
     "a11y": {
       "scene": "Animace: karty s názvy předplatných padají na hromadu. Počítadlo sčítá jejich měsíční ceny.",
       "counter": "Součet měsíčních cen karet, které dopadly: {value} Kč"
@@ -273,8 +272,8 @@
     "headline": "Zadáváš jen to, co chceš.",
     "facts": [
       {
-        "title": "Žádné připojení k bance",
-        "body": "Killsub nevidí účet. Předplatná zadáš ručně nebo z výpisu."
+        "title": "Banka? Zatím ručně nebo z výpisu.",
+        "body": "Předplatná zadáš ručně, z CSV výpisu nebo účtenky. Napojení na banku připravujeme."
       },
       {
         "title": "Přihlášení e-mailem nebo přes Google",

@@ -138,7 +138,7 @@ export function Overview({ c, lang }: { c: Content; lang: Lang }) {
           <p className="mk-column-label mono" data-reveal="type">{o.columnLabel}</p>
           <div className="mk-column-stack" aria-hidden="true" />
         </div>
-        <CalendarFrame />
+        <CalendarFrame cards={c.cards} />
       </div>
     </section>
   )

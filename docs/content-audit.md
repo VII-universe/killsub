@@ -35,3 +35,10 @@ Hero počítadlo nesčítá žádnou statistiku. Sčítá **měsíční ceny kar
 3. Root layout má `themeColor #ec4899` a `data-theme="neon"`; marketingový layout nastavuje vlastní pozadí `#0A0A0C`.
 4. `sitemap.ts` neobsahuje `/en` ani `/try` — doplní se v M2 (je to app soubor, drobná změna, hlásím).
 5. Rozpočet: `three` 131 kB gzip; Rapier 3D 0.21 **1 169 kB gzip** (wasm), compat build 1 653 kB gzip. Limit 400 kB z bodu 5 s Rapierem nejde splnit — viz otázky v M0 reportu.
+
+
+## Doplnění 29. 10. 2026
+
+- Bankovní napojení existuje v kódu (TrueLayer, sandbox). Web ho nepopírá ani neslibuje: sekce Data říká „Napojení na banku připravujeme“, nikde není TrueLayer, FCA, PSD2 ani název banky. „Bez karty“ (platební) zůstává, „bez banky“ jako vlastnost ne.
+- `NEXT_PUBLIC_SUPABASE_URL` v produkci na Vercelu míří na projekt `lxqznkruqvoamsviahkp` = region eu-central-1 (Frankfurt). Bod „Data v EU“ platí.
+- Přehled: kalendář i popisek sloupce počítají ze stejných 12 ukázkových karet, měna všude „Kč“.

@@ -4,6 +4,8 @@ import PortfolioScoreCard from '@/components/PortfolioScoreCard'
 import CashflowCalendar from '@/components/CashflowCalendar'
 import { DEMO_SUBSCRIPTIONS } from '@/utils/demoData'
 import GuestDemo from '@/components/GuestDemo'
+import type { CardData } from './content'
+import type { Subscription } from '@/components/SubscriptionList'
 
 /** Real app widgets rendered with the app's own sample data, inside the landing's palette. No network, no auth. */
 import { useEffect, useRef, useState } from 'react'
@@ -31,10 +33,20 @@ export function ScoreFrame() {
   )
 }
 
-export function CalendarFrame() {
+/** The landing's sample cards as app subscriptions: the same twelve the hero drops and the column label counts, all monthly, in Kč. */
+function cardsAsSubscriptions(cards: CardData[]): Subscription[] {
+  const now = new Date()
+  const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, '0')
+  return cards.map((c, i) => ({
+    id: `sample-${i}`, user_id: 'sample', name: c.name, amount: c.price, currency: 'Kč', billing_cycle: 'monthly',
+    next_payment_date: `${y}-${m}-${String(c.day).padStart(2, '0')}`, category: '', last_used_at: null, health_score: null, health_score_manual: false,
+  }))
+}
+
+export function CalendarFrame({ cards }: { cards: CardData[] }) {
   return (
     <div className="mk-app-frame" data-assemble="calendar" data-tilt="4">
-      <CashflowCalendar subscriptions={DEMO_SUBSCRIPTIONS} />
+      <CashflowCalendar subscriptions={cardsAsSubscriptions(cards)} />
     </div>
   )
 }
