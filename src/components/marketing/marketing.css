@@ -515,3 +515,13 @@ html[data-pre="1"] .mk-hero .mk-fade { animation-delay: calc(var(--delay, 400ms)
 .mk-journey-fallback { position: absolute; inset: 0; transition: opacity var(--mk-d2) var(--mk-ease-out); }
 .mk-journey[data-ready="true"]:not([data-forced="true"]) .mk-journey-fallback { opacity: 0; pointer-events: none; }
 .mk-journey[data-ready="true"]:not([data-forced="true"]) .mk-fcard { animation-play-state: paused; }
+
+/* Scene layer is clipped per frame to its own section's on-screen rect (JourneyScene sets clip-path). */
+.mk-journey { will-change: clip-path; }
+/* The DOM fallback belongs to the hero only. */
+.mk-journey[data-hero="false"] .mk-journey-fallback { opacity: 0; }
+.mk-journey[data-hero="false"] .mk-fcard { animation-play-state: paused; }
+
+/* No horizontal overflow at any width. */
+.mk { overflow-x: clip; }
+@media (max-width: 720px) { .mk-caps-list li[data-tilt] { margin: 0; padding-left: 0; padding-right: 0; } .mk-push-dim { transform: translateX(12px); } }

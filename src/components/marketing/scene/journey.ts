@@ -17,6 +17,8 @@ export type ScrollState = {
   wrapped: number
   closing: number
   wrappedExit: number
+  /** false while a non-scene section owns the screen: nothing is drawn. */
+  visible?: boolean
   /** Where the overview column / wrapped card / closing drain should sit on screen (NDC), measured from the DOM. */
   columnTarget?: PileTarget | null
   wrappedTarget?: PileTarget | null
@@ -632,7 +634,8 @@ export async function createJourney(canvas: HTMLCanvasElement, opts: JourneyOpti
 
     if (shadowFrozen && (Math.floor(now / 250) !== Math.floor((now - dt * 1000) / 250))) renderer.shadowMap.needsUpdate = true
     const r0 = performance.now()
-    renderer.render(scene, camera)
+    // Hidden behind another section: skip drawing (the canvas is faded out by CSS); physics/timing keep running.
+    if (scroll.visible !== false || !firstFrame) renderer.render(scene, camera)
     const renderMs = performance.now() - r0
     if (!firstFrame) {
       firstFrame = true; opts.onFirstFrame?.()

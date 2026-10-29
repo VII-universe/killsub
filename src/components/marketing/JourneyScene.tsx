@@ -70,6 +70,20 @@ export default function JourneyScene({ cards, lang, sceneLabel, timeline, wrappe
         wrapped: progressOf(S.wr, vh, 'enter'), wrappedExit: progressOf(S.wr, vh, 'exit'), closing: progressOf(S.cl, vh, 'enter'),
         columnTarget: ndcOf(S.col, canvas, 0, 30), wrappedTarget: ndcOf(S.wcard, canvas), drainTarget: ndcOf(S.drain, canvas, 0, 0),
       }
+      // The fixed scene layer is clipped to the on-screen rectangle of the scene section with the most screen
+      // (hero, timeline, overview, Wrapped, closing). Cards can therefore never be drawn over another section.
+      let best = { top: 0, bottom: 0 }
+      for (const el of [S.hero, S.tl, S.ov, S.wr, S.cl]) {
+        if (!el) continue
+        const r = el.getBoundingClientRect()
+        const top = Math.max(0, r.top), bottom = Math.min(vh, r.bottom)
+        if (bottom - top > best.bottom - best.top) best = { top, bottom }
+      }
+      const owns = best.bottom - best.top > 1
+      const clip = owns ? `inset(${Math.round(best.top)}px 0 ${Math.round(vh - best.bottom)}px 0)` : 'inset(100% 0 0 0)'
+      const holder = canvas.parentElement
+      if (holder) { if (holder.style.clipPath !== clip) holder.style.clipPath = clip; if (holder.dataset.owner !== String(owns)) holder.dataset.owner = String(owns) }
+      state.visible = owns
       handle.setScroll(state)
       const isHero = state.hero < 0.5
       if (isHero !== lastHero) { lastHero = isHero; setHeroMode(isHero) }
