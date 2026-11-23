@@ -107,13 +107,13 @@ export default function Home() {
             <Link href="/register" className={`${styles.btnStart} ${styles.heroAnim}`} style={{ animationDelay: '360ms' }}>
               Začít zdarma <span className={styles.arrow}>→</span>
             </Link>
-            <a
+            <Link
               href="/try"
               className={`${styles.heroAnim} inline-block rounded-2xl border border-white/20 px-6 py-3 text-sm text-white/70 transition-colors hover:border-white/40 hover:text-white`}
               style={{ animationDelay: '400ms' }}
             >
               Zkusit bez registrace →
-            </a>
+            </Link>
             <div className={`${styles.heroNote} ${styles.heroAnim}`} style={{ animationDelay: '440ms' }}>
               Průměrná úspora po prvním měsíci: <strong>420 Kč</strong>
             </div>
@@ -133,7 +133,7 @@ export default function Home() {
       <ScrollReveal>
         <section className={styles.security}>
           <div className={`${styles.container} ${styles.securityInner}`}>
-            <h2 className={styles.securityH2}>Vaše data jsou v bezpečí</h2>
+            <h2 className={styles.securityH2}>Tvoje data jsou v bezpečí</h2>
             <div className={styles.securityGrid}>
               {[
                 {
@@ -146,7 +146,7 @@ export default function Home() {
                 },
                 {
                   icon: '🔐',
-                  text: 'Vaše přihlašovací údaje k bance nikdy nevidíme ani neukládáme',
+                  text: 'Tvoje přihlašovací údaje k bance nikdy nevidíme ani neukládáme',
                 },
               ].map((item) => (
                 <div key={item.icon} className={styles.securityItem}>
@@ -260,7 +260,7 @@ export default function Home() {
           <div className={`${styles.container} ${styles.featuresInner}`}>
             <div className={styles.featuresHeader}>
               <div className={styles.featuresTag}>Co umí Killsub</div>
-              <h2 className={styles.featuresH2}>Žádné surprise platby.<br />Nikdy víc.</h2>
+              <h2 className={styles.featuresH2}>Žádné překvapivé platby.<br />Nikdy víc.</h2>
             </div>
             <div className={styles.featList}>
               {FEATURES.map((feat) => (
@@ -289,7 +289,7 @@ export default function Home() {
               {[
                 { quote: '"Platil jsem za Netflix i Disney+ — a díval se jen na Netflix. Killsub mi to ukázal za dvě minuty."', avBg: '#0A0C14', avLetter: 'M', name: 'Martin K.', role: 'vývojář, Praha', saving: '−259 Kč/měs' },
                 { quote: '"Měla jsem tři AI nástroje. Dva se překrývaly. Teď platím za jeden a dělám stejnou práci."', avBg: '#FF3B3B', avLetter: 'P', name: 'Petra N.', role: 'freelancerka, Brno', saving: '−490 Kč/měs' },
-                { quote: '"Zapomněl jsem zrušit tři trialsy. Killsub mě upozornil týden předem. Ušetřil jsem 900 Kč první měsíc."', avBg: '#00C67A', avLetter: 'T', name: 'Tomáš R.', role: 'student, Ostrava', saving: '−900 Kč/měs' },
+                { quote: '"Zapomněl jsem zrušit tři zkušební verze. Killsub mě upozornil týden předem. Ušetřil jsem 900 Kč první měsíc."', avBg: '#00C67A', avLetter: 'T', name: 'Tomáš R.', role: 'student, Ostrava', saving: '−900 Kč/měs' },
               ].map((t) => (
                 <div key={t.name} className={styles.tcard}>
                   <p className={styles.tQuote}>{t.quote}</p>
@@ -330,7 +330,7 @@ export default function Home() {
           <div className={styles.footerLinks}>
             <Link href="/privacy">Soukromí</Link>
             <Link href="/terms">Podmínky</Link>
-            <span style={{ color: 'var(--ink3)' }}>© 2025 · Česko 🇨🇿</span>
+            <span style={{ color: 'var(--ink3)' }}>© {new Date().getFullYear()} · Česko 🇨🇿</span>
           </div>
         </div>
       </footer>
